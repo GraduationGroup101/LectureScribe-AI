@@ -1,0 +1,180 @@
+Here is the cleaned transcript:
+
+Hello everyone, welcome to this lab on Computer and Network Security. In this lab, we will review the lecture by Dr. [Name] and introduce a new and important tool in network security called OpenVas. We will explain how it works, its uses, and how to implement it for security research on a network or device with analysis of results and understanding of vulnerabilities that can be exploited.
+
+The lab is divided into seven sections:
+
+1. OpenVas: We will learn about the process of performing security scans using OpenVas.
+2. Vulnerability Assessment Steps: This section will cover practical steps for vulnerability assessment.
+3. List of Vulnerability Scanners: Here, we will present the most important tools for scanning vulnerabilities available in the market used by Cyber Security professionals.
+4. What does OpenVas do?: We will explain the function and capabilities of OpenVas in detecting vulnerabilities.
+5. Starting and Stopping OpenVas: This section will cover how to properly start and stop the OpenVas tool.
+6. OpenVas Virtual Machine Installation: We will see how to easily install OpenVas on a virtual machine.
+7. Some Capture of OpenVas: We will show some screenshots for those who work with the tool and see the results of scans in detail.
+
+What is OpenVas? OpenVas is a powerful tool that scans networks and systems, similar to a spotlight that detects dark areas and works like a Scalp for all regions. What is OpenVas Scalp? It's a tool that detects problems in networks and systems.
+
+A problem with the network or system? Use Scalp, this first tool for carrying out security tasks. Like a guard who performs security duties. For everyone on the network, it checks if there are vulnerabilities and where they are located. In summary, it is a program that scans networks and systems to detect security vulnerabilities and helps us discover potential entry points before attackers exploit them.
+
+In general, in cybersecurity, we have four main types of vulnerabilities:
+
+1. Network Vulnerabilities: These are problems that occur within network components such as routers, firewalls (Firewall), servers, etc.
+2. Credential Stuffing Attacks: This refers to the hacker trying to steal passwords and then try them on all devices in the network.
+
+These two types of vulnerabilities represent the first step for attackers to enter systems. The third type is Operating System Vulnerabilities, which are present within the operating system itself (like Windows, Linux, etc.). These vulnerabilities allow attackers to take control of devices and shut them down.
+
+The fourth type is Application Vulnerabilities, which we will discuss later.
+
+Let's move on to the first section, OpenVas.
+
+Here is the cleaned transcript:
+
+The slide is about attacks and how hackers can flood a server, causing it to crash. This leads to a denial of service (DoS) attack on the third server, which is an "elevation of privilege" type of attack. The hacker gains elevated privileges by raising their user rights from normal to admin level, allowing them to control the system with unauthorized access.
+
+There are four types of vulnerabilities:
+
+1. Information disclosure: Hackers try to steal sensitive information.
+2. Spooking (spoofing): Impersonating another user's identity.
+3. Operating system vulnerabilities: Exploiting weaknesses in the OS.
+4. Human vulnerabilities: Social engineering, where hackers exploit human behavior or lack of knowledge.
+
+Social engineering is a type of attack that uses psychological manipulation to trick users into divulging sensitive information.
+
+Process vulnerabilities occur when there are weak policies and procedures within an organization.
+
+The four types of vulnerabilities can be summarized as:
+
+* Network vulnerabilities (allowing access to systems)
+* Operating system vulnerabilities (allowing control over systems)
+* Human vulnerabilities (exploiting human behavior or lack of knowledge)
+* Process vulnerabilities (weak policies and procedures)
+
+We will cover how to use OpenVAS to detect and remediate these types of vulnerabilities.
+
+What will we learn?
+
+How do we perform this task?
+
+What will we cover?
+
+We will cover:
+
+1. Introduction to OpenVAS
+2. How to use OpenVAS to scan for vulnerabilities
+3. How to interpret the results
+4. How to remediate vulnerabilities
+
+Why are we using OpenVAS? Because it helps us detect and remediate vulnerabilities.
+
+We will also cover how to download and install OpenVAS, but I won't explain that now because it's too technical.
+
+The process of detecting and remediating vulnerabilities involves several steps:
+
+1. Gathering information about the target system
+2. Scanning for open ports (port scanning)
+3. Identifying services running on those ports
+4. Fingerprinting the services to identify potential vulnerabilities
+
+We will use OpenVAS to perform these tasks.
+
+What is OpenVAS? It's a free and open-source vulnerability scanner that helps us detect and remediate vulnerabilities.
+
+How does it work?
+
+OpenVAS scans for vulnerabilities by:
+
+1. Identifying open ports on the target system
+2. Fingerprinting services running on those ports
+3. Identifying potential vulnerabilities
+
+The results are presented in a report, which we will learn how to interpret.
+
+What is a vulnerability report? It's a document that outlines the steps to evaluate and remediate vulnerabilities.
+
+We will cover the following topics:
+
+1. Introduction to OpenVAS
+2. How to use OpenVAS to scan for vulnerabilities
+3. How to interpret the results
+4. How to remediate vulnerabilities
+
+The process of detecting and remediating vulnerabilities involves several steps, which we will outline below.
+
+The first step is to gather information about the target system.
+
+The second step is port scanning, where we identify open ports on the target system.
+
+The third step is identifying services running on those ports.
+
+The fourth step is fingerprinting the services to identify potential vulnerabilities.
+
+We will use OpenVAS to perform these tasks.
+
+Here is the cleaned transcript:
+
+Fifth step: We will write down all the gaps we found, plus suggestions for solutions or mitigation of risks. Sixth and final step: We will perform a follow-up action called "متابعة" (monitoring). We will repeat this process from scratch every now and then because vulnerabilities are constantly changing and new ones appear.
+
+In summary, these steps represent an ongoing process to maintain a secure system. It involves collecting information (one), examining ports (two), understanding services (three), performing a full scan (four), and identifying robots (five). If we write another report, we will repeat these steps on a regular basis.
+
+List of vulnerability scanners in the department: We will learn about the most important tools that help us detect vulnerabilities in networks and applications. List of tools in cybersecurity: These are well-known in the field of cybersecurity. In our lab, we have a tool called "net sparker" which is specialized in web application scanning. It's fast and accurate in detecting vulnerabilities.
+
+We also have another tool called "parp suite" which is an integrated tool for analyzing web traffic and detecting vulnerabilities. We also have a tool called "next box" which is powerful in managing vulnerabilities with clear and easy-to-understand reports.
+
+In our lab, we are discussing the openVAS tool which is open-source. We also have another tool called "nessus" which is one of the most popular vulnerability scanning tools worldwide. It's fast and reliable.
+
+We also have a tool called "accountics" which scans web applications and helps developers and security professionals protect their websites from attacks.
+
+Each tool has its own specialty and features. If you want to learn more about them, you can search for them online. But today, we are focusing on openVAS because it's free and excellent for learning and practical application.
+
+What does openVAS do?
+
+The openVAS section explains that openVAS is a scanner that means "scanner" in the sense of a comprehensive system for evaluating security vulnerabilities. It can detect security issues in all types of servers and devices connected to the network.
+
+OpenVAS performs several tasks:
+
+1. Performance: OpenVAS first checks if it can access any IP address on the network to identify open services and ports.
+2. Discovery: OpenVAS then examines each device on the network to identify open ports, such as port 80 for a web server or port 22 for SSH.
+3. Scanning: OpenVAS scans the network to detect vulnerabilities in services and configurations.
+
+Once the scan is complete, openVAS generates a report detailing all detected vulnerabilities and their solutions.
+
+During scanning, openVAS performs several steps:
+
+1. It identifies the target IP address and examines its services and ports.
+2. It checks if any known vulnerabilities or misconfigurations are present.
+3. It generates a report with details on each vulnerability and its solution.
+
+Once the report is generated, we review it to ensure its accuracy and then proceed to remediate confirmed vulnerabilities to protect our system from risks.
+
+Here is the cleaned transcript:
+
+192.168.1.10 Full scan I have defined the target Second thing we do create scan means we create a new scan in openVAS settings according to what we defined in this step We will perform create scan and take the settings from this step Third step launch scan What does it mean? We run the scan and this step we execute the scan and openVAS starts running on open ports and active services and potential vulnerabilities Fourth and last step analyze the scan results After the scan is finished, we read the report and see what vulnerabilities were discovered How did they get in? Are they high or low risk What does it mean? High means difficult to fix Low means easy to fix We will see the solutions that are possible If summary We didn't want to summarize We wanted to define the target and settings for the scan and openVAS is the one that performs the scan and discovers vulnerabilities
+
+We define the target like a target in a game The scan settings and time of execution and openVAS is the one that scans and analyzes and gives results Running OpenVAS works on four basic steps First, we define the target and settings Second, we perform the scan Third, we perform the tool and fix vulnerabilities Running and stopping services and restarting OpenVAS After restarting OpenVAS, we need to shut down or start it Why? Because when we do an update or when the organization is started or when we restart the device, we run openVAS Okay, as I said, running openVAS doesn't work on Windows It works on Linux Okay, so you need to download Linux on your device You need to remove Windows Okay, you don't remove Windows You don't download Windows There's something called Virtual Machine Download a program like VirtualBox or VMware and download this operating system which is Linux When you download Linux, open the terminal and type the command to install OpenVAS If you installed OpenVAS on your device, you need a virtual machine Obviously If openVAS stops, type the command OpenVAS-STOP This command stops all services used by OpenVAS tool means it says to the program, stop working now If we want to run the OpenVAS tool again, open VirtualBox or VMware, open the terminal and type OpenVAS-STOP You will find the OpenVAS tool running smoothly This command OpenVAS-STOP makes all services work and prepares the interface for the OpenVAS tool so you can perform a scan for vulnerabilities There's a note that says all installation steps are on the Kali website Kali is like Linux, like Virtual Machine, like VirtualBox, like VMware This link we provide to you has a complete explanation If you forgot something or want to see the details of the steps, go back to this link and you will find the summary This website summarizes and says there's a command OpenVAS-STOP that stops openVAS and there's another command OpenVAS-STOP that runs openVAS There's a note for detailed steps I will write it in this link so I can prove how to install OpenVAS OpenVAS Virtual Machine Installation means downloading and installing OpenVAS as a virtual machine I found what I said, OpenVAS needs to be downloaded on Kali or VirtualBox or VMware Obviously, my friends Last thing, VirtualBox is a program that downloads an operating system like VirtualBox and VMware These are programs like NetBeans but download an operating system like you download a computer inside your computer like VirtualBox to download a new operating system because you downloaded a computer with Windows and the operating system is Windows So you need to download a new operating system on VirtualBox or VMware to download Linux to install OpenVAS There's a simple and fast way whether you're on Windows, Linux, or Mac First thing we use a version of Java
+
+Here is the cleaned transcript:
+
+We will install OpenVAS on a Virtual Machine, specifically the GSM Community Edition. This version can be downloaded onto a virtual machine by first installing either VMware or VirtualBox. Then, we download a pre-configured version of OpenVAS in the form of an ISO file from this link [insert link]. The ISO file is approximately 527 MB in size.
+
+We will use either VMware or VirtualBox to install the ISO file and complete the installation process step by step. The explanation is available on the slides if you want to see it in detail.
+
+To summarize, we download a pre-configured version of OpenVAS called Community Edition, then download the ISO file from the link, and finally install it using either VMware or VirtualBox.
+
+Some Capture of OpenVAS
+We will show you some screenshots of the OpenVAS tool so you can see how it looks and how to interact with it during the scan. This screenshot shows the Creating a task section, where we create a new task by filling in the required information, such as the task name, target, and schedule.
+
+This screenshot shows how to add a device or network to be scanned in OpenVAS. We simply enter the IP address, select what to scan, and click Save.
+
+Task Configurations
+Here, we choose the type of scan and how the tool will interact with devices. We can choose to scan one device at a time or multiple devices simultaneously.
+
+Check the task created
+This section shows the task after it has been created, including its name, status, and whether the scan has started.
+
+Results
+This screenshot shows the results of the scan in OpenVAS, which includes the number and type of vulnerabilities found. The report also provides details about each vulnerability, such as its severity and difficulty level.
+
+Generate a report
+Finally, this screenshot shows how to generate a report from OpenVAS, which includes a summary of the findings, including high, medium, and low-risk vulnerabilities. We simply click Download to export the report.
+
+Thank you for your attention, and may God guide you.

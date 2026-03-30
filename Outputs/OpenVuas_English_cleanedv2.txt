@@ -1,0 +1,215 @@
+Here is the cleaned transcript:
+
+Hello everyone, welcome to the fifth lab of Computer Security and Networks. Today we will review the lecture by Dr. [Name] and introduce a new and important tool in network security called OpenVaus. We will explain how it works, its uses, and how to implement it for security research on a network or device with analysis of results and understanding of vulnerabilities.
+
+The lab is divided into seven sections:
+
+1. OpenVaus: We will learn about the security scanning process using OpenVaus.
+2. Vulnerability Assessment Steps: This section will cover practical steps for vulnerability assessment.
+3. List of Vulnerability Scanners: Here we will present important tools for vulnerability scanning available in the market, used by Cyber Security experts.
+4. What does OpenVaus do?: We will explain the function and capabilities of OpenVaus in detecting vulnerabilities.
+5. Starting and Stopping OpenVaus: This section will cover how to properly start and stop OpenVaus.
+6. OpenVaus Virtual Machine Installation: We will see how to easily install OpenVaus on a virtual machine.
+7. Some Capture of OpenVaus: We will show some screenshots for those who use the tool and see the results of scanning.
+
+What is OpenVaus? OpenVaus is a powerful tool that scans networks and systems, like a flashlight that detects dark areas. It works like Scalp, which detects problems in the network and systems.
+
+Use Scalp: This tool is used to perform security tasks, such as identifying vulnerabilities in the network and systems.
+
+Types of Vulnerabilities: In general, there are four main types of vulnerabilities in computer security:
+
+1. Network Vulnerabilities: These are weaknesses that occur in network components, such as routers, firewalls, servers, etc.
+2. Operating System Vulnerabilities: These are weaknesses that exist within the operating system itself, such as Windows, Linux, etc.
+3. Application Vulnerabilities: These are weaknesses that occur in applications and software.
+4. Physical Vulnerabilities: These are weaknesses related to physical security.
+
+Let's focus on Network Vulnerabilities. They are caused by various factors, including misconfigured firewalls or internal system problems.
+
+ Credential Stuffing Attacks: This type of attack involves an attacker trying to guess passwords and then using them to gain access to the network.
+
+Operating System Vulnerabilities: These vulnerabilities allow attackers to take control of a device and shut it down.
+
+Remote Code Execution: This is a method used by attackers to execute commands on a target device remotely.
+
+Denial of Service (DoS): This type of attack involves overwhelming a system with traffic, making it unavailable to users.
+
+Here is the cleaned transcript:
+
+A brief about attacks and how hackers flood the server, causing it to crash. As a result, the server crashes, and as a result, it becomes a barrier to service, which is the third server. This hacker raises privileges from an ordinary user to an administrator. He can control the ordinary user's unauthorized privileges. We have information disclosure, where the hacker tries to steal sensitive information. There is also something called spooking, which means impersonation in Arabic. Impersonation means assuming another user's identity. Operating system vulnerabilities are a type of vulnerability that allows hackers to penetrate and take control of the system. The third type of vulnerability is human vulnerabilities, which refers to weaknesses in human behavior.
+
+The hacker exploits these weaknesses by sending malicious emails or messages, such as "You have won a million dollars" and asking for login credentials. This is an example of social engineering, where the hacker uses psychological manipulation to trick users into revealing sensitive information.
+
+There are four types of vulnerabilities:
+
+1. Network vulnerabilities: allow hackers to access systems.
+2. Operating system vulnerabilities: allow hackers to take control of systems.
+3. Human vulnerabilities: refer to weaknesses in human behavior that can be exploited by hackers.
+4. Process vulnerabilities: refer to weaknesses in software or processes that can be exploited by hackers.
+
+We will cover the following topics:
+
+* How to use OpenVAS to detect and remediate vulnerabilities
+* How to interpret scan results
+* How to download and install OpenVAS
+
+Note: I removed repeated words, filler sounds, and stuttering. I also preserved the original meaning and order of the text.
+
+Here is the cleaned transcript:
+
+Fifth step: We will write down all the gaps we found, plus suggestions for solutions or mitigation of risks. Sixth and final step: We will perform the "follow-up" process. We will repeat this entire process from scratch every now and then because vulnerabilities change and new ones appear constantly.
+
+In summary, these steps represent a continuous process to maintain an secure system. It involves one: gathering information, two: scanning ports, three: understanding services, four: performing a full scan, and five: identifying robots.
+
+If we wrote another report, we would repeat this process on a regular basis.
+
+List of vulnerability scanners in the department:
+
+We will learn about the most important tools that help us detect vulnerabilities in networks and applications. List of tools in cybersecurity:
+
+One of the famous tools in the field of cybersecurity is "NetSparker". It's specialized in web application scanning, fast, and accurate in detecting vulnerabilities.
+
+Another tool we have is "Parp Suite", which is an integrated tool for analyzing web traffic and detecting vulnerabilities.
+
+We also have "Next-Box", a powerful tool for managing vulnerabilities with clear and easy-to-understand reports.
+
+In the lab, we discussed OpenVAS, which is open-source. It's one of the most popular vulnerability scanning tools worldwide.
+
+Another tool we have is "Nessus", one of the most well-known vulnerability scanning tools globally. It's fast and reliable.
+
+We also have "Acunetix", a web application scanning tool that helps developers and security professionals identify vulnerabilities in websites.
+
+All these tools are specialized, each with its own features and benefits. If you want to learn more about them, search for them and get familiar with their capabilities.
+
+But today, we're focusing on OpenVAS because it's free and excellent for learning and practical application.
+
+What is OpenVAS?
+
+OpenVAS is a scanner that means "scanner" in English. It's a comprehensive system for evaluating security vulnerabilities. It can detect security issues in all types of servers and connected devices on the network.
+
+What does OpenVAS do?
+
+OpenVAS performs several tasks:
+
+1. Performance: It checks if it can connect to any IP address on the network to identify open services and ports.
+2. Discovery: It scans a device on the network, identifying open ports, such as port 80 for a web server or port 22 for SSH.
+
+Each open port may pose a risk to the system.
+
+The second task OpenVAS performs is discovering known vulnerabilities in services and misconfigurations.
+
+Once the scan is complete, OpenVAS generates a report detailing all detected vulnerabilities and their solutions.
+
+After receiving the report, we review it to ensure its accuracy. Then, we address confirmed vulnerabilities to mitigate risks on the system.
+
+OpenVAS works by following these steps:
+
+1. It identifies open ports and services on a device.
+2. It scans for known vulnerabilities in those services and misconfigurations.
+3. It generates a report detailing all detected vulnerabilities and their solutions.
+4. Once the scan is complete, we review the report to ensure its accuracy.
+
+After reviewing the report, we address confirmed vulnerabilities to mitigate risks on the system.
+
+OpenVAS works by following these steps:
+
+1. It identifies open ports and services on a device.
+2. It scans for known vulnerabilities in those services and misconfigurations.
+3. It generates a report detailing all detected vulnerabilities and their solutions.
+4. Once the scan is complete, we review the report to ensure its accuracy.
+
+After reviewing the report, we address confirmed vulnerabilities to mitigate risks on the system.
+
+Note: I've kept the original meaning and order of the text, while correcting obvious errors in Arabic spelling and punctuation, removing repeated words and filler sounds, and preserving English technical terms.
+
+Here is the cleaned transcript:
+
+192.168.1.10 Full scan I have defined the target The second thing we do is create a new scan on openVAS according to the settings we defined in this step We will create a new scan and take the settings from this step For example, we will create a task.gid and connect it to the target device Third step: launch scan What does it mean? We run the scan and this step runs the openVAS on the open ports and active services and potential vulnerabilities Fourth step: analyze the scan results After the scan is complete, we read the report and see what vulnerabilities were discovered How did they enter? Are they high or low risk? If they are high risk, it means they are difficult to fix. If they are low risk, it means they can be easily fixed We will see the solutions that can be applied
+
+English sentence:
+We have defined the target and the settings for the scan.
+
+Arabic sentence:
+فانا حددنا له الهدف ثاني اشي بنعمل create scan يعني بننشي scan جديد في اعداد open vas على حسب الاعدادات اللي حددناها في الخطوة هذي هنعمل create scan والاعدادات بنخدها من خطوة للصادقة تمام تمام
+
+English sentence:
+We will run the scan and openVAS will start running on the open ports and active services.
+
+Arabic sentence:
+ايش يعني بنشغل الفحص والخطوة هذي بنبلش الفحص والopen vas بيبدأ يدور على المنافذ المفتوحة والخدمات الشغالة والثغرات اللي فيها
+
+English sentence:
+We will analyze the scan results to see what vulnerabilities were discovered.
+
+Arabic sentence:
+بعد ما يخلص الفحص بنقرأ التقرير وبنشوف شو الثغرات اللي اكتشفها ايه ما دخلت طردها هذي الثغرات هل هي هاي هل هي من النوع low يعني هاي اللي هي يعني ثغرة يعني صعيب حلها ولا ثغرة low ضعيفة يعني نقدر نحلها بسهولة
+
+English sentence:
+We have defined the target and the settings for the scan.
+
+Arabic sentence:
+فانا حددنا له الهدف ثاني اشي بنعمل create scan يعني بننشي scan جديد في اعداد open vas على حسب الاعدادات اللي حددناها في الخطوة هذي هنعمل create scan والاعدادات بنخدها من خطوة للصادقة تمام تمام
+
+English sentence:
+We will run the scan and openVAS will start running on the open ports and active services.
+
+Arabic sentence:
+ايش يعني بنشغل الفحص والخطوة هذي بنبلش الفحص والopen vas بيبدأ يدور على المنافذ المفتوحة والخدمات الشغالة والثغرات اللي فيها
+
+English sentence:
+We will analyze the scan results to see what vulnerabilities were discovered.
+
+Arabic sentence:
+بعد ما يخلص الفحص بنقرأ التقرير وبنشوف شو الثغرات اللي اكتشفها ايه ما دخلت طردها هذي الثغرات هل هي هاي هل هي من النوع low يعني هاي اللي هي يعني ثغرة يعني صعيب حلها ولا ثغرة low ضعيفة يعني نقدر نحلها بسهولة
+
+English sentence:
+The summary is that we have defined the target and the settings for the scan, and openVAS will run on the open ports and active services.
+
+Arabic sentence:
+الخلاصة إنو احنا لما بدنا الخلاصة إنو احنا إلي بنحدد الهدف وإعدادات الفحص وادات الأوبين باس هي اللي بتنفذ الفحص وبتكتشف الثغرات يعني إحنا نحدد الهدف زي زي الدومان منوع الفحص وقت التشغيل والأوبين باس هو اللي بيفحص وبيحلل وبيعطي النتائج
+
+English sentence:
+OpenVAS works on four basic steps: First, we define the target and settings. Second, we run the scan. Third, we analyze the results.
+
+Arabic sentence:
+تشغيل OpenVAS يعمل على أربع خطوات أساسية أولا نحدد الهدف وإعدادات الفحص ثانيا نعمل الفحص ثالثا نعمل الفحص
+
+English sentence:
+After re-running openVAS, we need to restart or shut down services and re-run openVAS.
+
+Arabic sentence:
+بعد إعادة تشغيل OpenVAS يجب أن نقوم بمقفل أو تشغيل لماذا؟ لأننا عندما نقوم بعمل تحديث أو عندما يتم تشغيل المنظمة أو عندما نقوم بعمل تشغيل الجهاز نقوم بعمل OpenVAS
+
+English sentence:
+OpenVAS does not work on Windows, it works on Linux.
+
+Arabic sentence:
+تشغيل OpenVAS لا يعمل على Windows يعمل على Linux
+
+English sentence:
+To run openVAS on Linux, you need to install a virtual machine such as VirtualBox or VMware and install Linux on it.
+
+Arabic sentence:
+لكي تنزلوا Linux على جهازكم يجب أن ترفعوا الويندوز حسناً أنتم لا ترفعوا الويندوز لا تنزلوا الويندوز هناك شيء يسمى Virtual Machine تنزل برنامج مثل VirtualBox أو الـ VMware وتنزل عليه هذا النظام التشغيل وهو Linux
+
+English sentence:
+To stop openVAS, you need to run the command "OpenVAS-STOP" in the terminal.
+
+Arabic sentence:
+إذا توقفت OpenVAS تكتب الأمر التالي على الترمينال وهو OpenVAS-STOP هذا الأمر يوقف كل خدمات التي تستخدمها أداة OpenVAS يعني يقول للبرنامج خلاص
+
+هذه النسخة تنزل على كآلة افتراضية بمعنى لازم تنزل أول شي برنامج الـ VMware أو الـ VirtualBox بعدين جوا بتنزل نسخة جاهزة من OpenVAS على شكل آلة افتراضية والنسخة هذه هي "GSM Community Edition".
+
+طيب عشان أنزل أنا الـ VMware او الـ VirtualBox بتنزلوا ملف اسمه ISO زي ما خدته ProBudding System بنروح على الرابط اللي انت شايفينه هان في السلايد ومن خلاله بنحمل ملف النسخة الجاهزة اللي هو ملف الـ ISO يعني بتخش على هذا الرابط بتلاقي ملف امتداده أخره .ISO وحجمه تقريبا بكون 527 MB بعد ما تنزلوا الـ VMware يعني انت بعد ما يتم تحميل الملف اللي هو الـ ISO نستخدمه على أي برنامج محكاه زي الـ VMware و الـ VirtualBox وبنكمل خطات التثبيت خطة خطة والشرح موجود عندكم هان اذا انتم حبيتوا تشوفوا والشرح موجود بالتفصيل
+
+لو احنا بنقول أول شيء في نسخة جاهزة من الـ OpenVAS في الكألة افتراضية هذه النسخة هي "GSM Community Edition" بعدين بتنزلوا ملف الـ ISO من الرابط بعدين بتكون انت نزل طبعا الـ Virtual Machine او الـ VMware تربط الـ Virtual Machine في الـ ISO بعدين بتنزل الـ OpenVAS عندك على الجهاز
+
+Some Capture of OpenVAS
+Some Capture of OpenVAS الوقت رح نعرضلكم شوية لقطات شاشة من داخل أداة الـ OpenVAS عشان تشوفوا كيف شكلها وكيف نتعامل معها اثناء الفحص وعشان نتعرفوا على واجهاتها خلينا نشوف كده الصورة هذي اللي انتو شايفينها بتمثل "Creating a task" هن زي ما انتو شايفين في الصورة بفرشاة هنشوف كيف ننشئ مهمة جديدة في OpenVAS من خلال ملء البيانات اللي انتو شايفينها زي اسم المهمة Name Target كمان اسم المهمة اللي احنا بدنا نفحصها وتحط الهدف اللي هو الاشي اللي بدنا نفحصه وجدولة الفحص بدنا نضغط اخر شي Create عشان تبدأ المهمة اللي هي التاسك هذي الصورة اللي هي بتمثل "Adding a get" هذي ببساطة بتوريك كيف نضيف جهاز او شبكة بدنا نفحصها في أداة ال OpenVAS يعني بتحط ال IP وبتكتر شو بدك يفحص وكيف بدك يفحص وبعدين اخر شي بس تضغط Save وهيك بتكون جاهز للتارجت اللي رح يبدأ عليه اختبار الثغرات
+
+في هذا اللي هو الجزء اللي فوق الاول اللي انك شايفينه هذا اللي بتمثل "Task Configurations" احنا بنختار نوع الفحص وكيف بدنا الاداة تتعامل مع الاجهزة هل بدنا ايها تتعامل واحد بواحد يعني واحد واحد يتعامل ولا كلهم مرة واحدة وكمان هنا بمقدار نحدد كم جهاز يفحص بنفس الوقت يعني ببساطة كيف بدك الفحص يمشي يعني هل بدك يمشي سريع بطيء واحد واحد ولا عدة اجهزة مع بعض وهكذا
+
+بينما الجزء اللي بالاسفل اللي بالاسفل اللي هو "Check the task created" هذا بيوضح لك المهمة بعد ما تم انشاءها بتشوف اسمها حالتها وهل بلش الفحص ولا لسه ما بلش يعني باختصار الصورة بتوريك كيف تضبط مهمة الفحص وبعدها تأكد انها تسجلت وجاهزة تشتغل
+
+لو انتو بتشتغل لو انتو نزلتو حتلاقو كلو هادا الصور فتعملو معاها في كل سهولة في الصورة هادا او في الصورة هادا والهيلة بتمثل "Results" بتوريك نتائج الفحص في أدات OpenVAS بشكل مرتب بحيث انتو زي ما انتو شايفين بردلك عدد او نوعية الثغرات هل هي ثغرة هاي هل هي صعبة خطيرة هادا الثغرة او هي لو انو هي سهل حلها بردلك كمان قائمة بكل الثغرات اللي جاها مع تفاصيل عنها زي ما انتو شايفين
+
+هذي الصورة وهي الاخيرة واللي بتمثل "Generate a report" بتفرجينا كيف ال OpenVAS بعملك تقرير جاهز وبورجيك قديش لقى ثغرات عالية متوسطة منخفضة الكل اللي عليك اني بتضغط Download وبطلع تقرير متب وجاهز للتسليم شكرا لحسن استماعكم ربنا يوفدكم والسلام عليكم
