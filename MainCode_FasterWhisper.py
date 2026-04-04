@@ -2,25 +2,24 @@ from faster_whisper import WhisperModel
 from pathlib import Path
 import os
 import url_to_mp3
+from clean_with_Llama import clean_transcript_file
 
 
 os.environ["PATH"] += os.pathsep + r"C:\Users\Mahmoud\Downloads\Compressed\ffmpeg-8.1-essentials_build\ffmpeg-8.1-essentials_build\bin"
 
-# ========= إعدادات =========
-# AUDIO_PATH = Path(r"Lab5_ OpenVAS tool_20261523541.mp3")
+
+# Model and device settings
 AUDIO_PATH_as_url = Path(url_to_mp3.download_youtube_mp3(input("Enter YouTube URL: ")))
 MODEL_SIZE = "large-v3"                        
 DEVICE = "cuda"                              
 COMPUTE_TYPE = "int8_float16"                 
 
-# prompt من ملف الترجمة (اختياري)
+# subtitle Prompt
 SUB_TXT_PATH = Path("ch1_b_sub_txt.txt")
 PROMPT = ""
 if SUB_TXT_PATH.exists():
     PROMPT = SUB_TXT_PATH.read_text(encoding="utf-8", errors="ignore")[:4000]
 
-# إعداد ال prompt الرئيسي   
-another_promot = "This is a lecture about openVas program of web securty subject , the lecture contain some english words so please identfiy them and write them in english"
 
 Main_Prompt = (
     "This is a university lecture in Arabic with English technical terms.\n"
@@ -52,16 +51,15 @@ def main():
         language='ar',        
         vad_filter=True,
         beam_size=5,
-        # word_timestamps=True,  # لو بدك توقيت لكل كلمة (يبطّئ شوي)
     )
 
 #   If you want to use the custom prompt, uncomment the next line
   
-    kwargs["initial_prompt"] = another_promot
+    kwargs["initial_prompt"] = Main_Prompt
 
     segments, info = model.transcribe(AUDIO_PATH_as_url.as_posix(), **kwargs)
 
-    # اجمع النص
+    # combine all segments into one text
     parts = []
     for seg in segments:
         parts.append(seg.text.strip())
@@ -71,12 +69,17 @@ def main():
 
     print("\n===== TRANSCRIPT =====\n")
     print(text)
+#   save the transcript to a text file in folder of name "OutputForOllama" + AUDIO_PATH_as_url.stem + "_transcript.txt"
+    output_dir = Path("OutputForWhisper")
+    output_dir.mkdir(exist_ok=True)
 
-    out_path = AUDIO_PATH_as_url.stem + "sapcial_promot" + "_transcript.txt"
-
-    out = Path(out_path)
+    out = output_dir / f"{AUDIO_PATH_as_url.stem}_transcript.txt"
     out.write_text(text, encoding="utf-8")
+
     print(f"\nSaved to: {out.resolve()}")
+
+    # pipeline to clean the transcript using Ollama
+    clean_transcript_file(out)
 
     print("\n===== INFO =====")
     print("Detected language:", info.language)

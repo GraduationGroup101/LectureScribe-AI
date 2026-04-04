@@ -8,13 +8,6 @@ import re
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "llama3.1:8b-instruct-q4_K_M"
 
-#Input Whisper transcript file
-INPUT_TXT = Path("OpenVuas_English.txt")
-
-# Output cleaned transcript file
-output = INPUT_TXT.stem + "_cleanedv5.txt"
-OUTPUT_TXT = Path(output)
-
 # split text into chunks of roughly this many characters
 CHUNK_CHARS = 3500
 
@@ -32,8 +25,8 @@ Rules:
 - Do NOT invent new information. Do NOT add explanations. Just clean.
 - Preserve the original meaning and order.
 - every word should be in its correct form thats if the word in arabic but its english term keep it in english
-- when u convert arabic words to english terms write them in their correct english form and put them between quotes like this "term" next to the arabic word  not on the end of the line
-- when you write an english sentence , write the arabic sentence that after it in new line
+# - when u convert arabic words to english terms write them in their correct english form and put them between quotes like this "term" next to the arabic word  not on the end of the line
+# - when you write an english sentence , write the arabic sentence that after it in new line
 """
 
 def make_user_prompt(text: str) -> str:
@@ -41,12 +34,8 @@ def make_user_prompt(text: str) -> str:
 {text}
 """
 
-# =========================
-# HELPERS
-# =========================
 def split_text(text: str, max_chars: int):
     """Split text into chunks roughly by paragraphs/sentences."""
-    # split by double newlines (paragraphs)
     parts = re.split(r"\n{2,}", text.strip())
     chunks = []
     buf = ""
@@ -60,7 +49,6 @@ def split_text(text: str, max_chars: int):
         else:
             if buf:
                 chunks.append(buf)
-            # if single part is too long, split by sentences
             if len(p) > max_chars:
                 for i in range(0, len(p), max_chars):
                     chunks.append(p[i:i+max_chars])
@@ -72,7 +60,6 @@ def split_text(text: str, max_chars: int):
         chunks.append(buf)
 
     return chunks
-
 
 def ollama_generate(prompt: str) -> str:
     """Call Ollama local API."""
@@ -92,17 +79,18 @@ def ollama_generate(prompt: str) -> str:
     data = r.json()
     return data.get("response", "").strip()
 
+def clean_transcript_file(input_txt: Path):
+    if not input_txt.exists():
+        print(f"Input file not found: {input_txt.resolve()}")
+        return None
 
-def main():
-    if not INPUT_TXT.exists():
-        print(f"Input file not found: {INPUT_TXT.resolve()}")
-        print("ضع ملف ناتج whisper باسم whisper_output.txt بجانب هذا السكربت.")
-        return
-
-    raw = INPUT_TXT.read_text(encoding="utf-8", errors="ignore").strip()
+    raw = input_txt.read_text(encoding="utf-8", errors="ignore").strip()
     if not raw:
         print("Input file is empty.")
-        return
+        return None
+
+    output = Path("OutputForOllama") / f"{input_txt.stem}_cleanedv5.txt"
+    output_txt = Path(output)
 
     chunks = split_text(raw, CHUNK_CHARS)
     print(f"Loaded text. Chunks: {len(chunks)}")
@@ -114,11 +102,14 @@ def main():
         cleaned_chunks.append(out)
 
     cleaned = "\n\n".join(cleaned_chunks).strip()
-    OUTPUT_TXT.write_text(cleaned, encoding="utf-8")
+    output_txt.write_text(cleaned, encoding="utf-8")
 
     print("\n DONE")
-    print(f"Saved cleaned transcript to: {OUTPUT_TXT.resolve()}")
+    print(f"Saved cleaned transcript to: {output_txt.resolve()}")
 
+    return output_txt
 
+# if you want to run this file alone to clean a transcript without running the faster-whisper code, you can do that by putting the name of the transcript file in the same directory as this cleaner.py file and then run it. it will produce a cleaned version of the transcript with the name "OutputForOllama_" + input_file_name + "_cleanedv5.txt" 
 if __name__ == "__main__":
-    main()
+    INPUT_TXT = Path("OpenVuas_English.txt")
+    clean_transcript_file(INPUT_TXT)
