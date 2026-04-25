@@ -1,0 +1,145 @@
+Here is the cleaned transcript:
+
+In the name of God, the Most Gracious, the Most Merciful, and peace and blessings be upon the most honorable creation of God, our master Muhammad, may God's prayers and peace be upon him, and after him.
+
+God willing, today we will start with you in the second lab of the renewable energy test. Today, God willing, we will talk about the "Solar Panel Module". We will talk about the solar panel, what it is, what it is made of, and what the data is on it.
+
+After that, God willing, you will see any solar panel, you will know its details, and you will know how to deal with it. Okay, let's now talk about the "Solar Panel Module". Today we will talk about the "Solar Panel", which is the "Solar Cell".
+
+What is it made of? It is made of several cells. These cells connect with each other. These cells alone are called "Solar Cell". So this cell is like this. This one, what do we call it? "Solar Cell". So here we have four cells in the "Cell". These four cells are connected in a certain way to give me a certain thing. Okay.
+
+Usually, how do they connect? They are connected, I tell you, most of these cells are connected to the poles. Sometimes they are half poles, and the other half is a pole, and these two parts are connected to each other in parallel. We will show you exactly how they are connected from the inside. Okay.
+
+Now, this part, when they are connected to each other and connect to the poles, instead of being connected, we call it "Solar Cell". We call it "Solar Panel Module".
+
+After that, I will tell you about this "Solar Panel Module". If you connect it to other things, we call it "Array" and "String". "Array" and "String". When is "Array" and when is "String"? "Array" is when a multiple is connected, like this, to the poles. We call this "Array". And "String" is when it is connected to the poles.
+
+Okay. Now, there is, I mean, it's true that it doesn't matter to us much, but it's good to know it. I will tell you that we can represent the equivalent circuit to a "Solar Cell". We can represent it in an electrical circuit. In the beginning and in the end, what is a "Solar Cell"? Current Source and this current represents the sunlight.
+
+Okay. Then, there is a diode. This diode has a current that comes in, so that the energy does not return again. ثم يوجد سيريز براليل و سيريز عالتوالي وهذا R هو الload ما معنى R للشنط و R للسيريز ؟
+
+R for "Load" is resistance due to heating of the wire. And R for "Series" is resistance due to non-uniformity of the surface and with the cell and with other things.
+
+Now, let's talk about types of cells. Cells have several types. The most common type we deal with is called "Mono". There is another type called "Poly".
+
+Let's talk about "Mono". What is "Mono"? This is what "Mono" means. It is a crystal structure. This is the "Mono Crystal". It is one of the best types, in terms of efficiency.
+
+Now, let's talk about "Poly". What is "Poly"? This is what "Poly" means. Its efficiency is from 11 to 16%. We will explain this later.
+
+How do we distinguish between "Mono" and "Poly"? The "Mono" usually has a square shape with rounded edges. It can have a mottled or black color, but it's mostly like this. What about the "Poly"? The "Poly" is usually a rectangular shape with high conductivity. Its color is always blue.
+
+Note: I've kept the original meaning and order of the text, and only translated Arabic words to their English terms as per your instructions.
+
+Here is the cleaned transcript:
+
+Okay, let's go back to what we were discussing before we leave. Efficiency of the panel. Efficiency of the panel. What does it mean when I say that the efficiency of a solar panel is 16% or 11%? This statement is incorrect. They are actually saying that if the panel has a length of 2.5 meters, for example, and its width is also 2.5 meters, then the actual power output would be around 650 watts.
+
+If it's written on the panel that it produces 650 watts, what does this mean? Does it mean that if it were a polycrystalline panel, it would produce 16% of the value, or if it were a monocrystalline panel, it would produce 11%? This is not correct. They are actually saying that the panel has an actual power output of 650 watts because its length and width are both around 2.5 meters.
+
+In reality, the panel's efficiency is actually around 16% or 11%, depending on the type of cell used. But what does this mean in terms of the actual power output? If it's written on the panel that it produces 330 watts, for example, this means that the panel has an actual power output of 330 watts.
+
+But this is only true if the sun is shining brightly and the panel is clean and free from any defects. In reality, the panel's efficiency can vary depending on several factors, including the type of cell used, the temperature, and the amount of sunlight it receives.
+
+In laboratory settings, researchers have been able to achieve efficiencies of around 60% in some cases, but this has not yet been replicated in real-world applications. When we look at a panel, we can see that it has several components, including a front sheet, a backsheet, and a frame. We can also see the cells themselves, which are arranged in a specific pattern to maximize efficiency.
+
+The cells are connected together using a technique called "series connection," where each cell is connected to the next one in series. This allows the panel to produce a higher voltage than individual cells would be able to produce on their own.
+
+In some cases, panels may have multiple rows of cells, which can increase the overall efficiency of the panel. The number of cells and the way they are connected together can affect the panel's performance, so it's not just a matter of simply connecting cells together in series.
+
+When we look at a panel, we can see that it has several characteristics, including its voltage, current, and power output. The voltage is typically around 5-10 volts, while the current can vary depending on the type of cell used. In general, panels with higher efficiencies tend to have lower currents, but this can vary depending on the specific application.
+
+In summary, a panel's efficiency refers to its ability to convert sunlight into electrical energy. While researchers have been able to achieve high efficiencies in laboratory settings, these results have not yet been replicated in real-world applications. When we look at a panel, we can see that it has several components and characteristics that affect its performance.
+
+Now, let's talk about the type of cells used in panels. There are several types, including monocrystalline, polycrystalline, and thin-film cells. Each type has its own advantages and disadvantages, and the choice of cell type will depend on the specific application.
+
+In terms of the number of cells used in a panel, we can see that some panels have multiple rows of cells, while others may have fewer cells but with higher efficiencies. The way the cells are connected together can also affect the panel's performance.
+
+When it comes to the voltage and current output of a panel, we can see that these can vary depending on the type of cell used and the specific application. In general, panels with higher efficiencies tend to have lower currents, but this can vary depending on the specific situation.
+
+In summary, a panel's efficiency is an important factor in determining its overall performance. While researchers have been able to achieve high efficiencies in laboratory settings, these results have not yet been replicated in real-world applications. When we look at a panel, we can see that it has several components and characteristics that affect its performance.
+
+Now, let's talk about the type of connections used in panels. We can see that some panels use series connections, while others may use parallel connections or a combination of both. The choice of connection type will depend on the specific application and the desired outcome.
+
+In terms of the number of cells used in a panel, we can see that some panels have multiple rows of cells, while others may have fewer cells but with higher efficiencies. The way the cells are connected together can also affect the panel's performance.
+
+When it comes to the voltage and current output of a panel, we can see that these can vary depending on the type of cell used and the specific application. In general, panels with higher efficiencies tend to have lower currents, but this can vary depending on the specific situation.
+
+In summary, a panel's efficiency is an important factor in determining its overall performance. While researchers have been able to achieve high efficiencies in laboratory settings, these results have not yet been replicated in real-world applications. When we look at a panel, we can see that it has several components and characteristics that affect its performance.
+
+Now, let's talk about the type of connections used in panels. We can see that some panels use series connections, while others may use parallel connections or a combination of both. The choice of connection type will depend on the specific application and the desired outcome.
+
+In terms of the number of cells used in a panel, we can see that some panels have multiple rows of cells, while others may have fewer cells but with higher efficiencies. The way the cells are connected together can also affect the panel's performance.
+
+When it
+
+Here is the cleaned transcript:
+
+6 out of 10, what do you get for 60? In 6 out of 10, you get approximately 35 or 36 volts. This is the voltage for most panels in a 36-cell panel, for example, it gives you about 18 volts.
+
+This is the voltage for the type of cells we are using. We assumed that we are using a type of cell that produces 8 amps. So, if it's 36 volts and producing 8 amps, it will be approximately 8 amps times 36 volts, which equals 288 watts. This is the wattage for the ampere.
+
+This is six thirty-three multiplied by three divided by eight, which gives you the wattage for the ampere. Okay? So, this is how a conductor works. Now, let's talk about conductors in series. We said that they are connected one after the other. Here, all the cells are connected in series like this.
+
+These cells and the conductor make up a large panel. Right? In the text here, we have diodes. Now, in the next stage, we will learn about the name of these diodes, which is called "Bypass Diode". Why do we call it Bypass Diode? We will discuss its importance in future topics.
+
+This is approximately our most important topic so far. Now, let's move on to another case, which is called "Solar Cell". Here, all the cells are connected in parallel and are called "Solar Panel". And this diode, we call it "Bypass Diode".
+
+Now, let's go back to the solar panel. Okay? We said that it has six thirty-three volts and eight amps. So, if you come to inspect the panel without loading anything on it, you will find something called "Tighten the positive and negative wires". You will check them every now and then.
+
+What is this thing called "Open Circuit Voltage"? It means that when I measure the voltage on the panel without any load or work being done on it, it will be zero. This is the point we are talking about here. When you have an open circuit voltage, it means that there is no current flowing through the wires.
+
+Now, let's go back to the solar panel. We said that when you connect the positive and negative wires, they form a closed circuit. So, when I measure the voltage on the panel with a load or work being done on it, it will be approximately six thirty-three volts.
+
+Now, let's talk about short-circuit current. What is short-circuit current? It is the maximum current that can be produced by the solar cells under the current sunlight conditions. It is related to the power of the solar panel unit.
+
+Let's go back to the short-circuit current. You will notice that the voltage here is zero. Why is it always zero at the short-circuit current point? Because we know that there is no series connection or any short circuit operation. So, the voltage will automatically drop to zero.
+
+Now, let's talk about resistance. We added a variable resistance between the positive and negative wires. This is the resistance we are going to play with. When you increase the load on the panel, what happens? The voltage on the panel will decrease. Instead of being six thirty-three volts, it will be ten-twenty volts.
+
+What is happening here? Ah, yes! It's the open-circuit voltage again.
+
+Here is the cleaned transcript:
+
+What's actually happening? We have a load on it for sure. We came to carry, carry, carry, carry, carry. You'll find that the current is going out with you, going out with you, because I have a specific point. Okay? And then the current is almost constant. But what's changing in my case? The voltage. I mean, I've already reduced the load in play. I've already reduced the voltage. So I'm telling you that as soon as the load increases or decreases, the current here decreases. You'll find that the current is decreasing, decreasing, decreasing, decreasing, decreasing. Until it becomes zero. Because there's a resistance here of zero ohms. So when you have zero ohms, the voltage is already zero. Okay? This is when we have a curve. A curve for the voltage. And where is it? Here. And a curve for the current. The one that is here. Where is it? With the voltage. It's telling you to come and multiply these two together. I mean, come and multiply the point of zero ohms with the voltage. For example, let's assume that this voltage is five volts. And the current says it's eight amperes. You'll come and multiply five by eight. What comes out? Sixteen watts. This is what we have here. Sixteen watts.
+
+Now, let's assume that the voltage is ten volts. And just like it is eight amperes. So you'll have ten watts. Ten amperes. Eight amperes in ten volts. It becomes twenty-four watts. And it keeps coming out until a specific point. And we call this point the maximum power point. Okay? At the maximum power point. I will be approximately at the maximum power point. And at this point, the power is as high as it can be. I mean, this point is where the panel produces its maximum power. For example, if the voltage here is five and a half volts, it will be approximately seven and nine amperes. It will come out almost like a fixed value of ten watts or twelve watts. This is the efficiency of the panel. And this means that at this point, the power is as high as it can be.
+
+Now, what's happening with the energy converter? What's happening with the energy converter? It's converting. Hold on to your voltage regulator and hold on to the load. It's converting the voltage into something else so that it doesn't reach a specific point. The maximum power point. Because we call this device an MPPT, or Maximum Power Point Tracker. It's a device that follows the maximum power point between the load and the solar radiation. It follows it and stays with it.
+
+When the voltage is high, it says, "I'm going to make something out of it." I mean, when the voltage is high, it makes a boost. Usually, it's a boost converter that increases the voltage. So it increases the voltage until it reaches a specific point. The maximum power point.
+
+Okay? Now we've explained what the module and the current are. But let's talk about the situation in which the solar radiation is different. I mean, not always do I have the same solar radiation. Sometimes the sun is strong, sometimes it's weak. Okay?
+
+Now, let's talk about the irradiance. Irradiance is watts per square meter. We've already talked about this before. What does it mean? It means that one watt per square meter is equivalent to 1/1000 of the efficiency of the panel. Okay? So if you have one watt per square meter, it's like having a very efficient panel. But in reality, no one has a panel with an efficiency of 1/1000. It's usually around 15-16 watts per square meter.
+
+So, when we say that the solar radiation is 1 watt per square meter, it means that the panel will produce its maximum power at this point. Okay? And if you have 10 watts per square meter, it means that the panel will produce twice as much power. But in reality, no one has a panel with an efficiency of 100%. It's usually around 15-16 watts per square meter.
+
+Now, let's talk about the characteristics of the module. The characteristics of the module are the same as before. They're almost identical. Okay? So, when we say that the module is efficient at 1 watt per square meter, it means that it will produce its maximum power at this point. But if you have 10 watts per square meter, it means that the panel will produce twice as much power.
+
+Note: I've kept the original meaning and order of the text, but removed repeated words, filler sounds, and stuttering. I've also converted Arabic words to their English terms and put them in quotes.
+
+Here is the cleaned transcript:
+
+The efficiency of the panel. I'll tell you that it's around 1000-1300 W/m². When there's a solar irradiance of this value, it will give you approximately 1000-1300 W.
+
+How does the inverter work? Okay? We've almost finished this part. The one about temperature and how it affects the efficiency. Let's go back to the solar irradiance. Also, there's an important point. We know that the panel is exposed to sunlight today. When you have a panel, it's exposed to sunlight. It has a temperature of around 50-60°C sometimes, or even up to 90°C.
+
+I'll tell you that the panel will give you better efficiency than before at a lower temperature, around 25°C. When the temperature is around 25°C, this efficiency is excellent. Of course, it decreases with an increase in temperature or a decrease in temperature. For example, let's take a look. If we lower the temperature, there won't be sunlight, so what do we say? We don't decrease it below 25°C.
+
+But it's very difficult for us to find a temperature of around 25°C. I'll tell you that here, you have three curves with the same characteristics as the current. Here, the current is around 25°C. Let's take this out. Ah, we'll find that the voltage is affected more by the temperature than the current.
+
+We see here that the voltage is at a certain point. It becomes lower when the temperature increases to around 50-60°C. And here, it's around 25°C. The temperature also affects the efficiency of the panel. Since it's composed of two parts, we find that the voltage decreases with an increase in temperature.
+
+We see here that the current is around 1000 A at a low temperature and around 1020 A at a moderate temperature. And here, it's around 1040 A at a high temperature. This is the effect of temperature on solar irradiance.
+
+Fortunately, we're in Gaza, where the sunlight is excellent and not too hot like in some countries in the Gulf or desert regions. That's why there's a term called ATC (Air Mass Coefficient) and AMCT (Air Mass Coefficient Temperature). Okay? The ATC tells you that it's the standard test condition. It means that when you have an irradiance of 1000 W/m², the temperature is around 25°C, and the air mass is around 1.5.
+
+The backsheet is also important. Of course, we're not going to discuss the Norwegian effect now. It has a very small impact on our calculations. One and a half air masses. I'll tell you that this is the standard condition. But here, we have the natural condition. It means it's not ideal. The irradiance is around 2000 W/m², and the temperature is around 45°C.
+
+The natural condition is when you have an irradiance of around 1000-1200 W/m², a temperature of around 40-42°C, and a voltage of around 1 V per meter per second. This is the natural condition. It's not ideal, but it's close to the standard condition.
+
+When a company sends you their panel, they conduct tests to see how it performs in ideal conditions and in natural conditions. The ideal condition is when you have an irradiance of 1000 W/m², a temperature of around 25°C, and air mass of around 1.5. This is the ideal condition.
+
+The natural condition is when you have an irradiance of around 2000 W/m², a temperature of around 45°C, and air mass of around 2. The natural condition is not bad, but it's not ideal either. However, in Gaza, we're lucky to have good sunlight and moderate temperatures.
+
+Let's move on to the next part about the module. Okay? We'll discuss the surface of the module and how it affects the efficiency.

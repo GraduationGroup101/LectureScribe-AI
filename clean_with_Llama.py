@@ -97,7 +97,6 @@ def clean_transcript_file(input_txt: Path):
 
     cleaned_chunks = []
     for i, ch in enumerate(chunks, start=1):
-        print(f" Cleaning chunk {i}/{len(chunks)} ...")
         out = ollama_generate(make_user_prompt(ch))
         cleaned_chunks.append(out)
 
@@ -111,5 +110,5 @@ def clean_transcript_file(input_txt: Path):
 
 # if you want to run this file alone to clean a transcript without running the faster-whisper code, you can do that by putting the name of the transcript file in the same directory as this cleaner.py file and then run it. it will produce a cleaned version of the transcript with the name "OutputForOllama_" + input_file_name + "_cleanedv5.txt" 
 if __name__ == "__main__":
-    INPUT_TXT = Path("OpenVuas_English.txt")
+    INPUT_TXT = Path("IUG Renewable energy Lab 4 Broken solar panel part 1_transcript.txt")
     clean_transcript_file(INPUT_TXT)

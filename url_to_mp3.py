@@ -1,6 +1,7 @@
 import os
 import re
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+from pathlib import Path
 import yt_dlp
 
 os.environ["PATH"] += os.pathsep + r"C:\Users\Mahmoud\Downloads\Compressed\ffmpeg-8.1-essentials_build\ffmpeg-8.1-essentials_build\bin"
@@ -47,7 +48,8 @@ def download_youtube_mp3(youtube_url: str, output_dir="downloads") -> str:
     if not is_youtube_url(youtube_url):
         raise ValueError(" Input is NOT a valid YouTube URL")
 
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     # 🔑 Solution 2: force single video URL
     clean_url = force_single_video_url(youtube_url)
@@ -66,21 +68,20 @@ def download_youtube_mp3(youtube_url: str, output_dir="downloads") -> str:
         info = ydl.extract_info(clean_url, download=False)
         title = info.get("title", "lecture")
 
-    mp3_path = os.path.join(output_dir, f"{title}.mp3")
-
     # --------------------------------------------------
     # 2) If file exists → return it
     # --------------------------------------------------
-    if os.path.exists(mp3_path):
-        print(f"♻️ Lecture already exists. Using cached file:\n{mp3_path}")
-        return mp3_path
+    expected_mp3 = output_dir / f"{title}.mp3"
+    if expected_mp3.exists():
+        print(f"♻️ Lecture already exists. Using cached file:\n{expected_mp3}")
+        return str(expected_mp3)
 
     # --------------------------------------------------
     # 3) Download & convert to MP3
     # --------------------------------------------------
     ydl_opts = {
         "format": "bestaudio/best",
-        "outtmpl": f"{output_dir}/%(title)s.%(ext)s",
+        "outtmpl": str(output_dir / "%(title)s.%(ext)s"),
         "noplaylist": True,
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
@@ -94,10 +95,28 @@ def download_youtube_mp3(youtube_url: str, output_dir="downloads") -> str:
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.extract_info(clean_url, download=True)
+        info = ydl.extract_info(clean_url, download=True)
 
-    print(f" Download completed:\n{mp3_path}")
-    return mp3_path
+    # yt-dlp may sanitize characters in a way that differs from the raw title.
+    # Use yt-dlp's own filename resolution first, then fall back to a directory search.
+    resolved_mp3 = Path(yt_dlp.YoutubeDL(ydl_opts).prepare_filename(info)).with_suffix(".mp3")
+    if resolved_mp3.exists():
+        print(f" Download completed:\n{resolved_mp3}")
+        return str(resolved_mp3)
+
+    matches = sorted(
+        output_dir.glob("*.mp3"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if matches:
+        latest = matches[0]
+        print(f" Download completed:\n{latest}")
+        return str(latest)
+
+    raise FileNotFoundError(
+        f"yt-dlp finished, but no MP3 file was found in {output_dir.resolve()}"
+    )
 
 
 # --------------------------------------------------

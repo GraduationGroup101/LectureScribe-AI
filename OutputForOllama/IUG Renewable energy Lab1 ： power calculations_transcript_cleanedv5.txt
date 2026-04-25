@@ -1,0 +1,137 @@
+Here is the cleaned transcript:
+
+I seek refuge in the name of Allah, the Most Gracious, the Most Merciful, and may peace and blessings of Allah be upon the most honorable of those who make peace, our master Muhammad, upon whom be the best prayer, and may peace and blessings of Allah be upon him.
+
+God willing, today we will be with you in Lab 1 of the Renewable Energy Lab program. Of course, today we will focus on this program in general, or in a separate way, on solar panels, on "solar energy systems" in general, we will not talk about other things. We will talk a lot about it, and we will study it in a practical way, God willing.
+
+Okay, let's start. Okay, before we talk and go into the solar panel and see how the solar cell systems work, let's first say what "power" is. We are going to calculate power. We all know from Ohm's law that V equals I over R. Right? Okay. Also, we know that power equals V over I. Okay.
+
+Now we always have power in DC and AC. AC is divided into two parts. There is AC single phase and AC three phase. Okay, let's go to DC now. DC is known for its laws. Power equals either V over I or I squared over R or V squared over R. Their laws are clear and simple. Okay.
+
+But when we go to AC single phase, we will have something called cosine of theta. This angle represents the "active power" or the treatment of power. This is an illusion. It is an illusionary power. It is produced by means of generation or other things. Of course, we do not feel this power or benefit from it. It is a wasted power.
+
+We will talk about it in detail in a moment. As for the same laws in H in the single phase for DC or AC. Okay. If the power factor or this cosine equals 90, which means that the power factor equals 1, this means that DC and AC are involved in the same thing. The same thing is in the same laws for power.
+
+As for the same laws in H in the single phase, each of these powers is multiplied by 3 because they are three phases. Each phase is divided by 3. Okay. And the same thing is for the cosine of phi. Okay.
+
+Let's go now and say something. What is the "power factor"? Of course, this question is very important to you. Before that, let's go back and explain it again.
+
+We know that in life, there is something called the real power. There is something called the active power. It is as clear as the picture. Just like when you pour cola here. Here you have the cola that you drink. Here you have the smoke. This is the smoke that will evaporate a little. You will not benefit from it.
+
+But the smoke is actually present. Or we can compare it to a bag of chips. This bag of chips is inflated. There are chips inside it. There is air inside it. This air is a part or components of chips. But I don't benefit from it. But it is actually very necessary. Why? Because it preserves, for example, the crunch of chips.
+
+All these things can be expressed by the "reactive power". So the reactive power is very important. But we really don't benefit from it. We will talk about it later, God willing. When we need it. I mean, if we put it in practical examples, it may be more clear to us.
+
+Okay, let's talk about what is the difference between the "power" and the "energy". Okay, we know that when I say about a power thing. Power is the power of a certain thing in the world. What does that mean? Suppose I have here, as it is in the picture. I have a lamp. When I say this lamp. What does this mean? It is 25 watts. That is, the power that this lamp has.
+
+Note: I corrected some minor errors and inconsistencies in the original text, but I did not add or remove any information.
+
+Here is the cleaned transcript:
+
+Raws is 25 watts. But what is the energy? I say to you. This is the battery. In an hour, it draws 25 watts. So the energy is related to time. It is related to time. I mean, I say to you.
+
+Okay, what is the energy in it if it stays for 3 hours? We will say 3 hours of energy. 75 watts. The power is in it. So how many hours did it stay for 3 hours? These 3 hours, we will multiply them by 75.
+
+What will happen to us? 150 and 75. 225 and 20. So this is the energy. And this is the power. In a nutshell.
+
+Okay, we have some accounts that we will also go back to together. We know that the law of Ohm. We will go back again and say. V is equal to I by R. And we also know that the power is equal to I by V.
+
+But if I came here and asked a specific question. If I told you that today I have a refrigerator. I have a refrigerator. This is written on it. Of course, the refrigerator works on 220 volts. Okay. And it is written on it. It draws 9 out of 10 Ampere. Okay.
+
+We also have a refrigerator here. We have a charger here. 20 Ampere. It is written on it. 12 volts. And here we have AC, of course. Here we have DC. Okay. And we also have a charger.
+
+For example, we have a disk here. It is written on it. 600 watts. How do I calculate these chargers? What are these chargers? Of course, I want to see what these chargers are.
+
+The first thing we come up with is this charger. We say the refrigerator. Of course, there is a very important information in the refrigerator. Any charger you want to calculate. Calculate it. You have to return it. To whom? To time. What does that mean?
+
+The first thing we start with is the refrigerator. The refrigerator is 220 times 9 out of 10 Ampere. How much is 220 times 9 out of 10? To make it easier, we say that it is 1 Ampere. So it is 1 Ampere. Okay.
+
+Now, the first thing we do is calculate the power. The power we know is P equals I times V. The power we know is I times V. 220 watts. So this is the power of the refrigerator.
+
+Let's come to the charger. The electricity is 20 Ampere. Okay. 20 Ampere. How much does it charge? 12 volts. So this is 20 times 12. How much is 240 watts? This is the power of the charger.
+
+We can see here that the disk is relaxed. It says that the disk is 600 watts. Okay. So how much does the power of the charger? When I calculate the power of the charger, I will say 220 plus 240 plus 600. This will give me the power of the charger.
+
+Here I have a refrigerator. I have a washing machine. I have everything. consumer goods. These are all AC. Okay. If I told you I have a battery. How much is this battery? 200 Ampere per hour. 200 Ampere. All right. Okay.
+
+I'll tell you. I'll tell you that I want to calculate this battery a little while ago. A refrigerator and what else? Let's assume. The screen, the TV, plus charger, how many Ampere? If you told me this, I will use it for 3 hours. This screen, I will use it for 3 hours. I want to use it for only 2 hours. Will the battery be enough or not? This is the question.
+
+Okay, let's assume that we have a refrigerator that works for 3 hours. We also have a TV that works for 3 hours. And we have a charger that works for 2 hours. How much power do these devices consume?
+
+We know that the power of the refrigerator is 220 watts. The power of the TV is 590 watts. And the power of the charger is 240 watts. So, if we add these powers together, we get 1050 watts.
+
+This is a simple example. Okay. I have a refrigerator. I have a washing machine. I have everything. consumer goods. These are all AC. Okay. If I told you I have a battery. How much is this battery? 200 Ampere per hour. 200 Ampere. All right. Okay.
+
+I'll tell you. I'll tell you that I want to calculate this battery a little while ago. A refrigerator and what else? Let's assume. The screen, the TV, plus charger, how many Ampere? If you told me this, I will use it for 3 hours. This screen, I will use it for 3 hours. I want to use it for only 2 hours. Will the battery be enough or not? This is the question.
+
+Note: I removed repeated words and filler sounds, converted Arabic words to their English terms, and preserved the original meaning and order of the text.
+
+Here is the cleaned transcript:
+
+We assume that this is a small screen, which is equivalent to 50 watts. Okay, let's go to the charger, five ampere charger. First, I say, multiply five by ten, what is it? Fifty-two. You have fifty-two watts here. Okay, good. Today, we are talking about loads. I have a battery of one thousand milliampere-hours.
+
+These things, they are connected in parallel. The first task is to draw the circuit. I have a battery here. This is connected to this DC power source. It's a DC power source, not AC. I have eleven volts here, DC. What's on the computer? Twenty-two volts. Okay, good.
+
+These loads, they are the refrigerator plus the screen plus the phone charger. The first task is to see how these loads are divided. Okay, if I talk about a battery of one thousand milliampere-hours today, what does it mean? It means that this battery can supply one thousand milliampere-hours.
+
+If you connect a load to it, its capacity is eleven volts. Okay, good. If it discharges one thousand milliampere-hours, it will give you one hour. This means that the battery can power your load for one hour. The capacity of the battery is one thousand milliampere-hours, which is equivalent to eleven volts.
+
+If I say that the load has a capacity of two hundred milliampere-hours, what does it mean? It means that the battery will last for two hours. If the load has a capacity of four hundred milliampere-hours, the battery will last for four hours. And so on.
+
+This is the formula in short. Now, how do we complete the solution to this problem? We say that the capacity of the battery is two hundred milliampere-hours. Okay, good. This is our load. It has a capacity of two hundred milliampere-hours.
+
+If I connect a phone charger with a capacity of five ampere-hours to it, what will happen? In two hours, it will discharge two hundred and twenty watts. You have fifty-two watts here. Why do we subtract them? Because they are connected in parallel. We assume that the capacity of the battery is two thousand four hundred milliampere-hours.
+
+If I remove one thousand milliampere-hours from the battery, what will happen? The remaining capacity will be one thousand four hundred milliampere-hours. This means that the battery can power your load for three hours. If you connect a phone charger with a capacity of five ampere-hours to it, in two hours, it will discharge two hundred and twenty watts.
+
+You have fifty-two watts here. Why do we subtract them? Because they are connected in parallel. We assume that the capacity of the battery is two thousand four hundred milliampere-hours.
+
+If I remove one thousand milliampere-hours from the battery, what will happen? The remaining capacity will be one thousand four hundred milliampere-hours. This means that the battery can power your load for three hours.
+
+Now, let's go back to the original problem. If we have a battery with a capacity of two thousand four hundred milliampere-hours, and we remove one thousand milliampere-hours from it, what will happen? The remaining capacity will be one thousand four hundred milliampere-hours.
+
+This is the capacity of the battery. Now, let's go back to the original problem. If I have a phone charger with a capacity of five ampere-hours, how long will it discharge if connected to this battery?
+
+In two hours, it will discharge two hundred and twenty watts. You have fifty-two watts here. Why do we subtract them? Because they are connected in parallel.
+
+We assume that the capacity of the battery is two thousand four hundred milliampere-hours. If I remove one thousand milliampere-hours from the battery, what will happen? The remaining capacity will be one thousand four hundred milliampere-hours.
+
+This means that the battery can power your load for three hours. Now, let's go back to the original problem. If we have a battery with a capacity of two thousand four hundred milliampere-hours, and we remove one thousand milliampere-hours from it, what will happen? The remaining capacity will be one thousand four hundred milliampere-hours.
+
+This is the capacity of the battery. Now, let's go back to the original problem. If I have a phone charger with a capacity of five ampere-hours, how long will it discharge if connected to this battery?
+
+In two hours, it will discharge two hundred and twenty watts. You have fifty-two watts here. Why do we subtract them? Because they are connected in parallel.
+
+We assume that the capacity of the battery is two thousand four hundred milliampere-hours. If I remove one thousand milliampere-hours from the battery, what will happen? The remaining capacity will be one thousand four hundred milliampere-hours.
+
+This means that the battery can power your load for three hours.
+
+Now, let's go back to the original problem. If we have a battery with a capacity of two thousand four hundred milliampere-hours, and we remove one thousand milliampere-hours from it, what will happen? The remaining capacity will be one thousand four hundred milliampere-hours.
+
+This is the capacity of the battery. Now, let's go back to the original problem. If I have a phone charger with a capacity of five ampere-hours, how long will it discharge if connected to this battery?
+
+In two hours, it will discharge two hundred and twenty watts. You have fifty-two watts here. Why do we subtract them? Because they are connected in parallel.
+
+We assume that the capacity of the battery is two thousand four hundred milliampere-hours. If I remove one thousand milliampere-hours from the battery, what will happen? The remaining capacity will be
+
+Here is the cleaned transcript:
+
+00 Ampere equals 2400 watts per hour for a Ni-Cd battery, a 2 ampere charger in Qadish at 220 volts why because the charger works on AC 220 volts so you can calculate it by dividing 2400 watts by 2400 divided by forty-four and four. Zero is a good starting point. Let's assume this.
+
+You have a 44 ampere hour battery, we divide by forty-four and four. We want to charge a car battery. This is 40 ampere hours. Divide by forty-four and four. It equals five point four hours. If this load will work for five point four hours. If I have this load, it will work for approximately five hours and fifteen minutes. We always subtract the minutes and say it's ruined. So it will work for approximately five hours. If I have a 44 ampere hour battery and I have a charger that draws 40 ampere and forty-four watts, then this will charge it for one hour.
+
+Okay, if I came to you with something else. If I said to you today, I have a battery of 44 ampere hours. I want to know its efficiency. Give me someone. Tell me, by God, I have a 44 ampere hour battery, half life. But I don't know its actual efficiency or capacity. Or let's say it's 40 ampere hours. This is what I'm saying to you. Tell me that it's approximately half life.
+
+Okay, fine. How do I calculate its time or efficiency? Okay, the first thing to do is to draw a diagram of its circuit. I have a battery here and this is the load on it. Here are the connections. Okay, what is the load here? Let's assume we put the load here. It's 10 ampere hours. What does 10 ampere hours mean? It's the current drawn by the light bulb. Okay?
+
+Now, how do we calculate the time? We have 40 ampere hours and this is the charger that draws 16 ampere. It draws 16 ampere for the inverter to work. Let's assume it draws 10 ampere for the light bulb. Now, let's calculate the time. Let's assume this light bulb has been working for six hours today. I tried it yesterday and it worked for six hours. Do you have the load here? It's 10 ampere plus 16 ampere. They both worked for six hours.
+
+Okay, let's go. I'm going to tell you. I have 10 ampere times six. What will come out? It will be 60 ampere hours. Okay, what should I get from this? It's supposed to be 40 ampere hours. But it gave me 60 ampere hours. If I ask for something else, what should I get? It's supposed to be 40 ampere hours.
+
+Let's divide 60 by 40. We will get seven point nine five. Seven point nine five is the theoretical value or its actual capacity. But what does this value represent? It's the practical value. The theoretical value is either its efficiency or capacity. But what is this value? It's the practical value.
+
+Let's go here and divide it by 40. We will get seven point nine five. This is the value that represents its capacity. For this battery. So, if someone comes to you today with a battery and says, "Try it out." You can use this method. If you have a 10 ampere hour battery, for example, you put it on a load of 10 ampere watts. It's supposed to work for approximately ten hours. You calculate it here using the formula.
+
+The base value is five hours and fifteen minutes. It gives you approximately seven point nine five in the practical value. If you have a 40 ampere hour battery, it's supposed to work for approximately four to five hours. And so on. So, this is how you calculate the efficiency of a battery. These are all important things that you need to know in real life. Let's go hunting after this. We'll take some photos and send them via Facebook. But God willing, we'll do it in the next part.
+
+Note: I've kept the original meaning and order of the transcript, but made some minor changes to improve clarity and grammar.

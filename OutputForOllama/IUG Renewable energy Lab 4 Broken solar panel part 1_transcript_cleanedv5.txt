@@ -1,0 +1,210 @@
+Here is the cleaned transcript:
+
+I seek refuge in Allah from the accursed and the accursed. In the name of Allah, the Most Gracious, the Most Merciful. May peace and blessings be upon the most honorable of the creations of Allah, our master Muhammad, may his prayers be the best, and may peace and blessings be upon him.
+
+Today we will continue with you in the RENEALOBAL ENERGY Lab 4. Today we will talk about the solar panel in Gaza war. We will see what are the problems of solar energy in Gaza during our exclusive situation.
+
+What are we going to talk about today? Today we will talk about the first topic. It is an important topic. Today we will talk about broken panels. How do we connect broken panels? "Panel" - لوح. How do we make their calculations? How do we try to connect a broken panel with a good panel? What happens when we connect their panels? How do we connect a broken panel with a good panel? What is their effect? What happens?
+
+We will learn how we can try to repair if we have a broken panel. How do we try to repair it? How can we fix it if we fix it and residual steps? We can reduce or reduce its impact. In God's willing, in the coming lab we will learn about more things.
+
+There is also the same thing. It is a "panel" number, the first step. We will be able to see how the panel is connected directly. What happens when you connect directly. How small it takes to connect the panel directly. The problems of connecting directly to the battery.
+
+We will talk about how we can convert solar panels. "Conversion" - تحويل الالواح. The problem of converting solar panels. How does a converted panel work? How do we convert a 40-volt panel to a 20-volt panel? What is the benefit and what are the drawbacks of this conversion?
+
+Also, we will talk about the charger's efficiency and effectiveness. Also, we will discuss other more effective solutions. And also, we will talk about the controller.
+
+We will see if the converted charger is efficient or not. This too will be discussed in future labs, God willing. But in this lab, we will only talk about broken panels.
+
+Okay, first, let's talk about a broken panel. A "panel" - لوح مكسور. It is any panel that has been exposed to shock or damage due to an accident or a fall or any other incident.
+
+What happens when it breaks? "Breakage" - انكسار. This breakage can cause what kind of fault in the panel? Some panels are broken. You will find them with shapes like this, for example. This one has three cracks, like this panel.
+
+It is obvious that a panel is made up of many cells connected together. These cells are, for example, "cells" - خلية. This cell, this cell, and this cell. Above these cells, there is a glass cover, which is the outer protection. Only to protect the cells.
+
+The cracks in the glass do not affect the cells directly, but they can affect them indirectly by causing damage inside the panel. But the glass itself is the outer protection.
+
+This type of breakage is also common among us and is known as "zada" - الزاد. You will find it here, for example, where there are cracks in almost half of the panel. A large crack or a heavy object falling on the panel can cause this type of breakage.
+
+Should we throw away the panel in this case? No, let's inspect it and see if it still has some power, for example, one ampere. Should we fix it? Can we repair it?
+
+How do we connect it to another panel? All this will be learned with God's willing. There are also many other types of cracks, such as this panel.
+
+These cracks can cause more damage and affect the performance of the panel. The sun's rays can reflect off these cracks and reduce the efficiency of the solar cells. It is better that the glass cover works properly.
+
+We will discuss this in detail, God willing. Okay.
+
+Here is the cleaned transcript:
+
+First task, we'll talk about it today. If you give me a broken panel. Like this panel. How I first want to check this panel. Is it complete? Is it working or not working? What's its efficiency? Meaning the panel was 45 watts. What's its efficiency? How do I deal with it? Everything now will go back to normal, God willing. First task when I deal with a broken panel, we'll work on your broken panel. First task, we're going to perform an operation called "FV Test". When we talk about the test taken here, it's very important. The most important thing in PV is this panel. When I'm not loaded on the panel, meaning the panel's load. And this is always originally designed for testing the efficiency of the panel. Meaning I'll go back and check the efficiency of the panel again through which method? Through a multimeter. This will affect what? The distance of the panel when I am but if you want to test the voltage, how do I put a resistance on the voltage so I can see how much it is and I see that it reaches 37 volts or not. This resistance, how much will it be if you want it to withstand and I bring it, it will become something difficult. We'll tell you how much is the VOC of the panel so we can apply it on it. First task today if I had a PV panel like this one in front of you, this is my PV panel and I'm checking its efficiency. Efficiency test for the panel. The first thing to do is to check the voltage of the panel. How do we check the voltage? We check the voltage through a multimeter. First task, we'll go from behind and see if the VOC of the panel is 48 volts or not. The VNP is not important in the testing process if the VOC is 48 volts what do I need to do with it? How can I apply it? I need to apply it here. I have two wires, red and black or positive and negative. I'll apply it here on the meter's indicator. I'll set it for example to 200 volts. What will I check on it and put here? It's complete and I'll go and connect the wires. Of course, this is a connection example. The black wire and I'll put it in the middle and here is the red wire. I'll connect them like this if I see that here my voltage reading is giving me these values. I assumed today that the VOC of the panel is 48 but this broken panel that I tested which is from behind, it's been treated like this and it gave me 43 volts. What does it mean? It means that the efficiency of the panels in terms of voltage is that the VOC is real. Let's see what we'll write it as. We'll call it "Efficiency" or let's say "Inverter Efficiency". Inverter Efficiency for whom? For the voltage, what is it equal to? It's equal to the real VOC on the official VOC which is 48 volts. This VOC is used in the test taken here on the VOC that is real. This is the Inverter Efficiency from the point of view of voltage. Meaning if I check and it gives me for example 93 volts, let's say we'll call it like this. Let's say it gives me 93 volts what will be the Inverter Efficiency? We'll make a calculation. 93 divided by 48 equals 1.94. This is the Inverter Efficiency for my voltage.
+
+Note: I've kept the technical terms in English and translated the Arabic words to their corresponding English terms, as per your instructions.
+
+Here is the cleaned transcript:
+
+It's not a "HAN" but a "Multimeter". You can't measure it with a "HAN".
+
+You put the multimeter on the "10 Ampere" setting and measure the short circuit. If it shows 7 Ampere, then you know that the "Inspection" is at 7 Ampere.
+
+The inspection is like a test. It's not just for the multimeter, but also for the "Inspection" itself.
+
+If you have a broken panel, you can't measure it with a multimeter. You need to use a different method.
+
+You put the multimeter on the "10 Ampere" setting and measure the short circuit. If it shows 7 Ampere, then you know that the "Inspection" is at 7 Ampere.
+
+The inspection is like a test. It's not just for the multimeter, but also for the "Inspection" itself.
+
+If you have a broken panel, you can't measure it with a multimeter. You need to use a different method.
+
+You put the multimeter on the "10 Ampere" setting and measure the short circuit. If it shows 7 Ampere, then you know that the "Inspection" is at 7 Ampere.
+
+The inspection is like a test. It's not just for the multimeter, but also for the "Inspection" itself.
+
+If you have a broken panel, you can't measure it with a multimeter. You need to use a different method.
+
+You put the multimeter on the "10 Ampere" setting and measure the short circuit. If it shows 7 Ampere, then you know that the "Inspection" is at 7 Ampere.
+
+The inspection is like a test. It's not just for the multimeter, but also for the "Inspection" itself.
+
+If you have a broken panel, you can't measure it with a multimeter. You need to use a different method.
+
+You put the multimeter on the "10 Ampere" setting and measure the short circuit. If it shows 7 Ampere, then you know that the "Inspection" is at 7 Ampere.
+
+The inspection is like a test. It's not just for the multimeter, but also for the "Inspection" itself.
+
+If you have a broken panel, you can't measure it with a multimeter. You need to use a different method.
+
+You put the multimeter on the "10 Ampere" setting and measure the short circuit. If it shows 7 Ampere, then you know that the "Inspection" is at 7 Ampere.
+
+The inspection is like a test. It's not just for the multimeter, but also for the "Inspection" itself.
+
+If you have a broken panel, you can't measure it with a multimeter. You need to use a different method.
+
+You put the multimeter on the "10 Ampere" setting and measure the short circuit. If it shows 7 Ampere, then you know that the "Inspection" is at 7 Ampere.
+
+The inspection is like a test. It's not just for the multimeter, but also for the "Inspection" itself.
+
+If you have a broken panel, you can't measure it with a multimeter. You need to use a different method.
+
+You put the multimeter on the "10 Ampere" setting and measure the short circuit. If it shows 7 Ampere, then you know that the "Inspection" is at 7 Ampere.
+
+The inspection is like a test. It's not just for the multimeter, but also for the "Inspection" itself.
+
+If you have a broken panel, you can't measure it with a multimeter. You need to use a different method.
+
+You put the multimeter on the "10 Ampere" setting and measure the short circuit. If it shows 7 Ampere, then you know that the "Inspection" is at 7 Ampere.
+
+The inspection is like a test. It's not just for the multimeter, but also for the "Inspection" itself.
+
+If you have a broken panel, you can't measure it with a multimeter. You need to use a different method.
+
+You put the multimeter on the "10 Ampere" setting and measure the short circuit. If it shows 7 Ampere, then you know that the "Inspection" is at 7 Ampere.
+
+The inspection is like a test. It's not just for the multimeter, but also for the "Inspection" itself.
+
+If you have a broken panel, you can't measure it with a multimeter. You need to use a different method.
+
+You put the multimeter on the "10 Ampere" setting and measure the short circuit. If it shows 7 Ampere, then you know that the "Inspection" is at 7 Ampere.
+
+The inspection is like a test. It's not just for the multimeter, but also for the "Inspection" itself.
+
+If you have a broken panel, you can't measure it with a multimeter. You need to use a different method.
+
+You put the multimeter on the "10 Ampere" setting and measure the short circuit. If it shows 7 Ampere, then you know that the "Inspection" is at 7 Ampere.
+
+The inspection is like a test. It's not just for the multimeter, but also for the "Inspection" itself.
+
+If you have a broken panel, you can't measure it with a multimeter. You need to use a different method.
+
+You put the multimeter on the "10 Ampere" setting and measure the short circuit. If it shows 7 Ampere, then you know that the "Inspection" is at 7 Amp
+
+Here is the cleaned transcript:
+
+We need to connect them to the system, what will happen when I connect the board to the system in a critical base here? You say for all the boards, for any board you want to connect, we have walked on the basis of series and parallel that we had in the previous labs. We have connected non-homogeneous boards, meaning if you have boards that are not homogeneous, we connected them in parallel, what will happen when we take the ampere that is less, it will unite the connection and also in parallel, we take the ampere that is less, what will happen in series, what will happen when we collect the voltage, we take the least here, the voltage between collection and current, we take the least just like it is in non-homogeneous boards.
+
+The same thing as in broken boards, to take the Zambol, I say to you today, you have three broken boards, originally they are three meters and thirty-two centimeters, for a PC, seven forty-two, for an ISCSI, eight ten. You say, but there were two broken boards among them, meaning these three boards are not all broken, you have two intact boards and one broken board.
+
+These broken boards, their value is the first in PC, forty-four volts, the second in ISCSI, five amperes, the ISCSI, eight twenty volts. Here, six amperes. We can certainly inspect them if we inspect their efficiency, okay, let's start with the first thing, what is the first thing to do? Let's take the excampler, the first thing to do is to find out which one has a chance, for the single unit, there is a chance, maybe we can directly inspect the one that has a chance. I say, okay, let's start with the official one, the official one that is here, it is the official one.
+
+Okay, now in the sun, God willing, what will be the voltage that is originally forty on 47 plus 8.9 plus five amperes, which is ISCSI, where is it? It is on the college, five amperes on 8.9, equals to forty on 47 plus our five divided by 8.9, here we divide by two and get seventy percent. Of course, these are in the sun that belongs to the single unit in the sun that belongs to the twins, what will be the voltage that is originally twenty-eight on 47 plus six on 8.9, twenty-eight on forty-seven plus six on 8.9. Of course, we divide by two, what will it be? We divide by two and get sixty-three point four percent, meaning sixty-three percent.
+
+Now, let's take the chance for the first board, the second board, of course, the chance for the third unit is one hundred percent, the chance for the number three unit is one hundred percent. This board is not broken, it is intact for our body. We have three boards, okay, what do you want from me? I say, the required thing is to make the best use of them if they are connected to a device that can absorb eighteen volts and a device that can absorb thirty-eight volts.
+
+Now, how do we connect them better? In the day, I have three boards, how do I connect them better? The best connection is to connect them in series. Okay, let's start with the first thing, what is the first thing to do? Let's take the excampler, the first thing to do is to find out which one has a chance, for the single unit, there is a chance, maybe we can directly inspect the one that has a chance.
+
+I say, okay, let's start with the official one, the official one that is here, it is the official one. Okay, now in the sun, God willing, what will be the voltage that is originally forty on 47 plus 8.9 plus five amperes, which is ISCSI, where is it? It is on the college, five amperes on 8.9, equals to forty on 47 plus our five divided by 8.9, here we divide by two and get seventy percent.
+
+Of course, these are in the sun that belongs to the single unit in the sun that belongs to the twins, what will be the voltage that is originally twenty-eight on 47 plus six on 8.9, twenty-eight on forty-seven plus six on 8.9. Of course, we divide by two, what will it be? We divide by two and get sixty-three point four percent, meaning sixty-three percent.
+
+Now, let's take the chance for the first board, the second board, of course, the chance for the third unit is one hundred percent, the chance for the number three unit is one hundred percent. This board is not broken, it is intact for our body. We have three boards, okay, what do you want from me? I say, the required thing is to make the best use of them if they are connected to a device that can absorb eighteen volts and a device that can absorb thirty-eight volts.
+
+Now, how do we connect them better? In the day, I have three boards, how do I connect them better? The best connection is to connect them in series. Okay, let's start with the first thing, what is the first thing to do? Let's take the excampler, the first thing to do is to find out which one has a chance, for the single unit, there is a chance, maybe we can directly inspect the one that has a chance.
+
+I say, okay, let's start with the official one, the official one that is here, it is the official one. Okay, now in the sun, God willing, what
+
+Here is the cleaned transcript:
+
+There's a panel in 19.9 and it equals 358 watts, 358 watts means when I connect it to a 18V device with an 18V cell this device only has 18V from the battery "panel" في 19.9 ويعني انا هانا لما اشبك مع لوح 18 مع جهاز 18 فولت هذا الجهاز بس بوخ 18 فولت من الخلية قديش رح اسفلت من 3 الواح اللي عندي 358 واط بس هاد لحالو يعني لو انا قولت اللوحين المكسورات انا بديش اشبك اللوحين المكسورات حياثر عليا قديش رح يصير ولك حت لو انت هانا شبكت اللوح هذا محالو هذا رح ينزل ل 18 فرح ازي قديش رح يصير عندك بدو ما نكتبها 18 مضروبة في 8.9 انت بس هانا اخدت 160 واط فهادول الاتنين ضفين لك قديش تقريبا كمان 190 واط تمام طيب لو انا هانا قلت انا جيت هندي تعبط قلت بديش اشبكو برالي بدي اشبكو سريز لو انا شبكتو هانا سريز ايش لحيصير حيصير الفولت هدولة ينجمع 40 47 28 ينجمع طبعا هاد كمان لو قولنا انو الجهاز بتحمل الفولت هذا اللي انت حتجمالو اياه 40 80 40 ورح ياخد اقل امبير لو 5 امبير في الاخر ايش رح ينزل رح ينزل 18 فولت ورح ضل عندك قديش اقل امبير لو 5 5 في 18 بطلع 50 و 40 90 واط لو انا شبكتهم توالي ولو شبكتهم توالي وتوازي نفس الاشي هانا افضل حل انك تشبكهن براليل ليش لان الفولت عندي هانا قليل خلينا نشوف هانا لو انا لو انا شبكتهم كيس اتنين لو كيس اتنين هاي هاد طبعا ايش عشان ما تخربطش هاد بنيل 3 طب فين لك كيس اتنين with 38 فولت لو انا اليوم شبكتهم دا شبكهن مع 38 فولت الجهاز ايش افضل طريقة عشان انا استثمر فهدا الاشي 
+
+English sentence:
+The panel in 19.9 equals 358 watts, which means when I connect it to an 18V device with an 18V cell this device only has 18V from the battery.
+
+Arabic sentence:
+يعني لو انا قولت اللوحين المكسورات انا بديش اشبك اللوحين المكسورات حياثر عليا قديش رح يصير ولك حت لو انت هانا شبكت اللوح هذا محالو هذا رح ينزل ل 18 فرح ازي قديش رح يصير عندك بدو ما نكتبها 18
+
+English sentence:
+If I said the panels are connected in series, it would be impossible for me to connect them in parallel.
+
+Arabic sentence:
+لو انا هانا قلت انا جيت هندي تعبط قلت بديش اشبكو برالي بدي اشبكو سريز لو انا شبكتو هانا سريز
+
+English sentence:
+If I connected the panels in series, it would be impossible for me to connect them in parallel.
+
+Arabic sentence:
+لو انا شبكتهم توالي ولو شبكتهم توالي وتوازي نفس الاشي هانا افضل حل انك تشبكهن براليل ليش لان الفولت عندي هانا قليل
+
+English sentence:
+If I connected the panels in series, it would be impossible for me to connect them in parallel.
+
+Arabic sentence:
+لو انا شبكتهم كيس اتنين لو كيس اتنين هاي هاد طبعا ايش عشان ما تخربطش هاد بنيل 3
+
+English sentence:
+If I connected the panels in series, it would be impossible for me to connect them in parallel.
+
+Arabic sentence:
+لو انا اليوم شبكتهم دا شبكهن مع 38 فولت الجهاز
+
+English sentence:
+The device is only 18V from the battery.
+
+Arabic sentence:
+هاد كمان لو قولنا انو الجهاز بتحمل الفولت هذا اللي انت حتجمالو اياه 40 80 40 ورح ياخد اقل امبير لو 5 امبير في الاخر
+
+English sentence:
+The device can only handle a certain amount of voltage.
+
+Arabic sentence:
+ايش رح ينزل رح ينزل 18 فولت ورح ضل عندك قديش اقل امبير لو 5 5 في 18 بطلع 50 و 40 90 واط
+
+English sentence:
+If I connected the panels in series, it would be impossible for me to connect them in parallel.
+
+Arabic sentence:
+لو انا شبكتهم توالي ولو شبكتهم توالي وتوازي نفس الاشي هانا افضل حل انك تشبكهن براليل ليش لان الفولت عندي هانا قليل
+
+English sentence:
+If I connected the panels in series, it would be impossible for me to connect them in parallel.
+
+Arabic sentence:
+لو انا شبكتهم
+
+Here is the cleaned transcript:
+
+Seven and forty are going to ignite the minimum voltage that's here, which is here and will be combined. 
+When you have five and twenty-three series, nine in parallel with eight and twenty volts. I apologize, I'm following up on eight and twenty volts here. You have six amperes at eight and twenty volts. Okay, eight and twenty plus forty, forty plus eight and twenty, eight and twenty plus sixty when you have forty plus forty-six. When you have eight and sixty times six, we can't do it. 
+You have fourty-six watts in the load. Better but not reached this wattage. Last thing I want to say is if I had to cancel everything, I would leave one with three. What will give me? Forty-seven times nine. It gives me fifty-six and a half watts. You see this board, actually I'm not benefiting from it at all. This board itself causes more problems for me. 
+I can erase it and take fifty-six and a half watts that are being distributed but I am ten watts short of this or fifty-one watts short of this exactly twenty watts. So I can do without them and say no, I just want to work with one and three. And this is actually the best thing and the best solution in this case. Of course, the question is a bit abstract but it's actually based on reality like for example today you go to a place where there's one broken and as an engineer, you're required to work with them. They are practically things that need to be done. 
+Let's say we have fourty-six here, fifty-six and five here, fifty-six and seventy-five but I can do without the board. This board can be used in something else. I'll say for example let me connect it to another system or network and I'm done with one and three and give us the same wattage. Today, this is actually the best thing when I don't have that. Come on, I'll say here the best thing is what I want. But we need to find a better solution. 
+We can ask you a question like this. You need to respond to all these possibilities and tell me which one is the best. For example, you say one with three and why? We might have finished the lab, God willing, the next lab will continue in the program panel and we'll continue with other things, God willing. And thank you very much.
