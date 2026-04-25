@@ -25,8 +25,9 @@ Rules:
 - Do NOT invent new information. Do NOT add explanations. Just clean.
 - Preserve the original meaning and order.
 - every word should be in its correct form thats if the word in arabic but its english term keep it in english
-# - when u convert arabic words to english terms write them in their correct english form and put them between quotes like this "term" next to the arabic word  not on the end of the line
-# - when you write an english sentence , write the arabic sentence that after it in new line
+- when u convert arabic words to english terms write them in their correct english form and put them between quotes like this "term" next to the arabic word  not on the end of the line
+- when you write an english sentence , write the arabic sentence that after it in new line
+-Return only the cleaned transcript. Do not write introductions like "Here is the cleaned transcript:".
 """
 
 def make_user_prompt(text: str) -> str:
@@ -97,6 +98,7 @@ def clean_transcript_file(input_txt: Path):
 
     cleaned_chunks = []
     for i, ch in enumerate(chunks, start=1):
+        print(f"Cleaning chunk {i}/{len(chunks)} ...")
         out = ollama_generate(make_user_prompt(ch))
         cleaned_chunks.append(out)
 

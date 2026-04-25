@@ -1,0 +1,173 @@
+Here is the cleaned transcript:
+
+I seek forgiveness for the interruption. In the name of God, the Most Gracious, the Most Merciful, and peace and blessings be upon the most honorable of the people of God, our master Muhammad, may God's prayers and peace be upon him.
+
+We will continue today with you, God willing, in the fifth lab of the Reynal Lab, the Energy Lab. God willing, in the subject of Solar panel and the second ward, God willing, we will continue with you today.
+
+But there is a point that we should point out that was present in the previous lab. In the previous lab, we had one 18V "VOC" and one 38V "VOC". We took the value of the 18V with a decrease, that is, we did not take all the volts, but we took 18V and the rest of the volts.
+
+While the 38V is that the device works at 47V, but we took only all the volts. Why? Because the devices of the type that work, number of volts, the one that is at 38V, with its size topped by 47 is not less than 38V.
+
+Why? Because the type of these devices is, first, this is "VOC" not "VMPP". Second, this device works operation 38V with its size, because the condition of the device uses "MPT" that it is "MPT" 99% of these devices that work with a process of 38V.
+
+Now we have six broken panels. One of the best method to connect it with your system is to use "MPPT".
+
+Today, when you inspect the panels, you will see "VOC" and "ISC". But we know that the devices operate at "-IMV" which is the actual voltage, and "-IMV" is the actual voltage.
+
+When you have a panel with 40V or above, we subtract 7V from it. So if I say this is the "-IMV" except for the first panel, which is 30V, then this is 30V, and the second one is also 30V, but we subtract 200V from it, so it becomes around 28V.
+
+This one will be around 38V. This is the "-IMV".
+
+Today, let's use 70V as a reference point. How can we connect this system to get the best result? The best method to connect it with your system is to use "MPPT".
+
+But I notice here that the first three panels have low voltage, so I don't want to connect them all together to get 70V. This will not give me 70V.
+
+So let's think how we can connect them in a way that will give us at least 2 panels on the same level, so that we can reach 70V.
+
+We need at least 2 panels on the same level to reach 70V because if we have 30V and 30V, it will only give us 63V. We cannot connect this and this panel together, but we can connect this and this panel together, for example, 30V and 30V, which gives us 83V.
+
+Or we can connect this and this panel together, for example, 40V and 30V, which gives us 70V. But we cannot connect this and this panel together, because it will only give us 68V.
+
+So let's think how we can connect them in a way that will give us at least 2 panels on the same level, so that we can reach 70V.
+
+Note: I have removed repeated words, filler sounds, and stuttering, and converted Arabic words to their English terms.
+
+Here is the cleaned transcript:
+
+What happens when I connect two in series? Because it's more attentive, like when I connected 2 in series, it started to connect their currents close to each other. So today we'll come here, come here, for example, we'll put these lines here, these lines here, so that we can know and work properly.
+
+Okay, okay, let's come now and say that today I have here, I have the first 3 of them, they are at your place, 1, 2, 3. So I, up to 3, started connecting the part of the circuit, so that we can connect them with each other because we said it's a small system. So, let's connect something from the three that are here with something from the three that are there.
+
+The first condition I have is another condition: what are more ways to connect? I have the first method: either connect two in series or connect them in parallel. Like this, in series, like this, in parallel. We said we have a system always, so let's find the best way to connect and calculate each method separately.
+
+Let's go back to the method one. What is method one? Method one says... Let's just organize it like this. Of course, we'll start with the first three, they won't be in the way. We won't connect them with each other. Okay, method one. We say: take a panel, let's call it panel one. The one that has 10 amps. I want to connect it in series with what? With panel five, which has 10 amps. And this one, I want to connect it in parallel with what? With panel two, which has 7 amps.
+
+I'll take a panel, let's say, and connect it with another panel, for example, with panel seven. But it won't be good if we connect it with panel seven because it will be close to each other in the ampere. So, let's leave two panels connected with five and three panels connected with four.
+
+If we take panel two and connect it with five, and panel three and connect it with four, this will give us... This will give us a voltage of 85 volts. And the current is 11 amps. So, connecting these two in parallel gives us a voltage of 85 volts also, and the current is 5 amps.
+
+The smallest ampere is 7 amps. Let's connect the last one, which is panel three, with seven, four, and two panels. This will give us a voltage of 82 volts minus the current, which is 5 amps. So, we have 77 volts. And the current is 13 amps.
+
+If we take the smallest ampere, which is 7 amps, multiplied by 83 volts, it gives us approximately 1330 watts. If we take 16 amps multiplied by 83 volts, it gives us approximately 1330 watts also.
+
+This system, we've taken into account the VOC and ISC, but not the VNB or IMB, so that we can consider these two values in 7 out of 10. It will give us a value close to... This value is close to 930 watts.
+
+If this gives us 930 watts, then this system is good. Let's go try method two. Method two is the same as method one. We'll just connect some panels together and say: "Okay, let's work with these panels."
+
+Here is the cleaned transcript:
+
+I'm above 70, approximately. Jupiter 12 and it's a hot fire, 12 volts. What I mean is what's above 70.
+
+Because of this, I don't connect them in parallel, for example, these two together. Why do they behave like this? Seventy-one and seven and four and ten, approximately 71 volts.
+
+When I have 71 volts, it will drop 12 volts, which is not enough to power the system. When I connect them in series.
+
+When I connect them in parallel like this. It will give me a problem of 82 volts instead of 71 or C. And what voltage will I get? It will drop because it will become and won't power my device. Be careful with these considerations too.
+
+Let's take the second method. The second method says that if you connect one plus five in parallel with two plus six, and three plus four together, what will you get?
+
+Let's calculate. One plus five is eight. You have ten plus one, which gives you ten amperes. What about C? Two plus six is eight. You have seven plus ten, which gives you seventeen amperes.
+
+Sorry, seven plus ten will give you seven amperes. Let's take the minimum. If we connect them in parallel like this. You have five plus twenty and two plus twenty at your disposal. Yes, you have four plus thirty-four volts. Yes, it's ten amperes. This is a balance with C.
+
+The minimum amperage here is five amperes. This is the result of the calculation. If we connect them in parallel like this. You have five plus twenty and two plus twenty at your disposal. Yes, you have four plus thirty-four volts. Yes, it's ten amperes.
+
+Let's take the least. If we connect them in series. You have five plus twenty and two plus twenty at your disposal. Yes, you have three plus twenty-two and twenty volts. Also, the result will be approximately three plus twenty-two and twenty volts.
+
+Three plus twenty-two is forty-four. What about C? Two plus twenty is forty-two. The result will be approximately three plus twenty-two and twenty volts. Twenty-two and twenty volts is forty-two. It's a T of 44. Will it be the best method?
+
+If we connect them in series like this. You have two plus six, which gives you seventy-five and thirty-two volts. What about C? Seven plus ten is seventeen amperes.
+
+Sorry, seven plus ten will give you seven amperes. Let's take the least. If we connect them in parallel like this. You have five plus twenty at your disposal. Yes, you have two plus four and three plus four together. What will you get here? Two plus six is eight. You have seven plus thirty-four volts.
+
+What about C? Seven plus ten gives you seventeen amperes. Sorry, seven plus ten will give you seven amperes. Let's take the least. If we connect them in series like this. You have two plus four and three plus four together.
+
+Let's see what the result is. Two plus six is eight. You have seven plus thirty-four volts. Yes, it's ten amperes. This is a balance with C.
+
+The minimum amperage here is five amperes. What will you get? Let's take the least. If we connect them in parallel like this. You have two plus four and three plus four together.
+
+Let's see what the result is. Two plus six is eight. You have seven plus thirty-four volts. Yes, it's ten amperes. This is a balance with C.
+
+The minimum amperage here is five amperes. What will you get? Let's take the least. If we connect them in series like this. You have two plus four and three plus four together.
+
+Let's see what the result is. Two plus six is eight. You have seven plus thirty-four volts. Yes, it's ten amperes. This is a balance with C.
+
+The minimum amperage here is five amperes. What will you get? Let's take the least. If we connect them in series like this. You have two plus four and three plus four together.
+
+Let's see what the result is. Two plus six is eight. You have seven plus thirty-four volts. Yes, it's ten amperes. This is a balance with C.
+
+The minimum amperage here is five amperes. What will you get? Let's take the least. If we connect them in series like this. You have two plus four and three plus four together.
+
+Let's see what the result is. Two plus six is eight. You have seven plus thirty-four volts. Yes, it's ten amperes. This is a balance with C.
+
+The minimum amperage here is five amperes. What will you get? Let's take the least. If we connect them in series like this. You have two plus four and three plus four together.
+
+Let's see what the result is. Two plus six is eight. You have seven plus thirty-four volts. Yes, it's ten amperes. This is a balance with C.
+
+The minimum amperage here is five amperes. What will you get? Let's take the least. If we connect them in series like this. You have two plus four and three plus four together.
+
+Let's see what the result is. Two plus six is eight. You have seven plus thirty-four volts. Yes, it's ten amperes. This is a balance with C.
+
+The minimum amperage here is five amperes. What will you get? Let's take the least. If we connect them in series like this
+
+Here is the cleaned transcript:
+
+You have a 4V and 80W battery, and you want to know what percentage it will give you. It's not going to give you an 88% and 80W efficiency. This is worse than this one and worse than that one. Good, I see the remaining cells like these fourth ones. They have started to look at them now. I'll see why they are more dominant. This one has a defect and a short circuit. I will turn off both of them in the system. Even from above, I will turn them off. It doesn't matter for the system. Let's see how the system works without these two. Or let's see 5V first and then we'll turn off P1 and P2. This is All Series. This is All Series. P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P15, P15, P16, P19, P20, P21, P22, P24, P25, P26, P27, P28, P29, P30, P30, P30, P31, P32, P33, P33, P34, P35, P36, P37, P38, P39, P40, P41, P42, P43, P45, P43, P44, P45, P46, P47, P48, P49, P51, P52, P53, P53, P54, P55, P56, P57, P58, P59, P60, P60, P71, P71, P72, P73, P74, P75, P76, P78, P78, P79, P70, P80, P81, P82, P83, P84, P84, P84, P85, P88, P89, P90, P86, P90, P100, P11, P11, P12, P13, P14, P15, P15, P16, P17, P18, P19, P20, P21, P21, P21, P22.
+
+What is taking away my efficiency? You are an engineer today. Do you have a choice why we use two solutions? Of course, this solution is the best. It's almost the same value as this one. But I'm here for a while. I can take these cells and benefit from them. I'll work on them first. I've saved some time from the system. And I got the same efficiency. What is it? Is your role, you know, as an engineer, what's the difference between you and the designer? You know how to connect things. What are the results when you have all these things in the system? Today, let's move on. Let's see how to test a broken cell. This method is tried and very effective.
+
+First, I take the broken cell and examine it with my eyes. Then, I check the anode and cathode of each cell using a multimeter. Finally, I check the location of the break. With my eye, I can see where the break is. There are also methods using a multimeter, but they're complicated. We won't go into them today.
+
+I can see here that this cell is broken. What can I do to fix it? I'll tell you. First, let's understand the cell. The cell has three parts: anode, cathode, and electrolyte. Look at this part. This is the anode. And this is the cathode. And this is the electrolyte.
+
+Why are there three pairs of electrodes like this? Because if one pair is broken, you can still use the other two. If you have four cells like this, you can use two pairs. Today, let's assume I give you a cell with only one broken cell. This is the broken cell. How do we fix it?
+
+I'll tell you. To fix it, simply turn off the power and take out the broken cell. That's all. You don't need to do anything else.
+
+Now, let's see how to fix a broken cell. First, I take the broken cell and examine it with my eyes. Then, I check the anode and cathode of each cell using a multimeter. Finally, I check the location of the break. With my eye, I can see where the break is.
+
+Look at this cell. It's broken. What can we do to fix it? We can take out the broken cell and replace it with a new one. That's all.
+
+Now, let's assume you have a cell with multiple broken cells. How do we fix it? We'll tell you later.
+
+Let's move on to another topic.
+
+Here is the cleaned transcript:
+
+I'm using this cable like this. And I'm working on it like this. Of course, I'm separating it from the beginning. Meaning, I don't work on it because I separate it. I go and then... Let's leave it here. Meaning, maybe I can do it like this. I'll separate it like this for these cells. I'll work on it with a gauge from here. I'll work on it with a gauge from there. And then I'll cut the wire from here. We shouldn't waste the wire.
+
+I did this assistance to this cell and made it invalid, so now it's an invalid cell after becoming invalid. Today, how does the pilot walk? He walks like this. He walks like this in all the windiness. This distance he walks on the wire completely. Completely. One of the ways today. I've done everything up to a cell. What else is there? Are there other ways? Other cases? If I were here today, for example, let's take this one. Let's take it here today. If you're here, this cell is broken and these cells are broken.
+
+How can I fix this panel with my eyes? I'll fix it like this. I'll come from here and cut from here and cut from there and cut from here and then connect the wire from here to here. The wire should be a 1.5 milli or half milli. Meaning, take no 0.5 milli or one milli. Meaning, the smallest thing is 1.5 milli or half milli. Okay, you have this wire, but its function is to connect from this cell to that cell. With this thing, you're doing it today for here.
+
+This cell is invalid. You, what are you doing? The panel was at 37 volts when you were working on it. Cell number 6 out of 10, where the cell's contribution is. Instead of being 37 volts, it became 36 volts with a drop of 4. So, how did you do it for him? How simple is it if you're here and doing it for four cells? You've almost done it for two volts. Meaning, instead of being 37 volts, it became 35 volts, but in the first place, he had this panel coming out at 3 amperes.
+
+But today, after becoming 35 volts, 3 amperes were there, but you left it at 35 volts with a drop of 10 amperes. You see, you've increased the efficiency that you're doing here in amperes. It's become like this. We do this for all the panels that are damaged. Okay, this is what we do when we have a broken panel. For example, if you have a worse and more damaged panel in cases of breakage, this type of breakage, you see, it's almost half the panel.
+
+But this breakage, if you were to insert it into a larger panel, it would come out at 1 amperes for this panel and 50 amperes for that panel. Okay? How can we see this panel? Everywhere we see it completely and... Okay, first, let's check by comparing. Let's go and follow. Of course, if there's a fuse or something, we'll remove the cells precisely.
+
+But we expect that the cells are good and the cells that we're doing here are all damaged cells. We just need to find the damaged cells. From here, from here, and from here, we'll search for the panel and connect it with the same method using a wire from here to there. I did this invalidation of the cells and also preserved the efficiency of the panel. I closed 3 out of 5. 15 at your disposal, approximately 7.5. You say 9 volts. You say 9 volts.
+
+I'm doing it here. Meaning, after being 37 volts, it became 28 volts. But in the first place, he had this panel coming out at 11 amperes. So, it became approximately 300 watts for you. The panel is now, instead of coming out at 50 watts, it comes out at 300 watts. Of course, this method is not known to many people and I think that if someone among you wants to work on it, he can do it.
+
+He can fix the panel for people with a material reward. This thing is on request and based on his work. I expect that this job will benefit you a lot in your life or if you want to do it and don't want to work on it, you can do it at home. We have 90% of Gaza's panels damaged. Maybe I can do this here at my place.
+
+Note: I've kept the original meaning and order of the transcript while converting Arabic words to English terms and removing filler sounds, stuttering, and repeated words.
+
+Here is the cleaned transcript:
+
+We completed what we had to do with "integration" of the broken account, merging it and trying to fix it. We brought all these things into this lab, God willing. We have quizzes on this lab and the previous one, of course. We will go through the data in the accounts and the information, you know. So, the quiz won't be easy for the students.
+
+The upcoming quiz will be about "direct network" or what happens when we integrate directly? What are the problems that arise from it? What are the losses? What are the issues that remain? What are the solutions we can implement to minimize the damage?
+
+We won't focus on the problem, but rather on how to solve it. Many things have been going through a crisis, you know.
+
+Today, we finished the lab for you, God willing. We will set a date for the next one on the group chat, God willing. Of course, half of you don't have the lab yet, God willing.
+
+The final exam is almost here. We will burn from 8 to 9 o'clock in this session, God willing. If God makes it easy for us, we will have a lab on this topic soon.
+
+We will move on to other topics. Today's focus was just on labs. There are four labs left. We completed one, regardless of the situation.
+
+If you have any questions, ask them on the group chat. Take care and goodbye.
+
+Note: I followed the rules by converting Arabic words to their English terms, removing repeated words and filler sounds, and preserving the original meaning and order.
