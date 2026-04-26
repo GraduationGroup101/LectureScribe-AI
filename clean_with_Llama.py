@@ -15,28 +15,59 @@ CHUNK_CHARS = 3500
 # PROMPT
 # =========================
 SYSTEM_RULES = """You are a transcript cleaner for university lectures.
-Your job: clean Arabic transcript produced by ASR (Whisper).
+Your job: clean transcript text produced by ASR.
 Rules:
-- convert the text into Engloish words 
-- dont write any arabic word alone in the text, just convert it to its english term
-- Keep English technical terms in correct English spelling (do NOT translate them).
-- Fix obvious Arabic spelling and punctuation.
-- Remove repeated words, filler sounds, and stuttering (e.g., "يعني", "اا", "مم", "تمام؟" when excessive).
-- Do NOT invent new information. Do NOT add explanations. Just clean.
+- Preserve all the original information and meaning, but make it more readable and concise in English.
+- Do not  write any arabic words in Arabic script. Instead, write them in correct English spelling.
+- Keep English technical terms in correct English spelling.
+- Fix obvious spelling and punctuation.
+- Remove filler words, repeated greetings, and stuttering.
+- If the same sentence or phrase appears consecutively, keep only one copy.
+- Do NOT invent new information. Do NOT add explanations.
 - Preserve the original meaning and order.
-- every word should be in its correct form thats if the word in arabic but its english term keep it in english
-- when u convert arabic words to english terms write them in their correct english form and put them between quotes like this "term" next to the arabic word  not on the end of the line
-- when you write an english sentence , write the arabic sentence that after it in new line
--Return only the cleaned transcript. Do not write introductions like "Here is the cleaned transcript:".
+- Return only the cleaned transcript.
 """
+
 
 def make_user_prompt(text: str) -> str:
     return f"""Clean this transcript:
 {text}
 """
 
+
+def split_long_text(text: str, max_chars: int):
+    """Split a long paragraph or sentence on word boundaries."""
+    words = text.split()
+    chunks = []
+    buf = ""
+
+    for word in words:
+        candidate = f"{buf} {word}".strip()
+        if len(candidate) <= max_chars:
+            buf = candidate
+        else:
+            if buf:
+                chunks.append(buf)
+            buf = word
+
+    if buf:
+        chunks.append(buf)
+
+    return chunks
+
+
+def split_sentences(text: str):
+    """Split text into sentence-like units."""
+    text = re.sub(r"\s+", " ", text).strip()
+    if not text:
+        return []
+
+    parts = re.split(r"(?<=[\.\!\?\u061f])\s+", text)
+    return [part.strip() for part in parts if part.strip()]
+
+
 def split_text(text: str, max_chars: int):
-    """Split text into chunks roughly by paragraphs/sentences."""
+    """Split text into natural chunks with paragraph and sentence boundaries."""
     parts = re.split(r"\n{2,}", text.strip())
     chunks = []
     buf = ""
@@ -45,22 +76,111 @@ def split_text(text: str, max_chars: int):
         p = p.strip()
         if not p:
             continue
-        if len(buf) + len(p) + 2 <= max_chars:
-            buf = (buf + "\n\n" + p).strip()
-        else:
-            if buf:
-                chunks.append(buf)
-            if len(p) > max_chars:
-                for i in range(0, len(p), max_chars):
-                    chunks.append(p[i:i+max_chars])
-                buf = ""
+
+        sentences = split_sentences(p)
+        units = sentences if sentences else [p]
+
+        for unit in units:
+            if len(unit) > max_chars:
+                if buf:
+                    chunks.append(buf)
+                    buf = ""
+                chunks.extend(split_long_text(unit, max_chars))
+                continue
+
+            if not buf:
+                buf = unit
+            elif len(buf) + len(unit) + 1 <= max_chars:
+                buf = f"{buf} {unit}".strip()
             else:
-                buf = p
+                chunks.append(buf)
+                buf = unit
 
     if buf:
         chunks.append(buf)
 
     return chunks
+
+
+def normalize_for_compare(text: str) -> str:
+    """Normalize text so repeated phrases can be compared reliably."""
+    text = text.lower().strip()
+    text = re.sub(r"[^\w\u0600-\u06ff]+", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def collapse_repeated_word_blocks(text: str, max_block_words: int = 12) -> str:
+    """Collapse immediately repeated word blocks in a single pass."""
+    words = text.split()
+    if not words:
+        return text
+
+    out = []
+    i = 0
+    n = len(words)
+
+    while i < n:
+        best_len = 0
+        best_repeat = 1
+
+        for block_len in range(min(max_block_words, n - i) // 2, 0, -1):
+            block = words[i:i + block_len]
+            repeat = 1
+            while i + (repeat + 1) * block_len <= n and words[i + repeat * block_len:i + (repeat + 1) * block_len] == block:
+                repeat += 1
+            if repeat > 1:
+                best_len = block_len
+                best_repeat = repeat
+                break
+
+        if best_len:
+            out.extend(words[i:i + best_len])
+            i += best_len * best_repeat
+        else:
+            out.append(words[i])
+            i += 1
+
+    return " ".join(out)
+
+
+def dedupe_consecutive_units(text: str) -> str:
+    """Remove consecutive duplicate sentences or lines from text."""
+    lines = [line.strip() for line in text.splitlines()]
+    cleaned_lines = []
+    previous = ""
+
+    for line in lines:
+        if not line:
+            if cleaned_lines and cleaned_lines[-1] != "":
+                cleaned_lines.append("")
+            continue
+
+        normalized = normalize_for_compare(line)
+        if normalized and normalized == previous:
+            continue
+
+        cleaned_lines.append(line)
+        previous = normalized
+
+    text = "\n".join(cleaned_lines)
+    text = re.sub(r"\n{3,}", "\n\n", text).strip()
+
+    parts = re.split(r"(?<=[\.\!\?\u061f])\s+", text)
+    merged = []
+    previous = ""
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        normalized = normalize_for_compare(part)
+        if normalized and normalized == previous:
+            continue
+        merged.append(part)
+        previous = normalized
+
+    return " ".join(merged).strip()
+
 
 def ollama_generate(prompt: str) -> str:
     """Call Ollama local API."""
@@ -72,13 +192,14 @@ def ollama_generate(prompt: str) -> str:
         "options": {
             "temperature": 0.2,
             "top_p": 0.9,
-            "num_predict": 1200
-        }
+            "num_predict": 1200,
+        },
     }
     r = requests.post(OLLAMA_URL, json=payload, timeout=600)
     r.raise_for_status()
     data = r.json()
     return data.get("response", "").strip()
+
 
 def clean_transcript_file(input_txt: Path):
     if not input_txt.exists():
@@ -90,6 +211,9 @@ def clean_transcript_file(input_txt: Path):
         print("Input file is empty.")
         return None
 
+    # Remove obvious repeated blocks before chunking so the model sees less noise.
+    raw = collapse_repeated_word_blocks(raw)
+
     output = Path("OutputForOllama") / f"{input_txt.stem}_cleanedv5.txt"
     output_txt = Path(output)
 
@@ -100,9 +224,10 @@ def clean_transcript_file(input_txt: Path):
     for i, ch in enumerate(chunks, start=1):
         print(f"Cleaning chunk {i}/{len(chunks)} ...")
         out = ollama_generate(make_user_prompt(ch))
-        cleaned_chunks.append(out)
+        cleaned_chunks.append(dedupe_consecutive_units(out))
 
     cleaned = "\n\n".join(cleaned_chunks).strip()
+    cleaned = dedupe_consecutive_units(cleaned)
     output_txt.write_text(cleaned, encoding="utf-8")
 
     print("\n DONE")
@@ -110,7 +235,8 @@ def clean_transcript_file(input_txt: Path):
 
     return output_txt
 
-# if you want to run this file alone to clean a transcript without running the faster-whisper code, you can do that by putting the name of the transcript file in the same directory as this cleaner.py file and then run it. it will produce a cleaned version of the transcript with the name "OutputForOllama_" + input_file_name + "_cleanedv5.txt" 
+
+# if you want to run this file alone to clean a transcript without running the faster-whisper code, you can do that by putting the name of the transcript file in the same directory as this cleaner.py file and then run it. it will produce a cleaned version of the transcript with the name "OutputForOllama_" + input_file_name + "_cleanedv5.txt"
 if __name__ == "__main__":
-    INPUT_TXT = Path("IUG Renewable energy Lab 4 Broken solar panel part 1_transcript.txt")
+    INPUT_TXT = Path("CH1 B Part2_transcript.txt")
     clean_transcript_file(INPUT_TXT)

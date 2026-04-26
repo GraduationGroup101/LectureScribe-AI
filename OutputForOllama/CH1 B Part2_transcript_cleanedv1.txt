@@ -1,0 +1,47 @@
+Here is the cleaned transcript:
+
+As-salamu alaykum. As-salamu alaykum.
+
+We were here and it's possible to give him a name here, we tell him about it, we tell him the name of the image, "image" ( الصورة يعرض إلينا إياها ) and the second option is that he reads the image using "matrix" ( باستخدام وبعدين أعمل له أعطيه الباراميتر اللي هو اسم الصورة ) with a parameter that is the name of the matrix, "matrix" ( الماتريكس اللي هو اللي في الماتريكس ) itself, and then he displays it.
+
+We apply this explanation to the forest image, "forest dot" ( الفورست هاي الصورة ) and we see what will come with us. I'm busy, "active" ( منشغل أكتيف ), always remember that the command line is not active, "command line" ( الكماند لاين ). First, I go to the place in the images by any means, "any method" ( بأي طريقة ) whether it's by browsing or typing, "typing" ( بكتب ) the command on the path of the images. Because before this time, I had already done it and it was present here in the history, "history" ( فنخترتها صورة على الباث بتاع الصور ). Now, I tell him that we will use "package lot", "image enter" ( هسا بحكي له ببكيج لوت دائما لا تنسوا تعملوا هاي image enter ) always remember to do this.
+
+Now, I tell him that the image is "image show" ( الصورة اللي هي forest dot نعمل enter ), very nice, "very nice" ( يعني very nice ). The image came out as it was, "as it is" ( لو بنا نمشي بالخطوات اللي كنا نمشي فيها بالأول ) if we follow the steps we followed before. He reads the image using "x equal i am read of forest dot tiff", "read of forest dot tiff" ( أقرأ الصورة لحظة يقرأها هنا وحكي 300 و 1 447 ). The meaning is that it needs to be in 3 dimensions, but I'll explain this later. He says that the index is not color, "index" ( معناها هاي ) but rather a matrix with colors, "color matrix" ( matrix وفيه color matrix ).
+
+Now, we tell him that we will show him what we showed before, "i am show i am show of x", "x equal" ( زي ما كنا نعمل سابقا ماشي فطلع ). What will come out with me? First, when we gave it to him, it came out like this. Let's put a figure before it so that the previous ones remain present and we see what will come out with me. The first figure came out like this, "figure" ( الفيجر الأول طلع هيك ). The second figure came out like this, "figure" ( الفيجر الثاني طلع هيك ).
+
+It seems that the traditional method or reading the image using a matrix or reading it using a matrix and then giving the image show the matrix as a parameter did not work. Because this image is not like the second image, "image" ( الصورة الثانية ). This image has two components, "two components", an indexed image, "indexed image" ( هاي indexed image ) with example, "example" ( ففيها جوا two components ).
+
+The image show does not have enough information. You gave it one component, "component", and indices, but it's not enough. The information is that you need to give it a color map so that the image show knows how to display it. We agreed that with an indexed image, you take the index and go to the table and display the color according to the index.
+
+For example, if the index is number five, "five" ( رقص خمسة ), you will replace it with what it should be. The image show needs to know how to display it. It's better to go to the index numbers 0, 1, 2, 3, 4, 5 and see what will replace it. They have three components: red, green, and blue, "red", "green", "blue". Of course, we will normalize them by dividing by 255, so when you multiply 255 by the red component, it comes out correctly, "correctly" ( بطلع القديش ), and similarly for the green and blue components.
+
+But there are two pieces of information. First, when we told him that the image show is finished, "finished", he took the image and displayed it. He displayed the image, but he didn't know how to display it because he didn't have the indices. The indices were what he needed to display the components correctly.
+
+Now, let's go back to the beginning. When we read the image, we extracted the matrix from the image and gave it to him, "matrix" ( متغيرين يعني هون تحط متغيرين ). So, it was stored in the x, "x", and mab, "mab". Now, let's see what happened.
+
+I have a mab with information, "information" ( والاكس فيها معلومات ), and an x with information. The x has the color map, "color map" ( الكالر ماب ). The l is not clear.
+
+Note: I've kept the original order and meaning of the transcript, but removed repeated words, filler sounds, and stuttering as per your instructions. I've also converted Arabic words to their English terms and put them in quotes.
+
+Here is the cleaned transcript:
+
+The color map is like what we saw in it, three hundred and fifty-six different colors present in this image. It's out. So it means it will be like this color map. The color map itself is like this. It will be like that. Three hundred and fifty-six are the ones who are the number of different colors present in the image. So if we had worked on a color map from the beginning, you would see how it looks. This one, for example, means five forty-one. This is what I mean by "five forty-one". If you went to index five forty-one, you would know which color is present there.
+
+If we go back to index five forty-one, you will find that the pixels present in this image need to be displayed there. The one who is point number seven multiplied by three hundred and fifty-six is the red component of the green component of the blue component.
+
+Let's go back to where we are now. What do we tell him? We tell him. Do you want me to add another word "Fajr" so that we can see them all together? We tell him, what do we say? Okay. We give him two things. What do we give him? We give him the matrix of indices and the map. We named it map one.
+
+He displays it correctly. This is Fajr number one, which uses the function by passing the file name itself. And here are the ones who are when I tried to display them without reading them. The image is correct. If you know that this is my image, then you need to handle it in this way. Read from it and pass the function.
+
+How do you know that it's the one present in the slide that comes after him here? Here is a function. Give it to me. Of course, he is an operator when the operator reads another image. But we can use the function. There are two images present with us, which are the image of the peacock and this one, which I explained in detail.
+
+The same method can be used. You mean there are two examples here, different images. Okay? Here is a function called "Image File Info". Image File Info. It gives you information about the image. Okay?
+
+Let's see what information is on this image that comes first. We tell him Image File Info and then give him the name of the image, which is Forest. The file name follows.
+
+He gives me a title indicating that it contains information about it and gives me here that it has information about it. He does.
+
+The color type index. Okay, let's go to the dimensions here. Give me the ha. The format of the phone. So give me information about the image. Ah, in general. Okay? I want to stop here so that I can wait and see if there is anything more important to talk about.
+
+And we will talk about it in a video that is easy to understand. I want to stop here. So that the video is short. Peace be upon you, and God's mercy and blessings be upon you. Thank you.
