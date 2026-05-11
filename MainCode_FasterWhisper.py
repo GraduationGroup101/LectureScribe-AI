@@ -9,7 +9,7 @@ os.environ["PATH"] += os.pathsep + r"C:\Users\Mahmoud\Downloads\Compressed\ffmpe
 
 
 # Model and device settings
-AUDIO_PATH_as_url = Path(url_to_mp3.download_youtube_mp3(input("Enter YouTube URL: ")))
+AUDIO_PATH_as_url = Path(url_to_mp3.download_youtube_mp3(url_to_mp3.prompt_for_youtube_url()))
 # AUDIO_PATH_as_url = Path("IUG Renewable energy Lab 3 ： solar panel connection.mp3")
 MODEL_SIZE = "large-v3"                        
 DEVICE = "cuda"                              
