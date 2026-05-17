@@ -67,6 +67,16 @@ You also need:
 - The Llama model used in `clean_with_Llama.py`
 - A faster-whisper model available locally or downloadable
 
+## File naming and caching
+
+Downloaded MP3 files are now stored with a deterministic name based on the video ID and sanitized title, for example:
+
+```text
+downloads/<video_id>_Lecture_Title.mp3
+```
+
+If the same video is downloaded again, the script will reuse the cached MP3 file when possible.
+
 ## Ollama Model
 
 The cleaning script currently uses:

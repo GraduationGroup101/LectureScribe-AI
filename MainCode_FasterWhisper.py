@@ -5,15 +5,27 @@ import url_to_mp3
 from clean_with_Llama import clean_transcript_file
 
 
+def get_output_paths_for_audio(audio_path: Path) -> tuple[Path, Path]:
+    raw_transcript = Path("OutputForWhisper") / f"{audio_path.stem}_transcript.txt"
+    cleaned_transcript = Path("OutputForOllama") / f"{audio_path.stem}_transcript_cleanedv5.txt"
+    return raw_transcript, cleaned_transcript
+
+
+def print_final_output(cleaned_path: Path) -> None:
+    print("Cached audio and final Ollama output found for this file:")
+    print(cleaned_path.resolve())
+    print("\n===== FINAL OLLAMA OUTPUT =====\n")
+    print(cleaned_path.read_text(encoding="utf-8", errors="ignore"))
+
+
 os.environ["PATH"] += os.pathsep + r"C:\Users\Mahmoud\Downloads\Compressed\ffmpeg-8.1-essentials_build\ffmpeg-8.1-essentials_build\bin"
 
 
 # Model and device settings
 AUDIO_PATH_as_url = Path(url_to_mp3.download_youtube_mp3(url_to_mp3.prompt_for_youtube_url()))
-# AUDIO_PATH_as_url = Path("IUG Renewable energy Lab 3 ： solar panel connection.mp3")
-MODEL_SIZE = "large-v3"                        
-DEVICE = "cuda"                              
-COMPUTE_TYPE = "int8_float16"                 
+MODEL_SIZE = "large-v3"
+DEVICE = "cuda"
+COMPUTE_TYPE = "int8_float16"
 
 # subtitle Prompt
 SUB_TXT_PATH = Path("ch1_b_sub_txt.txt")
@@ -31,6 +43,18 @@ Main_Prompt = (
 )
 
 def main():
+    if AUDIO_PATH_as_url.exists():
+        raw_path, cleaned_path = get_output_paths_for_audio(AUDIO_PATH_as_url)
+        if cleaned_path.exists():
+            print_final_output(cleaned_path)
+            return
+        if raw_path.exists():
+            print("Cached audio found, raw transcript exists but cleaned output does not.")
+            clean_transcript_file(raw_path)
+            if cleaned_path.exists():
+                print_final_output(cleaned_path)
+            return
+
     if not AUDIO_PATH_as_url.exists():
         print(f"File not found: {AUDIO_PATH_as_url.resolve()}")
         return
