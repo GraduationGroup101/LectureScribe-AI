@@ -1,8 +1,20 @@
-from faster_whisper import WhisperModel
-from pathlib import Path
 import os
+from pathlib import Path
+from typing import Any
+
+from faster_whisper import WhisperModel
+
 import url_to_mp3
 from clean_with_Llama import clean_transcript_file
+
+
+os.environ["PATH"] += os.pathsep + r"C:\Users\Mahmoud\Downloads\Compressed\ffmpeg-8.1-essentials_build\ffmpeg-8.1-essentials_build\bin"
+
+MODEL_SIZE = "large-v3"
+DEVICE = "cuda"
+COMPUTE_TYPE = "int8_float16"
+MODEL_PATH = r"C:\Users\Mahmoud\models\faster-whisper-large-v3"
+DEFAULT_LANGUAGE = "ar"
 
 
 def get_output_paths_for_audio(audio_path: Path) -> tuple[Path, Path]:
@@ -18,97 +30,127 @@ def print_final_output(cleaned_path: Path) -> None:
     print(cleaned_path.read_text(encoding="utf-8", errors="ignore"))
 
 
-os.environ["PATH"] += os.pathsep + r"C:\Users\Mahmoud\Downloads\Compressed\ffmpeg-8.1-essentials_build\ffmpeg-8.1-essentials_build\bin"
+def build_initial_prompt() -> str:
+    return (
+        "This is a university lecture in Arabic with English technical terms.\n"
+        "Keep English technical terms correctly when they appear.\n"
+    )
 
 
-# Model and device settings
-AUDIO_PATH_as_url = Path(url_to_mp3.download_youtube_mp3(url_to_mp3.prompt_for_youtube_url()))
-MODEL_SIZE = "large-v3"
-DEVICE = "cuda"
-COMPUTE_TYPE = "int8_float16"
+def transcribe_audio(
+    audio_path: Path,
+    *,
+    model_path: str = MODEL_PATH,
+    model_size: str = MODEL_SIZE,
+    device: str = DEVICE,
+    compute_type: str = COMPUTE_TYPE,
+    language: str = DEFAULT_LANGUAGE,
+) -> tuple[Path, dict[str, Any]]:
+    if not audio_path.exists():
+        raise FileNotFoundError(f"File not found: {audio_path.resolve()}")
 
-# subtitle Prompt
-SUB_TXT_PATH = Path("ch1_b_sub_txt.txt")
-PROMPT = ""
-if SUB_TXT_PATH.exists():
-    PROMPT = SUB_TXT_PATH.read_text(encoding="utf-8", errors="ignore")[:4000]
-
-
-Main_Prompt = (
-    "This is a university lecture in Arabic with English technical terms.\n"
-    "The topic is indexed images and image processing in Octave/MATLAB.\n"
-    "Keep English technical terms correctly when they appear.\n"
-    "Here are subtitle hints:\n"
-    + PROMPT
-)
-
-def main():
-    if AUDIO_PATH_as_url.exists():
-        raw_path, cleaned_path = get_output_paths_for_audio(AUDIO_PATH_as_url)
-        if cleaned_path.exists():
-            print_final_output(cleaned_path)
-            return
-        if raw_path.exists():
-            print("Cached audio found, raw transcript exists but cleaned output does not.")
-            clean_transcript_file(raw_path)
-            if cleaned_path.exists():
-                print_final_output(cleaned_path)
-            return
-
-    if not AUDIO_PATH_as_url.exists():
-        print(f"File not found: {AUDIO_PATH_as_url.resolve()}")
-        return
-
-    print(f"Loading faster-whisper model: {MODEL_SIZE} on {DEVICE} ({COMPUTE_TYPE}) ...")
-    MODEL_PATH = r"C:\Users\Mahmoud\models\faster-whisper-large-v3"
-
-    print(f"Loading faster-whisper model from: {MODEL_PATH}")
+    print(f"Loading faster-whisper model: {model_size} on {device} ({compute_type}) ...")
+    print(f"Loading faster-whisper model from: {model_path}")
     model = WhisperModel(
-        MODEL_PATH,
-        device=DEVICE,
-        compute_type=COMPUTE_TYPE,
+        model_path,
+        device=device,
+        compute_type=compute_type,
     )
 
     print("Transcribing ...")
+    kwargs: dict[str, Any] = {
+        "language": language,
+        "vad_filter": True,
+        "beam_size": 5,
+        "initial_prompt": build_initial_prompt(),
+    }
 
-#    some settings for transcription 
-    kwargs = dict(
-        language='ar',        
-        vad_filter=True,
-        beam_size=5,
-    )
+    segments, info = model.transcribe(audio_path.as_posix(), **kwargs)
 
-#   If you want to use the custom prompt, uncomment the next line
-  
-    kwargs["initial_prompt"] = Main_Prompt
-
-    segments, info = model.transcribe(AUDIO_PATH_as_url.as_posix(), **kwargs)
-
-    # combine all segments into one text
-    parts = []
-    for seg in segments:
-        parts.append(seg.text.strip())
-
-    text = " ".join(parts)
-    # text = clean_transcript(text)
+    text = " ".join(seg.text.strip() for seg in segments)
 
     print("\n===== TRANSCRIPT =====\n")
     print(text)
-#   save the transcript to a text file in folder of name "OutputForOllama" + AUDIO_PATH_as_url.stem + "_transcript.txt"
+
     output_dir = Path("OutputForWhisper")
     output_dir.mkdir(exist_ok=True)
 
-    out = output_dir / f"{AUDIO_PATH_as_url.stem}_transcript.txt"
+    out = output_dir / f"{audio_path.stem}_transcript.txt"
     out.write_text(text, encoding="utf-8")
 
     print(f"\nSaved to: {out.resolve()}")
-
-    # pipeline to clean the transcript using Ollama
-    clean_transcript_file(out)
-
     print("\n===== INFO =====")
     print("Detected language:", info.language)
     print("Language probability:", getattr(info, "language_probability", "N/A"))
+
+    metadata = {
+        "detected_language": info.language,
+        "language_probability": getattr(info, "language_probability", None),
+    }
+    return out, metadata
+
+
+def process_youtube_url(
+    youtube_url: str,
+    *,
+    clean: bool = True,
+    skip_audio_cache: bool = False,
+    use_cached_outputs: bool = True,
+    language: str = DEFAULT_LANGUAGE,
+) -> dict[str, Any]:
+    audio_path = Path(
+        url_to_mp3.download_youtube_mp3(
+            youtube_url,
+            skip_cache=skip_audio_cache,
+        )
+    )
+    raw_path, cleaned_path = get_output_paths_for_audio(audio_path)
+    result: dict[str, Any] = {
+        "audio_path": str(audio_path),
+        "raw_transcript_path": str(raw_path),
+        "cleaned_transcript_path": str(cleaned_path) if clean else None,
+        "used_cached_raw_transcript": False,
+        "used_cached_cleaned_transcript": False,
+        "transcription_info": None,
+    }
+
+    if clean and use_cached_outputs and cleaned_path.exists():
+        result["used_cached_cleaned_transcript"] = True
+        return result
+
+    if use_cached_outputs and raw_path.exists():
+        result["used_cached_raw_transcript"] = True
+    else:
+        raw_path, transcription_info = transcribe_audio(
+            audio_path,
+            language=language,
+        )
+        result["raw_transcript_path"] = str(raw_path)
+        result["transcription_info"] = transcription_info
+
+    if clean:
+        cleaned = clean_transcript_file(raw_path)
+        result["cleaned_transcript_path"] = str(cleaned) if cleaned else None
+
+    return result
+
+
+def main() -> None:
+    youtube_url = url_to_mp3.prompt_for_youtube_url("Enter YouTube lecture link: ")
+
+    try:
+        result = process_youtube_url(youtube_url)
+    except Exception as exc:
+        print(f"\n Error: {exc}")
+        return
+
+    cleaned_path = result.get("cleaned_transcript_path")
+    if cleaned_path and Path(cleaned_path).exists():
+        print_final_output(Path(cleaned_path))
+    else:
+        print("\nPipeline completed.")
+        print(f"Raw transcript: {Path(result['raw_transcript_path']).resolve()}")
+
 
 if __name__ == "__main__":
     main()
