@@ -10,7 +10,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
-from MainCode_FasterWhisper import DEFAULT_LANGUAGE, process_youtube_url
+from MainCode_FasterWhisper import (
+    DEFAULT_LANGUAGE,
+    list_ollama_output_filenames,
+    process_youtube_url,
+)
 from url_to_mp3 import validate_youtube_url
 
 
@@ -50,6 +54,12 @@ class TranscriptionRequest(BaseModel):
     )
 
 
+def clean_job_result(job: dict) -> None:
+    result = job.get("result")
+    if isinstance(result, dict):
+        result.pop("llama_folder_filenames", None)
+
+
 def load_jobs() -> dict[str, dict]:
     if not JOBS_FILE.exists():
         return {}
@@ -64,6 +74,7 @@ def load_jobs() -> dict[str, dict]:
         return {}
 
     for job in loaded_jobs.values():
+        clean_job_result(job)
         if job.get("status") in {"queued", "running"}:
             job["status"] = "failed"
             job["error"] = "API server restarted before this job finished."
@@ -73,9 +84,19 @@ def load_jobs() -> dict[str, dict]:
 
 
 def save_jobs_unlocked() -> None:
+    for job in jobs.values():
+        clean_job_result(job)
+
     tmp = JOBS_FILE.with_suffix(".json.tmp")
     tmp.write_text(
-        json.dumps({"jobs": jobs}, ensure_ascii=False, indent=2),
+        json.dumps(
+            {
+                "jobs": jobs,
+                "llama_folder_filenames": list_ollama_output_filenames(),
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding="utf-8",
     )
     tmp.replace(JOBS_FILE)

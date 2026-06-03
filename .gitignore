@@ -2,3 +2,5 @@ __pycache__/
 *.py[cod]
 jobs.json
 jobs.json.tmp
+transcript_cache.json
+transcript_cache.json.tmp
