@@ -8,7 +8,6 @@ The project is designed for university lectures, especially Arabic lectures that
 
 - Downloading lecture audio from YouTube as MP3
 - Transcribing Arabic lecture audio with faster-whisper
-- Using optional subtitle text as a prompt hint
 - Cleaning noisy ASR output with Llama through Ollama
 - Saving both raw and cleaned transcript files
 
@@ -37,10 +36,6 @@ The project is designed for university lectures, especially Arabic lectures that
   - Splits long transcripts into chunks.
   - Saves cleaned output files.
 
-- `srt_to_txt.py`
-  - Converts `.srt` subtitle files into plain `.txt` files.
-  - The generated text can be used as prompt hints for transcription.
-
 ## Output Folders
 
 - `downloads/`
@@ -57,7 +52,7 @@ The project is designed for university lectures, especially Arabic lectures that
 Install the required Python packages:
 
 ```bash
-pip install faster-whisper yt-dlp requests
+pip install -r requirements.txt
 ```
 
 You also need:
@@ -66,6 +61,16 @@ You also need:
 - Ollama installed and running locally
 - The Llama model used in `clean_with_Llama.py`
 - A faster-whisper model available locally or downloadable
+
+## File naming and caching
+
+Downloaded MP3 files are now stored with a deterministic name based on the video ID and sanitized title, for example:
+
+```text
+downloads/<video_id>_Lecture_Title.mp3
+```
+
+If the same video is downloaded again, the script will reuse the cached MP3 file when possible.
 
 ## Ollama Model
 
@@ -96,6 +101,50 @@ python MainCode_FasterWhisper.py
 ```
 
 Then enter the YouTube lecture URL when prompted.
+
+## Running the API
+
+For a detailed explanation of the API design and workflow, read `API_WORKFLOW.md`.
+
+The API saves job history in `jobs.json`, so completed jobs can still be listed after restarting the server. If the server restarts while a job is still running, that job is marked as failed because the background transcription thread was stopped.
+
+Start the FastAPI server:
+
+```bash
+uvicorn api:app --host 127.0.0.1 --port 8000
+```
+
+Open the interactive API docs:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Create a transcription job:
+
+```bash
+curl -X POST http://127.0.0.1:8000/jobs ^
+  -H "Content-Type: application/json" ^
+  -d "{\"youtube_url\":\"https://www.youtube.com/watch?v=dQw4w9WgXcQ\",\"clean\":true}"
+```
+
+Check job status:
+
+```bash
+curl http://127.0.0.1:8000/jobs/<job_id>
+```
+
+Read the cleaned transcript after the job completes:
+
+```bash
+curl http://127.0.0.1:8000/jobs/<job_id>/transcript
+```
+
+Read the raw Whisper transcript instead:
+
+```bash
+curl "http://127.0.0.1:8000/jobs/<job_id>/transcript?kind=raw"
+```
 
 ## Running Only the Cleaning Step
 

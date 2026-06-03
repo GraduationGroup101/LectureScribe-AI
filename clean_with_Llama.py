@@ -214,8 +214,9 @@ def clean_transcript_file(input_txt: Path):
     # Remove obvious repeated blocks before chunking so the model sees less noise.
     raw = collapse_repeated_word_blocks(raw)
 
-    output = Path("OutputForOllama") / f"{input_txt.stem}_cleanedv5.txt"
-    output_txt = Path(output)
+    output_dir = Path("OutputForOllama")
+    output_dir.mkdir(exist_ok=True)
+    output_txt = output_dir / f"{input_txt.stem}_cleanedv5.txt"
 
     chunks = split_text(raw, CHUNK_CHARS)
     print(f"Loaded text. Chunks: {len(chunks)}")
@@ -238,5 +239,5 @@ def clean_transcript_file(input_txt: Path):
 
 # if you want to run this file alone to clean a transcript without running the faster-whisper code, you can do that by putting the name of the transcript file in the same directory as this cleaner.py file and then run it. it will produce a cleaned version of the transcript with the name "OutputForOllama_" + input_file_name + "_cleanedv5.txt"
 if __name__ == "__main__":
-    INPUT_TXT = Path("CH1 B Part2_transcript.txt")
+    INPUT_TXT = Path("Qbqc5MoGk5E_IUG Renewable energy Lab 7 _ Broken solar panel part 3_transcript.txt")
     clean_transcript_file(INPUT_TXT)
