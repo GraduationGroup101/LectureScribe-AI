@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 from threading import Lock
 from time import time
-from typing import Any
+from typing import Any, Callable
 
 for stream in (sys.stdout, sys.stderr):
     if hasattr(stream, "reconfigure"):
@@ -13,7 +13,11 @@ for stream in (sys.stdout, sys.stderr):
 from faster_whisper import WhisperModel
 
 import url_to_mp3
-from clean_with_Llama import clean_transcript_file
+from clean_with_Llama import (
+    CloudCleanerUnavailable,
+    clean_transcript_file,
+    clean_transcript_file_with_groq,
+)
 
 
 os.environ["PATH"] += os.pathsep + r"C:\Users\Mahmoud\Downloads\Compressed\ffmpeg-8.1-essentials_build\ffmpeg-8.1-essentials_build\bin"
@@ -24,6 +28,7 @@ COMPUTE_TYPE = "int8_float16"
 MODEL_PATH = r"C:\Users\Mahmoud\models\faster-whisper-large-v3"
 DEFAULT_LANGUAGE = "ar"
 TRANSCRIPT_CACHE_FILE = Path("transcript_cache.json")
+TRANSCRIPT_PROMPT_VERSION = "original-language-v1"
 whisper_model_lock = Lock()
 whisper_models: dict[tuple[str, str, str], WhisperModel] = {}
 LEGACY_FILENAME_CACHE_FIELDS = (
@@ -35,11 +40,21 @@ LEGACY_FILENAME_CACHE_FIELDS = (
     "ollama_output_filename",
     "llama_folder_filenames",
 )
+ProgressCallback = Callable[[str, dict[str, Any]], None]
+
+
+def emit_progress(
+    progress_callback: ProgressCallback | None,
+    stage: str,
+    **details: Any,
+) -> None:
+    if progress_callback:
+        progress_callback(stage, details)
 
 
 def get_output_paths_for_audio(audio_path: Path) -> tuple[Path, Path]:
-    raw_transcript = Path("OutputForWhisper") / f"{audio_path.stem}_english_transcript.txt"
-    cleaned_transcript = Path("OutputForOllama") / f"{audio_path.stem}_english_transcript_cleanedv5.txt"
+    raw_transcript = Path("OutputForWhisper") / f"{audio_path.stem}_transcript.txt"
+    cleaned_transcript = Path("OutputForOllama") / f"{audio_path.stem}_transcript_cleanedv5.txt"
     return raw_transcript, cleaned_transcript
 
 
@@ -92,6 +107,11 @@ def get_cached_cleaned_entry(video_id: str) -> dict[str, Any] | None:
     if not isinstance(entry, dict):
         return None
 
+    if entry.get("prompt_version") != TRANSCRIPT_PROMPT_VERSION:
+        cache["videos"].pop(video_id, None)
+        save_transcript_cache(cache)
+        return None
+
     cleaned_path = entry.get("cleaned_transcript_path")
     if cleaned_path and Path(cleaned_path).exists():
         llama_folder_filenames = list_ollama_output_filenames()
@@ -119,6 +139,7 @@ def save_cleaned_cache_entry(
     canonical_url: str,
     raw_path: Path,
     cleaned_path: Path,
+    cleaner_provider: str | None = None,
 ) -> dict[str, Any]:
     cache = load_transcript_cache()
     existing = cache["videos"].get(video_id, {})
@@ -129,6 +150,8 @@ def save_cleaned_cache_entry(
         "original_url": original_url,
         "raw_transcript_path": str(raw_path),
         "cleaned_transcript_path": str(cleaned_path),
+        "cleaner_provider": cleaner_provider,
+        "prompt_version": TRANSCRIPT_PROMPT_VERSION,
         "created_at": existing.get("created_at", now) if isinstance(existing, dict) else now,
         "updated_at": now,
     }
@@ -148,7 +171,11 @@ def find_existing_cleaned_output(
         return None
 
     matches = sorted(
-        output_dir.glob(f"{video_id}_*_transcript_cleanedv5.txt"),
+        (
+            path
+            for path in output_dir.glob(f"{video_id}_*_transcript_cleanedv5.txt")
+            if "_english_transcript_cleanedv5" not in path.name
+        ),
         key=lambda p: p.stat().st_mtime,
         reverse=True,
     )
@@ -167,15 +194,39 @@ def find_existing_cleaned_output(
     )
 
 
+def clean_transcript_with_preferred_model(
+    raw_path: Path,
+    *,
+    allow_ollama_fallback: bool,
+    progress_callback: ProgressCallback | None = None,
+) -> tuple[Path | None, str | None, str | None]:
+    groq_error = None
+
+    try:
+        emit_progress(progress_callback, "formatting", detail="Formatting transcript with Groq")
+        print("Running Groq cleaner ...")
+        cleaned = clean_transcript_file_with_groq(raw_path, progress_callback=progress_callback)
+        if cleaned:
+            return cleaned, "groq", None
+    except (CloudCleanerUnavailable, Exception) as exc:
+        groq_error = f"{type(exc).__name__}: {exc}"
+        print(f"Groq cleaner unavailable: {groq_error}")
+
+    if not allow_ollama_fallback:
+        return None, None, groq_error
+
+    emit_progress(progress_callback, "formatting", detail="Groq unavailable. Formatting transcript with Ollama")
+    print("Running Ollama cleaner ...")
+    cleaned = clean_transcript_file(raw_path, progress_callback=progress_callback)
+    return cleaned, "ollama", groq_error
+
+
 def find_existing_raw_output(video_id: str) -> Path | None:
     output_dir = Path("OutputForWhisper")
     if not output_dir.exists():
         return None
 
-    patterns = (
-        f"{video_id}_*_english_transcript.txt",
-        f"{video_id}_*_transcript.txt",
-    )
+    patterns = (f"{video_id}_*_transcript.txt",)
     matches: list[Path] = []
     for pattern in patterns:
         matches.extend(output_dir.glob(pattern))
@@ -210,10 +261,11 @@ def print_final_output(cleaned_path: Path) -> None:
 def build_initial_prompt() -> str:
     return (
         "This is a university lecture in Arabic with English technical terms.\n"
-        "Write the transcript in English only.\n"
-        "Translate Arabic speech into clear English text.\n"
-        "Do not write Arabic words using Arabic script.\n"
+        "Transcribe the speech in the original spoken language.\n"
+        "Do not translate Arabic speech into English.\n"
+        "Write Arabic speech using Arabic script.\n"
         "Keep English technical terms correctly when they appear.\n"
+        "Avoid repeated outro text, repeated greetings, and invented phrases.\n"
     )
 
 
@@ -247,10 +299,12 @@ def transcribe_audio(
     device: str = DEVICE,
     compute_type: str = COMPUTE_TYPE,
     language: str = DEFAULT_LANGUAGE,
+    progress_callback: ProgressCallback | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     if not audio_path.exists():
         raise FileNotFoundError(f"File not found: {audio_path.resolve()}")
 
+    emit_progress(progress_callback, "transcribing", detail="Loading faster-whisper model")
     print(f"Loading faster-whisper model: {model_size} on {device} ({compute_type}) ...")
     model = get_whisper_model(
         model_path=model_path,
@@ -258,6 +312,7 @@ def transcribe_audio(
         compute_type=compute_type,
     )
 
+    emit_progress(progress_callback, "transcribing", detail="Whisper is transcribing the lecture")
     print("Transcribing ...")
     kwargs: dict[str, Any] = {
         "language": language,
@@ -276,7 +331,7 @@ def transcribe_audio(
     output_dir = Path("OutputForWhisper")
     output_dir.mkdir(exist_ok=True)
 
-    out = output_dir / f"{audio_path.stem}_english_transcript.txt"
+    out = output_dir / f"{audio_path.stem}_transcript.txt"
     out.write_text(text, encoding="utf-8")
 
     print(f"\nSaved to: {out.resolve()}")
@@ -288,6 +343,7 @@ def transcribe_audio(
         "detected_language": info.language,
         "language_probability": getattr(info, "language_probability", None),
     }
+    emit_progress(progress_callback, "transcribing", detail="Whisper transcription finished")
     return out, metadata
 
 
@@ -298,7 +354,9 @@ def process_youtube_url(
     skip_audio_cache: bool = False,
     use_cached_outputs: bool = True,
     language: str = DEFAULT_LANGUAGE,
+    progress_callback: ProgressCallback | None = None,
 ) -> dict[str, Any]:
+    emit_progress(progress_callback, "checking_cache", detail="Checking saved transcripts")
     video_id = url_to_mp3.extract_youtube_video_id(youtube_url)
     if not video_id:
         raise ValueError("Input is NOT a valid YouTube video URL")
@@ -313,11 +371,13 @@ def process_youtube_url(
         "used_cached_raw_transcript": False,
         "used_cached_cleaned_transcript": False,
         "transcription_info": None,
+        "cleaner_provider": None,
+        "cleaner_error": None,
         "audio_deleted": False,
         "audio_delete_error": None,
     }
 
-    if clean and use_cached_outputs:
+    if use_cached_outputs:
         cached_entry = get_cached_cleaned_entry(video_id)
         if not cached_entry:
             cached_entry = find_existing_cleaned_output(
@@ -326,10 +386,12 @@ def process_youtube_url(
                 canonical_url=canonical_url,
             )
         if cached_entry:
+            emit_progress(progress_callback, "cache_hit", detail="Using saved Ollama output")
             result.update(
                 {
                     "raw_transcript_path": cached_entry.get("raw_transcript_path"),
                     "cleaned_transcript_path": cached_entry.get("cleaned_transcript_path"),
+                    "cleaner_provider": cached_entry.get("cleaner_provider"),
                     "used_cached_cleaned_transcript": True,
                 }
             )
@@ -341,12 +403,14 @@ def process_youtube_url(
             result["raw_transcript_path"] = str(existing_raw_path)
             result["used_cached_raw_transcript"] = True
 
-            if not clean:
-                return result
-
-            print("Running Ollama cleaner ...")
-            cleaned = clean_transcript_file(existing_raw_path)
+            cleaned, cleaner_provider, cleaner_error = clean_transcript_with_preferred_model(
+                existing_raw_path,
+                allow_ollama_fallback=clean,
+                progress_callback=progress_callback,
+            )
             result["cleaned_transcript_path"] = str(cleaned) if cleaned else None
+            result["cleaner_provider"] = cleaner_provider
+            result["cleaner_error"] = cleaner_error
             if cleaned:
                 save_cleaned_cache_entry(
                     video_id,
@@ -354,21 +418,27 @@ def process_youtube_url(
                     canonical_url=canonical_url,
                     raw_path=existing_raw_path,
                     cleaned_path=cleaned,
+                    cleaner_provider=cleaner_provider,
                 )
+            elif not clean:
+                emit_progress(progress_callback, "cache_hit", detail="Using saved Whisper output")
             return result
 
+    emit_progress(progress_callback, "downloading", detail="Downloading audio from YouTube")
     audio_path = Path(
         url_to_mp3.download_youtube_mp3(
             youtube_url,
             skip_cache=skip_audio_cache,
         )
     )
+    emit_progress(progress_callback, "downloading", detail="Audio download finished")
     raw_path, cleaned_path = get_output_paths_for_audio(audio_path)
     result["audio_path"] = str(audio_path)
     result["raw_transcript_path"] = str(raw_path)
-    result["cleaned_transcript_path"] = str(cleaned_path) if clean else None
+    result["cleaned_transcript_path"] = str(cleaned_path)
 
-    if clean and use_cached_outputs and cleaned_path.exists():
+    if use_cached_outputs and cleaned_path.exists():
+        emit_progress(progress_callback, "cache_hit", detail="Using saved cleaned transcript")
         save_cleaned_cache_entry(
             video_id,
             original_url=youtube_url,
@@ -388,25 +458,32 @@ def process_youtube_url(
         raw_path, transcription_info = transcribe_audio(
             audio_path,
             language=language,
+            progress_callback=progress_callback,
         )
         result["raw_transcript_path"] = str(raw_path)
         result["transcription_info"] = transcription_info
 
-    if clean:
-        print("Running Ollama cleaner ...")
-        cleaned = clean_transcript_file(raw_path)
-        result["cleaned_transcript_path"] = str(cleaned) if cleaned else None
-        if cleaned:
-            save_cleaned_cache_entry(
-                video_id,
-                original_url=youtube_url,
-                canonical_url=canonical_url,
-                raw_path=raw_path,
-                cleaned_path=cleaned,
-            )
-            audio_deleted, audio_delete_error = delete_audio_file(audio_path)
-            result["audio_deleted"] = audio_deleted
-            result["audio_delete_error"] = audio_delete_error
+    cleaned, cleaner_provider, cleaner_error = clean_transcript_with_preferred_model(
+        raw_path,
+        allow_ollama_fallback=clean,
+        progress_callback=progress_callback,
+    )
+    result["cleaned_transcript_path"] = str(cleaned) if cleaned else None
+    result["cleaner_provider"] = cleaner_provider
+    result["cleaner_error"] = cleaner_error
+    if cleaned:
+        emit_progress(progress_callback, "saving", detail="Saving cache and deleting audio")
+        save_cleaned_cache_entry(
+            video_id,
+            original_url=youtube_url,
+            canonical_url=canonical_url,
+            raw_path=raw_path,
+            cleaned_path=cleaned,
+            cleaner_provider=cleaner_provider,
+        )
+        audio_deleted, audio_delete_error = delete_audio_file(audio_path)
+        result["audio_deleted"] = audio_deleted
+        result["audio_delete_error"] = audio_delete_error
 
     return result
 

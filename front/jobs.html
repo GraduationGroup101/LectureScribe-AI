@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Previous Jobs - LectureScribe AI</title>
+    <link rel="stylesheet" href="/front/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="workspace">
+        <header class="topbar">
+          <div class="brand-block">
+            <span class="brand-kicker">Lecture workflow</span>
+            <h1>Previous Jobs</h1>
+            <p>Open completed transcripts or check jobs that failed earlier.</p>
+          </div>
+          <nav class="nav-links" aria-label="Main navigation">
+            <a href="/app">New Job</a>
+            <a class="active" href="/app/jobs">Previous Jobs</a>
+            <a href="/docs">API Docs</a>
+          </nav>
+        </header>
+
+        <section class="panel jobs-page-panel">
+          <div class="section-title">
+            <div>
+              <span class="section-kicker">Archive</span>
+              <h2>Job History</h2>
+              <p class="subtle">Recent requests from this server.</p>
+            </div>
+            <button id="refresh-jobs" class="secondary" type="button">Refresh</button>
+          </div>
+
+          <div class="filters">
+            <input id="job-search" type="search" placeholder="Search by URL or job ID">
+            <select id="status-filter" aria-label="Filter jobs by status">
+              <option value="all">All statuses</option>
+              <option value="completed">Completed</option>
+              <option value="running">Running</option>
+              <option value="queued">Queued</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
+
+          <div id="jobs-list" class="jobs-list full"></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="/front/jobs.js"></script>
+  </body>
+</html>

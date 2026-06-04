@@ -10,52 +10,94 @@
     <main class="shell">
       <section class="workspace">
         <header class="topbar">
-          <div>
+          <div class="brand-block">
+            <span class="brand-kicker">Lecture workflow</span>
             <h1>LectureScribe AI</h1>
             <p>Turn lecture videos into readable transcripts.</p>
           </div>
-          <a class="docs-link" href="/docs">API Docs</a>
+          <nav class="nav-links" aria-label="Main navigation">
+            <a class="active" href="/app">New Job</a>
+            <a href="/app/jobs">Previous Jobs</a>
+            <a href="/docs">API Docs</a>
+          </nav>
         </header>
 
-        <form id="job-form" class="panel">
-          <label class="field-label" for="youtube-url">Lecture YouTube URL</label>
-          <div class="url-row">
-            <input
-              id="youtube-url"
-              name="youtube_url"
-              type="url"
-              placeholder="https://www.youtube.com/watch?v=..."
-              autocomplete="off"
-              required
-            >
-            <button id="submit-button" type="submit">Start</button>
-          </div>
-
-          <fieldset class="mode-group">
-            <legend>Output mode</legend>
-            <label class="mode-option">
-              <input type="radio" name="mode" value="fast" checked>
-              <span>
-                <strong>Fast output</strong>
-                <small>Quicker result with lighter formatting.</small>
-              </span>
-            </label>
-            <label class="mode-option">
-              <input type="radio" name="mode" value="formatted">
-              <span>
-                <strong>Better formatting</strong>
-                <small>Cleaner text, slower processing.</small>
-              </span>
-            </label>
-          </fieldset>
-        </form>
-
-        <section class="status-grid">
-          <article class="panel status-panel">
+        <section class="app-grid">
+          <section class="panel start-panel">
             <div class="section-title">
-              <h2>Current Job</h2>
-              <span id="job-status" class="status-badge idle">Idle</span>
+              <div>
+                <span class="section-kicker">New request</span>
+                <h2>Start A Transcript</h2>
+              </div>
             </div>
+
+            <form id="job-form">
+              <label class="field-label" for="youtube-url">Lecture YouTube URL</label>
+              <div class="url-row">
+                <input
+                  id="youtube-url"
+                  name="youtube_url"
+                  type="url"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  autocomplete="off"
+                  required
+                >
+                <button id="submit-button" type="submit">Start</button>
+              </div>
+
+              <fieldset class="mode-group">
+                <legend>Output mode</legend>
+                <label class="mode-option">
+                  <input type="radio" name="mode" value="fast" checked>
+                  <span>
+                    <strong>Fast output</strong>
+                    <small>Tries cloud cleanup first, then shows Whisper if unavailable.</small>
+                  </span>
+                </label>
+                <label class="mode-option">
+                  <input type="radio" name="mode" value="formatted">
+                  <span>
+                    <strong>Better formatting</strong>
+                    <small>Uses cloud cleanup first, with Ollama fallback.</small>
+                  </span>
+                </label>
+              </fieldset>
+            </form>
+          </section>
+
+          <section id="status-panel" class="panel status-panel is-hidden" aria-live="polite">
+            <div class="section-title">
+              <div>
+                <span class="section-kicker">Live progress</span>
+                <h2>Job Status</h2>
+                <p id="step-label" class="subtle">Preparing job...</p>
+              </div>
+              <span id="job-status" class="status-badge queued">Queued</span>
+            </div>
+
+            <div class="progress-track" aria-label="Job progress">
+              <div id="progress-fill" class="progress-fill"></div>
+            </div>
+
+            <div class="status-metrics">
+              <div>
+                <span>Step</span>
+                <strong id="step-count">-</strong>
+              </div>
+              <div>
+                <span>Estimate</span>
+                <strong id="eta">Calculating...</strong>
+              </div>
+              <div>
+                <span>Elapsed</span>
+                <strong id="elapsed">0s</strong>
+              </div>
+              <div>
+                <span>Cache</span>
+                <strong id="job-cache">-</strong>
+              </div>
+            </div>
+
             <dl class="job-details">
               <div>
                 <dt>Job ID</dt>
@@ -65,29 +107,27 @@
                 <dt>Mode</dt>
                 <dd id="job-mode">-</dd>
               </div>
-              <div>
-                <dt>Cache</dt>
-                <dd id="job-cache">-</dd>
+              <div id="chunk-row" class="is-hidden">
+                <dt>Cleaner</dt>
+                <dd id="chunk-status">-</dd>
               </div>
             </dl>
-            <p id="job-message" class="message">Ready.</p>
-          </article>
 
-          <article class="panel jobs-panel">
-            <div class="section-title">
-              <h2>Previous Jobs</h2>
-              <button id="refresh-jobs" class="secondary" type="button">Refresh</button>
-            </div>
-            <div id="jobs-list" class="jobs-list"></div>
-          </article>
+            <p id="job-message" class="message">Waiting for the job to start.</p>
+            <p id="waiting-note" class="waiting-note">Keep this page open while your transcript is being prepared.</p>
+          </section>
         </section>
 
-        <section class="panel transcript-panel">
+        <section id="result-panel" class="panel transcript-panel is-hidden">
           <div class="section-title">
-            <h2>Transcript</h2>
+            <div>
+              <span class="section-kicker">Output</span>
+              <h2>Transcript</h2>
+              <p id="result-summary" class="subtle">Result is ready.</p>
+            </div>
             <button id="copy-transcript" class="secondary" type="button" disabled>Copy</button>
           </div>
-          <pre id="transcript-output">No transcript loaded.</pre>
+          <pre id="transcript-output">Waiting for transcript...</pre>
         </section>
       </section>
     </main>

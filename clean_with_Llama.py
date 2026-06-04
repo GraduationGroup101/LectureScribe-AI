@@ -1,38 +1,52 @@
 from pathlib import Path
+import os
 import requests
 import re
+from typing import Any, Callable
 
 # =========================
 # SETTINGS
 # =========================
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "llama3.1:8b-instruct-q4_K_M"
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODEL = "openai/gpt-oss-120b"
 
 # split text into chunks of roughly this many characters
 CHUNK_CHARS = 3500
+GROQ_CHUNK_CHARS = 1200
 
 # =========================
 # PROMPT
 # =========================
-SYSTEM_RULES = """You are a transcript cleaner for university lectures.
-Your job: clean transcript text produced by ASR.
+SYSTEM_RULES = """You are a transcript formatter and translator for university lectures.
+Your job: format ASR transcript text, then translate the formatted result into English.
 Rules:
-- Preserve all the original information and meaning, but make it more readable and concise in English.
-- Do not  write any arabic words in Arabic script. Instead, write them in correct English spelling.
-- Keep English technical terms in correct English spelling.
-- Fix obvious spelling and punctuation.
-- Remove filler words, repeated greetings, and stuttering.
-- If the same sentence or phrase appears consecutively, keep only one copy.
-- Do NOT invent new information. Do NOT add explanations.
-- Preserve the original meaning and order.
-- Return only the cleaned transcript.
+- Final output must be English.
+- First preserve the transcript content and structure, then translate it faithfully into English.
+- Do not add new ideas, examples, explanations, or lecture details.
+- Do not delete ideas, examples, explanations, or lecture details.
+- Do not paraphrase beyond what is necessary for faithful English translation.
+- Do not summarize.
+- Preserve the original order of words, sentences, and ideas as much as English allows.
+- Keep English technical terms, variables, equations, function names, code-like phrases, punctuation, and numbers clear.
+- Improve visual formatting with line breaks, paragraph breaks, and indentation.
+- Return only the formatted English transcript.
 """
 
 
 def make_user_prompt(text: str) -> str:
-    return f"""Clean this transcript:
+    return f"""Format this transcript, then translate the final formatted result to English.
+Do not summarize. Do not add new information. Do not delete any information.
+Preserve the original order and keep technical terms, variables, equations, code-like phrases, and numbers clear.
+
+Transcript:
 {text}
 """
+
+
+class CloudCleanerUnavailable(RuntimeError):
+    pass
 
 
 def split_long_text(text: str, max_chars: int):
@@ -201,7 +215,81 @@ def ollama_generate(prompt: str) -> str:
     return data.get("response", "").strip()
 
 
-def clean_transcript_file(input_txt: Path):
+def load_local_env(path: Path = Path(".env")) -> None:
+    """Load simple KEY=VALUE lines from .env without overriding real env vars."""
+    if not path.exists():
+        return
+
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+def groq_generate(prompt: str) -> str:
+    """Call Groq's OpenAI-compatible chat completions API."""
+    load_local_env()
+    api_key = os.environ.get("GROQ_API_KEY", "").strip()
+    if not api_key:
+        raise CloudCleanerUnavailable("GROQ_API_KEY is not set.")
+
+    payload = {
+        "model": GROQ_MODEL,
+        "messages": [
+            {"role": "system", "content": SYSTEM_RULES},
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0.2,
+        "top_p": 0.9,
+        "max_completion_tokens": 4096,
+        "reasoning_effort": "low",
+    }
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+
+    try:
+        r = requests.post(GROQ_URL, json=payload, headers=headers, timeout=180)
+        r.raise_for_status()
+    except requests.RequestException as exc:
+        raise CloudCleanerUnavailable(f"Groq cleaner failed: {exc}") from exc
+
+    data = r.json()
+    choices = data.get("choices") or []
+    if not choices:
+        raise CloudCleanerUnavailable("Groq returned no choices.")
+
+    message = choices[0].get("message") or {}
+    content = message.get("content", "").strip()
+    if not content:
+        finish_reason = choices[0].get("finish_reason", "unknown")
+        usage = data.get("usage") or {}
+        completion_tokens = usage.get("completion_tokens", "unknown")
+        raise CloudCleanerUnavailable(
+            "Groq returned an empty response "
+            f"(finish_reason={finish_reason}, completion_tokens={completion_tokens})."
+        )
+
+    return content
+
+
+ProgressCallback = Callable[[str, dict[str, Any]], None]
+
+
+def clean_transcript_with_generator(
+    input_txt: Path,
+    generate_fn: Callable[[str], str],
+    provider_name: str,
+    chunk_chars: int = CHUNK_CHARS,
+    progress_callback: ProgressCallback | None = None,
+) -> Path | None:
     if not input_txt.exists():
         print(f"Input file not found: {input_txt.resolve()}")
         return None
@@ -218,13 +306,31 @@ def clean_transcript_file(input_txt: Path):
     output_dir.mkdir(exist_ok=True)
     output_txt = output_dir / f"{input_txt.stem}_cleanedv5.txt"
 
-    chunks = split_text(raw, CHUNK_CHARS)
+    chunks = split_text(raw, chunk_chars)
     print(f"Loaded text. Chunks: {len(chunks)}")
+    if progress_callback:
+        progress_callback(
+            "formatting",
+            {
+                "detail": f"{provider_name} is preparing transcript chunks",
+                "chunk_index": 0,
+                "chunk_total": len(chunks),
+            },
+        )
 
     cleaned_chunks = []
     for i, ch in enumerate(chunks, start=1):
-        print(f"Cleaning chunk {i}/{len(chunks)} ...")
-        out = ollama_generate(make_user_prompt(ch))
+        print(f"{provider_name} cleaning chunk {i}/{len(chunks)} ...")
+        if progress_callback:
+            progress_callback(
+                "formatting",
+                {
+                    "detail": f"{provider_name} cleaning chunk {i} of {len(chunks)}",
+                    "chunk_index": i,
+                    "chunk_total": len(chunks),
+                },
+            )
+        out = generate_fn(make_user_prompt(ch))
         cleaned_chunks.append(dedupe_consecutive_units(out))
 
     cleaned = "\n\n".join(cleaned_chunks).strip()
@@ -235,6 +341,32 @@ def clean_transcript_file(input_txt: Path):
     print(f"Saved cleaned transcript to: {output_txt.resolve()}")
 
     return output_txt
+
+
+def clean_transcript_file(
+    input_txt: Path,
+    progress_callback: ProgressCallback | None = None,
+) -> Path | None:
+    return clean_transcript_with_generator(
+        input_txt,
+        ollama_generate,
+        "Ollama",
+        CHUNK_CHARS,
+        progress_callback,
+    )
+
+
+def clean_transcript_file_with_groq(
+    input_txt: Path,
+    progress_callback: ProgressCallback | None = None,
+) -> Path | None:
+    return clean_transcript_with_generator(
+        input_txt,
+        groq_generate,
+        "Groq",
+        GROQ_CHUNK_CHARS,
+        progress_callback,
+    )
 
 
 # if you want to run this file alone to clean a transcript without running the faster-whisper code, you can do that by putting the name of the transcript file in the same directory as this cleaner.py file and then run it. it will produce a cleaned version of the transcript with the name "OutputForOllama_" + input_file_name + "_cleanedv5.txt"
