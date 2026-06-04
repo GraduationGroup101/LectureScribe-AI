@@ -2,12 +2,18 @@ from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 import json
 from pathlib import Path
+import sys
 from threading import Lock
 from time import time
 from uuid import uuid4
 
+for stream in (sys.stdout, sys.stderr):
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(encoding="utf-8", errors="replace")
+
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from MainCode_FasterWhisper import (
@@ -23,6 +29,7 @@ app = FastAPI(
     description="Download lecture audio, transcribe it with faster-whisper, and optionally clean it with Ollama.",
     version="1.0.0",
 )
+app.mount("/front", StaticFiles(directory="front"), name="front")
 
 executor = ThreadPoolExecutor(max_workers=1)
 JOBS_FILE = Path("jobs.json")
@@ -171,9 +178,15 @@ def submit_job(request_data: dict) -> dict:
 def root() -> dict:
     return {
         "name": "LectureScribe-AI API",
+        "app": "/app",
         "docs": "/docs",
         "health": "/health",
     }
+
+
+@app.get("/app", response_class=FileResponse)
+def frontend() -> FileResponse:
+    return FileResponse(Path("front") / "index.html")
 
 
 @app.get("/health")

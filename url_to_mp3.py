@@ -1,8 +1,13 @@
 import os
 import re
+import sys
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 from pathlib import Path
 import yt_dlp
+
+for stream in (sys.stdout, sys.stderr):
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(encoding="utf-8", errors="replace")
 
 os.environ["PATH"] += os.pathsep + r"C:\Users\Mahmoud\Downloads\Compressed\ffmpeg-8.1-essentials_build\ffmpeg-8.1-essentials_build\bin"
 

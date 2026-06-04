@@ -1,9 +1,14 @@
 import json
 import os
 from pathlib import Path
+import sys
 from threading import Lock
 from time import time
 from typing import Any
+
+for stream in (sys.stdout, sys.stderr):
+    if hasattr(stream, "reconfigure"):
+        stream.reconfigure(encoding="utf-8", errors="replace")
 
 from faster_whisper import WhisperModel
 
@@ -33,8 +38,8 @@ LEGACY_FILENAME_CACHE_FIELDS = (
 
 
 def get_output_paths_for_audio(audio_path: Path) -> tuple[Path, Path]:
-    raw_transcript = Path("OutputForWhisper") / f"{audio_path.stem}_transcript.txt"
-    cleaned_transcript = Path("OutputForOllama") / f"{audio_path.stem}_transcript_cleanedv5.txt"
+    raw_transcript = Path("OutputForWhisper") / f"{audio_path.stem}_english_transcript.txt"
+    cleaned_transcript = Path("OutputForOllama") / f"{audio_path.stem}_english_transcript_cleanedv5.txt"
     return raw_transcript, cleaned_transcript
 
 
@@ -162,6 +167,27 @@ def find_existing_cleaned_output(
     )
 
 
+def find_existing_raw_output(video_id: str) -> Path | None:
+    output_dir = Path("OutputForWhisper")
+    if not output_dir.exists():
+        return None
+
+    patterns = (
+        f"{video_id}_*_english_transcript.txt",
+        f"{video_id}_*_transcript.txt",
+    )
+    matches: list[Path] = []
+    for pattern in patterns:
+        matches.extend(output_dir.glob(pattern))
+
+    matches = sorted(
+        {path.resolve(): path for path in matches}.values(),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    return matches[0] if matches else None
+
+
 def delete_audio_file(audio_path: Path) -> tuple[bool, str | None]:
     if not audio_path.exists():
         return False, None
@@ -184,9 +210,10 @@ def print_final_output(cleaned_path: Path) -> None:
 def build_initial_prompt() -> str:
     return (
         "This is a university lecture in Arabic with English technical terms.\n"
+        "Write the transcript in English only.\n"
+        "Translate Arabic speech into clear English text.\n"
+        "Do not write Arabic words using Arabic script.\n"
         "Keep English technical terms correctly when they appear.\n"
-        "Correctly handle Arabic diacritics and punctuation.\n"
-        "Transcribe the lecture accurately, preserving the original language and technical terms.\n"
     )
 
 
@@ -249,7 +276,7 @@ def transcribe_audio(
     output_dir = Path("OutputForWhisper")
     output_dir.mkdir(exist_ok=True)
 
-    out = output_dir / f"{audio_path.stem}_transcript.txt"
+    out = output_dir / f"{audio_path.stem}_english_transcript.txt"
     out.write_text(text, encoding="utf-8")
 
     print(f"\nSaved to: {out.resolve()}")
@@ -306,6 +333,28 @@ def process_youtube_url(
                     "used_cached_cleaned_transcript": True,
                 }
             )
+            return result
+
+    if use_cached_outputs:
+        existing_raw_path = find_existing_raw_output(video_id)
+        if existing_raw_path:
+            result["raw_transcript_path"] = str(existing_raw_path)
+            result["used_cached_raw_transcript"] = True
+
+            if not clean:
+                return result
+
+            print("Running Ollama cleaner ...")
+            cleaned = clean_transcript_file(existing_raw_path)
+            result["cleaned_transcript_path"] = str(cleaned) if cleaned else None
+            if cleaned:
+                save_cleaned_cache_entry(
+                    video_id,
+                    original_url=youtube_url,
+                    canonical_url=canonical_url,
+                    raw_path=existing_raw_path,
+                    cleaned_path=cleaned,
+                )
             return result
 
     audio_path = Path(
