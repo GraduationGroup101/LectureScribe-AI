@@ -48,23 +48,79 @@ def emit_progress(
     stage: str,
     **details: Any,
 ) -> None:
+    """Send a pipeline progress event when a callback is available.
+
+    Purpose:
+        Decouple pipeline work from API job-status persistence and frontend updates.
+    Args:
+        progress_callback: Optional callable receiving a stage and details dictionary.
+        stage: Stable pipeline stage identifier.
+        **details: Stage-specific progress metadata.
+    Returns:
+        None.
+    Workflow:
+        Invokes the callback only when the caller supplied one.
+    Connects to:
+        Called throughout transcription and cleaning; the API supplies
+        `update_job_progress` through a lambda.
+    """
     if progress_callback:
         progress_callback(stage, details)
 
 
 def get_output_paths_for_audio(audio_path: Path) -> tuple[Path, Path]:
+    """Derive raw and cleaned transcript paths from an MP3 path.
+
+    Purpose:
+        Keep output naming consistent across cache checks and new processing.
+    Args:
+        audio_path: Downloaded or cached audio file path.
+    Returns:
+        A `(raw_transcript_path, cleaned_transcript_path)` tuple.
+    Workflow:
+        Uses the audio filename stem and the project's two output directories.
+    Connects to:
+        Called by `process_youtube_url` after audio download.
+    """
     raw_transcript = Path("OutputForWhisper") / f"{audio_path.stem}_transcript.txt"
     cleaned_transcript = Path("OutputForOllama") / f"{audio_path.stem}_transcript_cleanedv5.txt"
     return raw_transcript, cleaned_transcript
 
 
 def list_ollama_output_filenames(output_dir: Path = Path("OutputForOllama")) -> list[str]:
+    """List files currently stored in the cleaned-transcript directory.
+
+    Purpose:
+        Maintain a lightweight filename inventory in persistent JSON state.
+    Args:
+        output_dir: Directory containing cleaned transcript files.
+    Returns:
+        Sorted filenames, or an empty list when the directory does not exist.
+    Workflow:
+        Iterates over direct child files and returns only their names.
+    Connects to:
+        Called by transcript-cache persistence and API job persistence.
+    """
     if not output_dir.exists():
         return []
     return sorted(path.name for path in output_dir.iterdir() if path.is_file())
 
 
 def load_transcript_cache() -> dict[str, Any]:
+    """Load and normalize the persistent video-to-transcript cache.
+
+    Purpose:
+        Restore cleaned transcript locations across API and machine restarts.
+    Args:
+        None.
+    Returns:
+        A dictionary containing normalized `videos` and `llama_folder_filenames` fields.
+    Workflow:
+        Reads JSON when available, recovers from invalid files, validates field types,
+        and refreshes missing filename inventory data.
+    Connects to:
+        Calls `list_ollama_output_filenames`; used by cache lookup and cache writes.
+    """
     if not TRANSCRIPT_CACHE_FILE.exists():
         return {"videos": {}, "llama_folder_filenames": list_ollama_output_filenames()}
 
@@ -85,6 +141,20 @@ def load_transcript_cache() -> dict[str, Any]:
 
 
 def save_transcript_cache(cache: dict[str, Any]) -> None:
+    """Persist transcript cache data with an atomic temporary-file replacement.
+
+    Purpose:
+        Save cache updates while avoiding partially written JSON files.
+    Args:
+        cache: Complete transcript cache dictionary to store.
+    Returns:
+        None.
+    Workflow:
+        Removes obsolete per-video filename fields, refreshes the cleaned-folder
+        inventory, writes a temporary JSON file, and replaces the live cache file.
+    Connects to:
+        Calls `list_ollama_output_filenames`; used by all cache mutation functions.
+    """
     videos = cache.get("videos", {})
     if isinstance(videos, dict):
         for entry in videos.values():
@@ -102,6 +172,20 @@ def save_transcript_cache(cache: dict[str, Any]) -> None:
 
 
 def get_cached_cleaned_entry(video_id: str) -> dict[str, Any] | None:
+    """Return a valid cleaned-transcript cache entry for a YouTube video.
+
+    Purpose:
+        Skip download, Whisper, and cleaning when a current cleaned result exists.
+    Args:
+        video_id: Stable YouTube video ID used as the cache key.
+    Returns:
+        The cache entry when valid, otherwise None.
+    Workflow:
+        Loads the cache, validates prompt version and file existence, removes obsolete
+        fields, refreshes inventory metadata, and deletes stale entries.
+    Connects to:
+        Calls cache load/save helpers; called by `process_youtube_url`.
+    """
     cache = load_transcript_cache()
     entry = cache["videos"].get(video_id)
     if not isinstance(entry, dict):
@@ -141,6 +225,25 @@ def save_cleaned_cache_entry(
     cleaned_path: Path,
     cleaner_provider: str | None = None,
 ) -> dict[str, Any]:
+    """Create or update a video's cleaned-transcript cache entry.
+
+    Purpose:
+        Record enough metadata to reuse a completed result on future requests.
+    Args:
+        video_id: YouTube video ID used as the cache key.
+        original_url: URL submitted by the user.
+        canonical_url: Normalized single-video URL.
+        raw_path: Path to the Faster-Whisper transcript.
+        cleaned_path: Path to the Groq or Ollama result.
+        cleaner_provider: Provider that produced the cleaned file, when known.
+    Returns:
+        The cache entry that was saved.
+    Workflow:
+        Preserves the original creation time, updates paths and timestamps, then writes
+        the complete cache atomically.
+    Connects to:
+        Calls cache load/save helpers; used by output discovery and the main pipeline.
+    """
     cache = load_transcript_cache()
     existing = cache["videos"].get(video_id, {})
     now = time()
@@ -166,6 +269,22 @@ def find_existing_cleaned_output(
     original_url: str,
     canonical_url: str,
 ) -> dict[str, Any] | None:
+    """Discover an existing cleaned file and register it in the JSON cache.
+
+    Purpose:
+        Recover reusable outputs that exist on disk but are missing from cache metadata.
+    Args:
+        video_id: YouTube video ID that prefixes output filenames.
+        original_url: URL submitted for the current request.
+        canonical_url: Normalized URL saved with the recovered entry.
+    Returns:
+        A newly saved cache entry, or None when no matching file exists.
+    Workflow:
+        Searches cleaned outputs by video ID, selects the newest eligible file, derives
+        its raw transcript path, and stores a cache entry.
+    Connects to:
+        Calls `save_cleaned_cache_entry`; called by `process_youtube_url`.
+    """
     output_dir = Path("OutputForOllama")
     if not output_dir.exists():
         return None
@@ -200,6 +319,24 @@ def clean_transcript_with_preferred_model(
     allow_ollama_fallback: bool,
     progress_callback: ProgressCallback | None = None,
 ) -> tuple[Path | None, str | None, str | None]:
+    """Clean a raw transcript using Groq first and optionally Ollama second.
+
+    Purpose:
+        Implement the model-selection policy shared by fast and better-format modes.
+    Args:
+        raw_path: Faster-Whisper transcript to clean.
+        allow_ollama_fallback: Whether a Groq failure should start local Ollama cleaning.
+        progress_callback: Optional callback for formatting-stage updates.
+    Returns:
+        `(cleaned_path, provider_name, groq_error)`; values may be None when no cleaner
+        succeeds or fallback is disabled.
+    Workflow:
+        Attempts Groq, records any failure, returns early in fast mode, or invokes Ollama
+        as the better-format fallback.
+    Connects to:
+        Calls both cleaner entry points and `emit_progress`; used by
+        `process_youtube_url`.
+    """
     groq_error = None
 
     try:
@@ -222,6 +359,20 @@ def clean_transcript_with_preferred_model(
 
 
 def find_existing_raw_output(video_id: str) -> Path | None:
+    """Find the newest raw Faster-Whisper output for a YouTube video.
+
+    Purpose:
+        Reuse transcription work when no cleaned result is available.
+    Args:
+        video_id: YouTube video ID expected at the start of the filename.
+    Returns:
+        Path to the newest matching transcript, or None when absent.
+    Workflow:
+        Searches the raw-output directory, removes duplicate resolved paths, sorts by
+        modification time, and selects the newest file.
+    Connects to:
+        Called by `process_youtube_url` before audio download.
+    """
     output_dir = Path("OutputForWhisper")
     if not output_dir.exists():
         return None
@@ -240,6 +391,19 @@ def find_existing_raw_output(video_id: str) -> Path | None:
 
 
 def delete_audio_file(audio_path: Path) -> tuple[bool, str | None]:
+    """Delete a downloaded audio file after successful transcript cleaning.
+
+    Purpose:
+        Reduce repository and disk usage while retaining raw and cleaned text outputs.
+    Args:
+        audio_path: MP3 file to remove.
+    Returns:
+        `(deleted, error_message)`; a missing file returns `(False, None)`.
+    Workflow:
+        Checks existence, attempts `Path.unlink`, and converts OS errors to result data.
+    Connects to:
+        Called by `process_youtube_url` after a cleaned result is secured.
+    """
     if not audio_path.exists():
         return False, None
 
@@ -252,6 +416,19 @@ def delete_audio_file(audio_path: Path) -> tuple[bool, str | None]:
 
 
 def print_final_output(cleaned_path: Path) -> None:
+    """Print a cleaned transcript path and its contents for CLI users.
+
+    Purpose:
+        Present the final pipeline result when the main module runs directly.
+    Args:
+        cleaned_path: Existing cleaned transcript file.
+    Returns:
+        None.
+    Workflow:
+        Prints the absolute file location, then reads and prints UTF-8 content.
+    Connects to:
+        Called by `main` after `process_youtube_url` returns a cleaned path.
+    """
     print("Cached audio and final Ollama output found for this file:")
     print(cleaned_path.resolve())
     print("\n===== FINAL OLLAMA OUTPUT =====\n")
@@ -259,6 +436,19 @@ def print_final_output(cleaned_path: Path) -> None:
 
 
 def build_initial_prompt() -> str:
+    """Build the Faster-Whisper context prompt for mixed-language lectures.
+
+    Purpose:
+        Encourage original-language transcription while preserving English terminology.
+    Args:
+        None.
+    Returns:
+        Prompt text passed to Faster-Whisper's `initial_prompt` option.
+    Workflow:
+        Combines fixed language, script, terminology, and repetition instructions.
+    Connects to:
+        Called by `transcribe_audio`.
+    """
     return (
         "This is a university lecture in Arabic with English technical terms.\n"
         "Transcribe the speech in the original spoken language.\n"
@@ -275,6 +465,23 @@ def get_whisper_model(
     device: str = DEVICE,
     compute_type: str = COMPUTE_TYPE,
 ) -> WhisperModel:
+    """Load or reuse a Faster-Whisper model instance.
+
+    Purpose:
+        Avoid expensive model reloads across sequential API jobs.
+    Args:
+        model_path: Local model directory or model identifier.
+        device: Execution device such as `cuda` or `cpu`.
+        compute_type: Faster-Whisper numerical precision configuration.
+    Returns:
+        A cached, ready-to-use `WhisperModel`.
+    Workflow:
+        Builds a configuration key, locks shared state, creates the model once, and
+        returns the cached instance on later calls.
+    Connects to:
+        Called by `transcribe_audio`; accesses `whisper_models` under
+        `whisper_model_lock`.
+    """
     key = (model_path, device, compute_type)
     with whisper_model_lock:
         model = whisper_models.get(key)
@@ -301,6 +508,29 @@ def transcribe_audio(
     language: str = DEFAULT_LANGUAGE,
     progress_callback: ProgressCallback | None = None,
 ) -> tuple[Path, dict[str, Any]]:
+    """Transcribe an audio file with Faster-Whisper and save raw text.
+
+    Purpose:
+        Convert downloaded lecture audio into the raw transcript used by all cleaners.
+    Args:
+        audio_path: Existing audio file to transcribe.
+        model_path: Local model directory or model identifier.
+        model_size: Display name used in logs.
+        device: Execution device.
+        compute_type: Model numerical precision.
+        language: Whisper language code supplied to transcription.
+        progress_callback: Optional callback for transcription-stage updates.
+    Returns:
+        `(raw_transcript_path, metadata)` containing detected language information.
+    Raises:
+        FileNotFoundError: If the audio path does not exist.
+    Workflow:
+        Loads the cached model, transcribes with VAD, beam search, and the initial
+        prompt, joins segments, writes UTF-8 text, and reports metadata.
+    Connects to:
+        Calls `get_whisper_model`, `build_initial_prompt`, and `emit_progress`; called by
+        `process_youtube_url`.
+    """
     if not audio_path.exists():
         raise FileNotFoundError(f"File not found: {audio_path.resolve()}")
 
@@ -356,6 +586,32 @@ def process_youtube_url(
     language: str = DEFAULT_LANGUAGE,
     progress_callback: ProgressCallback | None = None,
 ) -> dict[str, Any]:
+    """Run the complete cached YouTube-to-transcript pipeline.
+
+    Purpose:
+        Coordinate URL validation, cache reuse, audio download, Whisper transcription,
+        model cleaning, cache persistence, and MP3 cleanup.
+    Args:
+        youtube_url: YouTube lecture URL to process.
+        clean: Enables Ollama fallback when Groq is unavailable.
+        skip_audio_cache: Forces yt-dlp to download audio again.
+        use_cached_outputs: Allows reuse of cleaned and raw transcript files.
+        language: Whisper language code.
+        progress_callback: Optional callback receiving pipeline stage updates.
+    Returns:
+        A result dictionary containing output paths, cache flags, provider information,
+        transcription metadata, and audio deletion status.
+    Raises:
+        ValueError: If the URL does not contain a valid video ID.
+        Download, transcription, or cleaner exceptions when required work fails.
+    Workflow:
+        Checks cleaned then raw caches, downloads only when needed, transcribes missing
+        raw text, tries Groq and optional Ollama, saves successful cleaned output in the
+        cache, and deletes the MP3 after cleaning.
+    Connects to:
+        Orchestrates helpers in this module, `url_to_mp3`, and `clean_with_Llama`; called
+        by API background jobs and `main`.
+    """
     emit_progress(progress_callback, "checking_cache", detail="Checking saved transcripts")
     video_id = url_to_mp3.extract_youtube_video_id(youtube_url)
     if not video_id:
@@ -489,6 +745,21 @@ def process_youtube_url(
 
 
 def main() -> None:
+    """Run the transcript pipeline interactively from the command line.
+
+    Purpose:
+        Provide a direct non-API entry point for local processing and debugging.
+    Args:
+        None.
+    Returns:
+        None.
+    Workflow:
+        Prompts for a YouTube URL, runs the pipeline without output-cache reuse, handles
+        errors, and prints either the cleaned result or raw transcript location.
+    Connects to:
+        Calls `url_to_mp3.prompt_for_youtube_url`, `process_youtube_url`, and
+        `print_final_output`.
+    """
     youtube_url = url_to_mp3.prompt_for_youtube_url("Enter YouTube lecture link: ")
 
     try:
