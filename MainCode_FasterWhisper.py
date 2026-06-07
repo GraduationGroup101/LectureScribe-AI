@@ -391,10 +391,10 @@ def find_existing_raw_output(video_id: str) -> Path | None:
 
 
 def delete_audio_file(audio_path: Path) -> tuple[bool, str | None]:
-    """Delete a downloaded audio file after successful transcript cleaning.
+    """Delete a downloaded audio file after successful job processing.
 
     Purpose:
-        Reduce repository and disk usage while retaining raw and cleaned text outputs.
+        Reduce repository and disk usage after the transcript result is safely stored.
     Args:
         audio_path: MP3 file to remove.
     Returns:
@@ -402,7 +402,7 @@ def delete_audio_file(audio_path: Path) -> tuple[bool, str | None]:
     Workflow:
         Checks existence, attempts `Path.unlink`, and converts OS errors to result data.
     Connects to:
-        Called by `process_youtube_url` after a cleaned result is secured.
+        Called by `process_youtube_url` before a downloaded job returns successfully.
     """
     if not audio_path.exists():
         return False, None
@@ -413,6 +413,42 @@ def delete_audio_file(audio_path: Path) -> tuple[bool, str | None]:
         return False, f"{type(exc).__name__}: {exc}"
 
     return True, None
+
+
+def delete_audio_files_for_video(
+    video_id: str,
+    downloads_dir: Path = Path("downloads"),
+) -> tuple[bool, str | None]:
+    """Delete any cached MP3 files associated with a YouTube video.
+
+    Purpose:
+        Remove audio left by earlier interrupted runs when a later job completes from a
+        raw or cleaned transcript cache hit.
+    Args:
+        video_id: YouTube video ID used at the beginning of downloaded filenames.
+        downloads_dir: Directory containing temporary MP3 files.
+    Returns:
+        `(deleted, error_message)` where `deleted` is True when at least one file was
+        removed and `error_message` describes any files Windows could not delete.
+    Workflow:
+        Finds MP3 files prefixed by the video ID and delegates deletion of each file to
+        `delete_audio_file`.
+    Connects to:
+        Calls `delete_audio_file`; used by successful cache-return paths in
+        `process_youtube_url`.
+    """
+    if not downloads_dir.exists():
+        return False, None
+
+    deleted_any = False
+    errors = []
+    for audio_path in downloads_dir.glob(f"{video_id}_*.mp3"):
+        deleted, error = delete_audio_file(audio_path)
+        deleted_any = deleted_any or deleted
+        if error:
+            errors.append(f"{audio_path.name}: {error}")
+
+    return deleted_any, "; ".join(errors) or None
 
 
 def print_final_output(cleaned_path: Path) -> None:
@@ -607,7 +643,7 @@ def process_youtube_url(
     Workflow:
         Checks cleaned then raw caches, downloads only when needed, transcribes missing
         raw text, tries Groq and optional Ollama, saves successful cleaned output in the
-        cache, and deletes the MP3 after cleaning.
+        cache, and deletes downloaded MP3 audio before successful completion.
     Connects to:
         Orchestrates helpers in this module, `url_to_mp3`, and `clean_with_Llama`; called
         by API background jobs and `main`.
@@ -651,6 +687,9 @@ def process_youtube_url(
                     "used_cached_cleaned_transcript": True,
                 }
             )
+            audio_deleted, audio_delete_error = delete_audio_files_for_video(video_id)
+            result["audio_deleted"] = audio_deleted
+            result["audio_delete_error"] = audio_delete_error
             return result
 
     if use_cached_outputs:
@@ -678,6 +717,9 @@ def process_youtube_url(
                 )
             elif not clean:
                 emit_progress(progress_callback, "cache_hit", detail="Using saved Whisper output")
+            audio_deleted, audio_delete_error = delete_audio_files_for_video(video_id)
+            result["audio_deleted"] = audio_deleted
+            result["audio_delete_error"] = audio_delete_error
             return result
 
     emit_progress(progress_callback, "downloading", detail="Downloading audio from YouTube")
@@ -728,7 +770,7 @@ def process_youtube_url(
     result["cleaner_provider"] = cleaner_provider
     result["cleaner_error"] = cleaner_error
     if cleaned:
-        emit_progress(progress_callback, "saving", detail="Saving cache and deleting audio")
+        emit_progress(progress_callback, "saving", detail="Saving transcript cache")
         save_cleaned_cache_entry(
             video_id,
             original_url=youtube_url,
@@ -737,9 +779,11 @@ def process_youtube_url(
             cleaned_path=cleaned,
             cleaner_provider=cleaner_provider,
         )
-        audio_deleted, audio_delete_error = delete_audio_file(audio_path)
-        result["audio_deleted"] = audio_deleted
-        result["audio_delete_error"] = audio_delete_error
+
+    emit_progress(progress_callback, "saving", detail="Removing temporary audio")
+    audio_deleted, audio_delete_error = delete_audio_file(audio_path)
+    result["audio_deleted"] = audio_deleted
+    result["audio_delete_error"] = audio_delete_error
 
     return result
 
