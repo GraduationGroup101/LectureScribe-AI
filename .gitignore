@@ -4,3 +4,6 @@ jobs.json
 jobs.json.tmp
 transcript_cache.json
 transcript_cache.json.tmp
+.env
+downloads/
+API_WORKFLOW.md
