@@ -1,0 +1,221 @@
+**Lecture Notes – VLANs and IEEE 802.1Q**
+
+---
+
+### 1. Recap of the Previous Session
+- **Topic:** Virtual LANs (VLANs)
+- **Key Point:** Modern switches often operate as **Layer‑3 (network‑layer) switches**, not just Layer‑2 (data‑link). - **Capability:** A single switch can host multiple VLANs, effectively separating traffic as if a router existed between each VLAN. - **Inter‑VLAN Communication:** Devices in different VLANs—even when connected to the same physical switch—must pass through a router (or a Layer‑3 switch) to communicate. ---
+
+### 2. Motivation for Using VLANs
+
+| Reason | Explanation |
+|--------|-------------|
+| **Reduce Broadcast Domain** | Without VLANs, a broadcast (e.g., ARP, DHCP) sent by any host propagates to every switch and reaches the router’s interface, then stops. This can involve thousands of hosts, creating excessive traffic and overhead. |
+| **Improve Security** | By segmenting the network, traffic from one VLAN cannot reach another without routing. Sensitive groups (e.g., accountants) can be placed on a dedicated VLAN, limiting exposure. |
+| **Simplify Management** | Logical separation of users and devices makes policy enforcement and troubleshooting easier. |
+
+---
+
+### 3. Introduction to IEEE 802.1Q
+
+- **Purpose:** Provides a method to **identify the VLAN** to which an Ethernet frame belongs when it traverses a trunk link. - **Why It’s Needed:** The original Ethernet frame format does **not contain a VLAN identifier**. Without additional information, a switch receiving a frame cannot determine its VLAN membership. ---
+
+### 4. How 802.1Q Works
+
+1. **Tag Insertion**
+- A **4‑byte tag** is inserted into the Ethernet frame between the source MAC address and the EtherType/Length field. 2. **Tag Structure**
+- The tag includes a **12‑bit VLAN ID** field, allowing up to 4096 VLANs (0 and 4095 are reserved). 3. **Operation on Trunk Links**
+- When a frame moves from one switch to another over a trunk, the VLAN ID in the tag tells the receiving switch which VLAN the frame belongs to. - This enables multiple VLANs (e.g., VLAN 5, VLAN 6, VLAN 10, VLAN 20) to share a single physical link while remaining logically separate. ---
+
+### 5. Summary
+
+- VLANs partition a Layer‑2 network into multiple broadcast domains, reducing unnecessary traffic and enhancing security. - IEEE 802.1Q adds a 4‑byte tag with a 12‑bit VLAN ID to Ethernet frames, allowing switches to recognize and forward frames to the correct VLAN over trunk links. ---
+
+*End of notes.*
+
+**VLAN Identification**
+- Each frame carries a VLAN ID that tells the switch which VLAN the frame belongs to (e.g., VLAN 1, VLAN 2, VLAN 3, etc.). **Switch Self‑Learning (Review)**
+- A switch builds its MAC‑address table automatically:
+- When a frame arrives from **A**, the switch records **A**’s MAC address and the port it came in on. - When a frame arrives from **B**, the switch records **B**’s MAC address and its port. - This learning process allows the switch to forward future frames directly to the correct port. ---
+
+### Point‑to‑Point Protocol (PPP)
+
+**Context**
+- PPP is used when configuring a home router for ADSL or other broadband connections. - During setup you select the **PPP** option to communicate with the ISP. **Layer**
+- PPP operates at the **Data Link Layer** of the OSI model. **Relation to Other Protocols**
+- PPP is similar in function to **HDLC**, but most telecommunications providers use PPP. - It is a wired protocol (telephone/ADSL line), which makes management simpler than wireless or broadcast media. **Typical Uses**
+- Dial‑up connections between a residential host and an ISP. - Simple point‑to‑point links such as SONET (Synchronous Optical Networking) connections. **Key Characteristics**
+- **Very simple** and streamlined; considered the simplest protocol in the data‑link family. ---
+
+### PPP Requirements
+
+- **Packet Framing** – PPP must encapsulate each higher‑layer packet within a PPP frame. - **Encapsulation** – The protocol provides a method to wrap (encapsulate) data from the network layer. - **Bit Transparency** – The link must be able to carry any arbitrary bit pattern without interpretation; no bit pattern is reserved in the data field. - **Error Detection** – PPP includes mechanisms to detect errors (e.g., a Frame Check Sequence). It does **not** provide error correction, only detection. **Point‑to‑Point Protocol (PPP) – Data‑Link Layer Overview**
+
+---
+
+### 1. General Characteristics
+- **Purpose:** Carries any type of data received from the network layer. - **Connection Liveness:** Maintains the link for an extended period. - **Network‑Layer Address Negotiation:** Hosts on each side of the link must learn and configure each other’s network‑layer addresses. ### 2. What PPP Does **NOT** Provide
+| Feature | Reason |
+|---------|--------|
+| Error correction | Handled by higher layers; PPP keeps the protocol simple. |
+| Flow control (stop/resume sending) | Not required; flow control is implemented in protocols such as HDLC, not in PPP. |
+| Sequencing of frames | Left to higher‑layer protocols. |
+| Multipoint support | PPP is designed for point‑to‑point links only. |
+
+---
+
+### 3. PPP Frame Structure
+
+```
+| Flag | Address | Control | Protocol / Info | FCS | Flag |
+```
+
+| Field | Description | Fixed Value (typical) |
+|-------|-------------|-----------------------|
+| **Flag** | Delimits the start and end of a frame. It is a single byte (0x7E). | 0x7E |
+| **Address** | Identifies the destination; the same value is used for all PPP units. | 0xFF (all‑ones) |
+| **Control** | Reserved for possible future use; currently a fixed value. | 0x03 (or 0x00 in many implementations) |
+| **Protocol / Info** | Carries the encapsulated network‑layer packet (variable length). | – |
+| **FCS** (Frame Check Sequence) | Error‑detecting checksum. | – |
+| **Flag** | Closing delimiter, identical to the opening flag. | 0x7E |
+
+---
+
+### 4. Handling Flag‑Like Patterns Inside the Data
+
+- The flag byte (0x7E) could accidentally appear in the payload. - To avoid confusion between a genuine delimiter and a data byte that looks like a flag, PPP uses **byte stuffing** (also called **character stuffing**):
+1. When the transmitter detects the flag pattern in the data, it inserts an extra escape byte (0x7D) before the flag‑like byte. 2. The escaped byte is then XOR‑ed with 0x20, turning 0x7E into 0x5E (and similarly for other control characters). 3. The receiver, upon seeing the escape byte 0x7D, knows that the following byte is not a delimiter but part of the payload and restores the original value. This mechanism lets the receiver reliably distinguish between actual frame delimiters and identical byte patterns that belong to the information field. ---
+
+### 5. Summary
+
+- PPP is a **simple, lightweight** data‑link protocol for point‑to‑point links. - It deliberately omits error correction, flow control, sequencing, and multipoint capabilities, delegating those responsibilities to higher layers. - The frame is bounded by a unique flag byte (0x7E) at both ends, with fixed address and control fields. - **Byte stuffing** resolves the ambiguity when the flag pattern occurs within the payload, ensuring correct frame delimitation. **Example: PPP Framing and Byte Stuffing**
+
+- Assume we have a data frame that contains the same flag pattern as the PPP flag (all‑zeroes except the flag byte). - To avoid confusion with the flag, we insert a special stuffing byte that ends with the bit pattern **0.1** (the standard PPP escape sequence). - At the receiver side the stuffing byte is removed, restoring the original data. - PPP is one of the simplest link‑layer protocols: the **address** field is constant (0xFF) and the **control** field is constant (0x03). No additional configuration is required beyond these fixed values. ---
+
+## The “Day in the Life” of a Web Request
+
+### Overview
+We will follow a single HTTP request from the moment a user opens a browser to the moment the response is received. This walk‑through ties together all the protocol layers we have studied (physical, data‑link, network, transport, and application). ### 1. Connecting to the Local Network
+
+1. **Physical / Data‑Link Layer**
+- The laptop connects to the corporate network either via Wi‑Fi or Ethernet (through a switch). 2. **Initial IP Configuration**
+- At first the host has **no valid IP address**. - The host must obtain an IP address from the network. ### 2. Obtaining an IP Address – DHCP
+
+| Step | Description |
+|------|-------------|
+| **Protocol** | **DHCP (Dynamic Host Configuration Protocol)** – an application‑layer protocol that runs over **UDP** (client port 68, server port 67). |
+| **Message flow** | 1. The client broadcasts a **DHCPDISCOVER** message because it does not yet know the server’s address. The broadcast is sent to the well‑known UDP port 68. <br>2. All DHCP servers on the LAN receive the broadcast. |
+| **Server response** | The DHCP server replies with a **DHCPOFFER** that contains an IP address lease, subnet mask, default gateway, DNS server addresses, etc. |
+| **Completion** | The client accepts the offer (DHCPREQUEST) and the server acknowledges (DHCPACK). The client now has a valid **IP address** at the **Network Layer**. |
+
+### 3. Resolving the Destination Host – DNS
+
+- After obtaining an IP address, the browser needs to contact **google.com**. - The required protocol for name resolution is **DNS (Domain Name System)**. - The browser sends a DNS query (typically over UDP port 53) to the configured DNS server asking for the **IP address of google.com**. - The DNS server replies with the IPv4 (or IPv6) address of the Google web server. ### 4. Establishing a TCP Connection
+
+- With the destination IP known, the browser initiates a **TCP** three‑way handshake to the server’s port 80 (HTTP) or 443 (HTTPS). - TCP operates over **IP** (Network Layer) and provides reliable, ordered delivery for the subsequent HTTP request. ### 5. Sending the HTTP Request
+
+- Once the TCP connection is established, the browser sends an **HTTP GET** request (or HTTPS request if using TLS). - The request traverses the protocol stack:
+- **Application Layer:** HTTP message. - **Transport Layer:** TCP segment. - **Network Layer:** IP packet. - **Data‑Link Layer:** Ethernet frame (or Wi‑Fi frame). - **Physical Layer:** Bits on the wire. ### 6. Receiving the Response
+
+- The server processes the request and returns an HTTP response (HTML, CSS, JavaScript, etc.) using the same layered path in reverse. - The browser renders the received content, completing the “day in the life” of that web request. ---
+
+### Key Takeaways
+
+- **DHCP** automatically provides the host with an IP address, gateway, and DNS information using UDP broadcasts. - **DNS** translates human‑readable domain names (e.g., *google.com*) into IP addresses required for routing. - The full request journey illustrates how each protocol layer builds upon the previous one, from the physical connection up to the application‑level HTTP exchange. **Study Notes – DNS Resolution and ARP Interaction**
+
+---
+
+### 1. Scenario Overview
+- A device initially does **not know its own hostname or IP address**. - After obtaining an IP address, it needs to find the IP address of **`google.com`**. ---
+
+### 2. Locating the DNS Server
+- The DNS server resides **in a different building of the same organization** (a separate DNS server host). - The device will first try to contact this internal DNS server. ---
+
+### 3. Missing MAC Address of the Router
+- The device knows the **router’s IP address** but **does not know the router’s MAC address**. - To obtain the MAC address, the device uses the **ARP (Address Resolution Protocol)**, which operates at the **Network Layer**. **ARP Process**
+1. The device broadcasts an ARP request asking “Who has IP *X*? Tell *Y*.”
+2. The router replies with its **MAC address**. 3. The device now has the router’s MAC address and can forward frames to it. ---
+
+### 4. DNS Query for `google.com`
+- DNS operates at the **Application Layer** and uses **UDP** (typically port 53). - The query flow is:
+
+1. **Device → Internal DNS Server** (in the same organization). 2. If the internal DNS server does **not have the record** in its cache, it forwards the request upward. ---
+
+### 5. DNS Hierarchy and Forwarding Path
+The request traverses several DNS entities in order:
+
+1. **Local DNS resolver on the device** (often a stub resolver). 2. **DNS resolver on the router** (if configured). 3. **Organizational DNS server** (the one in the other building). 4. **External DNS services** (e.g., ISP’s DNS such as SpeedClick or SIP). 5. **Top‑Level Domain (TLD) servers** for the `.com` zone. 6. **Authoritative DNS server for `google.com`**. Each step may involve caching; if a cache contains the answer, the lookup stops early. ---
+
+### 6. Step‑by‑Step Resolution for a First‑Time Query
+- **Cache Miss**: The address is not present in any cache. - The device sends the query to its **local DNS resolver**. - The resolver forwards the request to the **router’s DNS** (if any). - The router forwards to the **organizational DNS server**. - The organizational server forwards to the **external DNS provider** (e.g., ISP). - The external provider contacts the **TLD `.com` servers**, which then direct the query to the **authoritative `google.com` server**. - The authoritative server returns the **IP address of `google.com`** back through the same chain to the device. ---
+
+### 7. Performance Considerations
+- Although the lookup involves many hops, **modern networking hardware and software process these steps extremely quickly**. - The apparent latency is negligible for the user because each component (ARP, DNS, routing) is highly optimized. ---
+
+### 8. Summary
+- **ARP** resolves the router’s MAC address, enabling Ethernet‑level communication. - **DNS** resolves domain names to IP addresses, using a hierarchical chain of resolvers and authoritative servers. - Even a first‑time lookup, which traverses multiple caches and servers, completes in a fraction of a second due to efficient protocol design and fast processing. **TCP Handshake and HTTP Request Flow**
+
+- **Domain resolution** – The ID (IP address) of `google.com` is obtained first. - **TCP connection is required** – The HTTP protocol cannot send a request until a TCP handshake is completed between the client host and Google’s server. - **Three‑way handshake (TCP)**
+1. **SYN** – The client sends a SYN packet to the server. 2. **SYN‑ACK** – The server replies with a SYN‑ACK packet. 3. **ACK** – The client acknowledges with an ACK packet. - After this exchange a TCP connection is established (the connection is now “oriented”). - **HTTP request** – With the TCP connection in place, the client can send an HTTP request for the Google homepage. - **Server response** – Google’s server returns the requested page, which the client receives and displays (the Google home page appears on the device). ---
+
+**Summary of Material Covered (Two Chapters)**
+
+- The instructor condensed everything studied over the two chapters into **four to five slides**. - Topics included:
+- Core concepts of the Data Link and Network layers. - Various encoding schemes and other detailed mechanisms (many of which were only mentioned briefly due to time constraints). ---
+
+**What Comes Next? – Assignments and Grading**
+
+- **Completed**: Data Link Layer. - **Next focus**: Network Layer. - **Assignments**:
+- Posted on the course “Model” page. - A grade‑distribution sheet is also available there. - **Components of the grade**:
+- Quizzes, regular assignments, and other tasks assigned by the instructor. - **Workload**:
+- **6 semester‑long assignments**. - **3 end‑of‑semester projects** (the numbers 4, 6, 3, 18, 6 in the transcript refer to the point values allocated to these items). ---
+
+**Course Roadmap – Remaining Chapters**
+
+All mandatory core chapters for the undergraduate networking course have now been completed. The remaining optional chapters can be covered either in a second networking course (Network II) or, at the instructor’s discretion, within the same course. The remaining chapters are:
+
+1. **Wireless Networks**
+- Topics: wireless communication, cellular networks, mobile devices, and related technologies. 2. **Multimedia Networking**
+- Topics: transmission of video, audio, and images; SIP (Session Initiation Protocol); content providers; and other multimedia services. 3. **Network Security**
+- Topics: security aspects of network protocols, private vs. public addressing, public‑key cryptography, and related security mechanisms. These chapters will be introduced after the Network Layer material is finished. **Study Notes – Multimedia Networking (Chapter 7)**
+
+---
+
+### 1. Overview of the Lecture
+- The class will focus on **Multimedia Networking** (Chapter 7 of the textbook). - Previous semester topics (Network Security) will be revisited later; the current emphasis is on practical multimedia concepts. ---
+
+### 2. Simple Management Network Protocol (SNMP)
+- **SNMP** is the protocol used for **network management**, monitoring, and control. - It is essential for administrators who need to observe network performance and troubleshoot issues. ---
+
+### 3. Multimedia Networking – Main Themes
+
+| Theme | Description |
+|-------|-------------|
+| **Multimedia Networking Applications** | • How applications operate with multimedia data.<br>• **Streaming** – delivery of live or on‑demand video.<br>• **Stored Video** – playback of pre‑recorded content.<br>• **Voice over IP (VoIP)** – transmission of voice packets over IP networks.<br>• **Real‑Time Conversational Applications** – e.g., video conferencing, online gaming. |
+| **Network Support for Multimedia** | • Underlying network mechanisms that enable multimedia services (e.g., QoS, traffic shaping, multicast).<br>• Overview of the protocols that will be covered in this chapter. |
+
+---
+
+### 4. Suggested Pre‑Reading
+- Search the following headings on Google (or any academic search engine) to get a preview of the material: <br>• *Multimedia Networking Applications* <br>• *Network Support for Multimedia* <br>• *Relevant Protocols for Multimedia*
+- Reviewing external sources will provide additional context and examples beyond the textbook. ---
+
+### 5. Practical Focus – “More Interesting” Topics
+- The instructor recommends concentrating on **multimedia topics that are directly applicable to content creators** (e.g., YouTubers, streamers). - These areas tend to be more engaging and provide hands‑on experience with real‑world tools. ---
+
+### 6. Security (Deferred)
+- Detailed coverage of **Network Security** will be handled by **Ismail** in a later session. - Students should expect a separate security module after the multimedia material. ---
+
+### 7. Example Project Mentioned
+- A project involving **Voice Core Recorder** was referenced: <br>• Approximately **15 protocols** are associated with voice recording and transmission. <br>• The project is linked to a company (details omitted). - Students are encouraged to explore similar voice‑related protocols and their implementations. ---
+
+### 8. Course Plan for the Remaining Weeks
+
+1. **Complete Chapter 7** (Multimedia Networking). 2. **Open new chapters** as needed, depending on time and class progress. 3. **Discussion sessions**:
+- Review previously covered material. - Solve homework problems together. 4. **Flexibility**: If time permits, revisit earlier chapters for deeper discussion. ---
+
+### 9. Closing Remarks
+- The instructor thanked the class and invited any final questions. - The session concluded with a brief exchange of thanks. ---
+
+**Key Takeaways**
+- Understand the role of SNMP in network management. - Grasp the fundamentals of multimedia applications (streaming, VoIP, real‑time communication). - Recognize the network features that support high‑quality multimedia delivery. - Prepare for a later, dedicated security module. - Use external resources to supplement textbook learning, especially for practical, creator‑focused multimedia topics.

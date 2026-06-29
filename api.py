@@ -252,7 +252,7 @@ def update_job(job_id: str, **changes) -> None:
         save_jobs_unlocked()
 
 
-def estimate_stage_seconds(stage: str, clean: bool) -> int:
+def estimate_stage_seconds(stage: str, clean: bool, details: dict | None = None) -> int:
     """Estimate remaining seconds for a pipeline stage.
 
     Purpose:
@@ -260,6 +260,7 @@ def estimate_stage_seconds(stage: str, clean: bool) -> int:
     Args:
         stage: Current pipeline stage identifier.
         clean: Whether the job uses better-format mode.
+        details: Optional pipeline metadata, such as video duration.
     Returns:
         Estimated duration in whole seconds.
     Workflow:
@@ -268,6 +269,18 @@ def estimate_stage_seconds(stage: str, clean: bool) -> int:
     Connects to:
         Reads the global `jobs` registry; called by `build_progress_update`.
     """
+    details = details or {}
+    explicit_estimate = details.get("estimated_stage_seconds")
+    if explicit_estimate:
+        return max(0, int(explicit_estimate))
+
+    video_duration = details.get("video_duration_seconds")
+    if stage == "transcribing" and video_duration:
+        try:
+            return max(30, int(round(float(video_duration) / 3)))
+        except (TypeError, ValueError):
+            pass
+
     completed_durations = []
     for job in jobs.values():
         if job.get("status") != "completed":
@@ -326,18 +339,23 @@ def build_progress_update(stage: str, request_data: dict, details: dict | None =
     if not clean and stage in {"saving", "completed"}:
         step = total_steps
 
-    return {
+    update = {
         "stage": stage,
         "stage_label": details.get("detail") or defaults["label"],
         "progress_percent": progress,
         "current_step": min(step, total_steps),
         "total_steps": total_steps,
         "stage_started_at": time(),
-        "estimated_stage_seconds": estimate_stage_seconds(stage, clean),
+        "estimated_stage_seconds": estimate_stage_seconds(stage, clean, details),
         "chunk_index": details.get("chunk_index"),
         "chunk_total": details.get("chunk_total"),
         "updated_at": time(),
     }
+    if details.get("video_duration_seconds") is not None:
+        update["video_duration_seconds"] = details.get("video_duration_seconds")
+    if stage == "transcribing" and details.get("estimated_stage_seconds") is not None:
+        update["whisper_estimate_seconds"] = details.get("estimated_stage_seconds")
+    return update
 
 
 def update_job_progress(job_id: str, request_data: dict, stage: str, details: dict | None = None) -> None:
@@ -535,7 +553,10 @@ def frontend_jobs() -> FileResponse:
     Connects to:
         The page calls `list_jobs`, `get_job`, and transcript endpoints through JavaScript.
     """
-    return FileResponse(Path("front") / "jobs.html")
+    return FileResponse(
+        Path("front") / "jobs.html",
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @app.get("/health")

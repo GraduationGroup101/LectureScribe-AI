@@ -102,7 +102,7 @@ function updateLiveClock() {
   const stageElapsed = (Date.now() - activeStageStartedAt) / 1000;
   const remaining = Math.max(0, activeEstimateSeconds - stageElapsed);
   elapsedEl.textContent = formatDuration(elapsedSeconds);
-  etaEl.textContent = activeEstimateSeconds ? `about ${formatDuration(remaining)}` : "Almost done";
+  etaEl.textContent = activeEstimateSeconds && remaining > 5 ? `about ${formatDuration(remaining)}` : "Almost done";
 }
 
 function rotateNote() {
@@ -256,6 +256,9 @@ function renderJob(job) {
   }
   if (job.started_at) {
     activeJobStartedAt = job.started_at * 1000;
+  }
+  if (job.stage_started_at) {
+    activeStageStartedAt = job.stage_started_at * 1000;
   }
   activeEstimateSeconds = Number(job.estimated_stage_seconds || 0);
 

@@ -9,30 +9,34 @@ from typing import Any, Callable
 # =========================
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "llama3.1:8b-instruct-q4_K_M"
-GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "openai/gpt-oss-120b"
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+OPENROUTER_MODEL = "openai/gpt-oss-120b"
 
 # split text into chunks of roughly this many characters
 CHUNK_CHARS = 3500
-GROQ_CHUNK_CHARS = 1200
+CLOUD_CHUNK_CHARS = 3000
+OPENROUTER_TIMEOUT_SECONDS = 300
+OPENROUTER_MAX_TOKENS = 8192
+
+ARABIC_CHAR_RE = re.compile(r"[\u0600-\u06ff]")
 
 # =========================
 # PROMPT
 # =========================
-SYSTEM_RULES = """You are a transcript cleaner for university lectures.
-Your job: clean transcript text produced by ASR.
+SYSTEM_RULES = """You format ASR lecture transcripts into faithful English text.
 Rules:
-- Preserve all the original information and meaning, but make it more readable and concise.
-- Keep English technical terms in correct English spelling.
-- Fix obvious spelling and punctuation.
-- Remove filler words, repeated greetings, and stuttering.
-- If the same sentence or phrase appears consecutively, keep only one copy.
-- Do NOT invent new information. Do NOT add explanations.
-- Preserve the original meaning and order.
-- Return only the cleaned transcript.
-- Do NOT include any commentary, notes, or explanations. Only return the cleaned text.
-- just do ur best to clean the text according to the above rules, even if the input is very messy and dont suggest any thing to the user,bc the user can not chat with u.
-
+- Output English only. Translate any Arabic or mixed Arabic-English text into English.
+- Preserve every lecture detail, fact, example, number, symptom, drug, test, and technical term.
+- Do not summarize, shorten, merge unrelated points, or replace a term with a different term.
+- Do not add information that is not present in the transcript.
+- Keep the original lecture order.
+- Fix only obvious ASR issues: broken encoding, punctuation, repeated phrases, filler words, and stuttering.
+- Use clear Markdown: headings, short paragraphs, and bullet points only when the transcript naturally lists items, steps, symptoms, examples, or comparisons.
+- Put each bullet, numbered item, and table row on its own line.
+- Keep technical explanations correct. Do not make cumulative ACKs, sequence numbers, or other technical terms mean something they do not mean.
+- If a word or phrase is unclear, keep the closest safe wording  .
+- Do not invent information, add commentary, or mention these instructions.
+- Return only the final formatted transcript.
 """
 
 
@@ -40,7 +44,7 @@ def make_user_prompt(text: str) -> str:
     """Wrap one transcript chunk in the model's user prompt.
 
     Purpose:
-        Give Groq or Ollama a consistent instruction around each transcript chunk.
+        Give OpenRouter or Ollama a consistent instruction around each transcript chunk.
     Args:
         text: Transcript content to clean.
     Returns:
@@ -50,13 +54,39 @@ def make_user_prompt(text: str) -> str:
     Connects to:
         Called by `clean_transcript_with_generator` before invoking a model generator.
     """
-    return f"""Clean this transcript:
+    return f"""Format this transcript chunk into faithful English notes.
+Do not summarize. Do not delete any details. Do not change facts or technical terms.
+Keep the lecture order and keep all examples, numbers, symptoms, tests, medicines, and exceptions.
+Use bullet points only for natural lists, steps, symptoms, examples, or comparisons.
+Use short paragraphs for normal explanation text.
+If the transcript contains encoding artifacts such as "â€™", "â€“", or "â€œ", repair them.
+Use clean Markdown. Do not put multiple bullets on one line.
+Do not add unrelated sections or examples that are not supported by this transcript chunk.
+
+Transcript:
+{text}
+"""
+
+
+def has_arabic_script(text: str) -> bool:
+    """Return whether text still contains Arabic-script characters."""
+    return bool(ARABIC_CHAR_RE.search(text))
+
+
+def make_english_repair_prompt(text: str) -> str:
+    """Build a strict repair prompt for outputs that still contain Arabic text."""
+    return f"""The text below still contains Arabic or mixed-language content.
+Translate it into English only while preserving every detail, fact, example, number, and technical term.
+Do not summarize, shorten, add new information, or change the formatting style.
+Repair broken encoding artifacts and keep each bullet on its own line.
+
+Text:
 {text}
 """
 
 
 class CloudCleanerUnavailable(RuntimeError):
-    """Signal that the remote Groq cleaner cannot provide a usable result.
+    """Signal that the remote cloud cleaner cannot provide a usable result.
 
     Purpose:
         Distinguish recoverable cloud-cleaner failures from general pipeline errors.
@@ -65,9 +95,9 @@ class CloudCleanerUnavailable(RuntimeError):
     Returns:
         Not applicable; this class represents an exception.
     Workflow:
-        Raised for missing credentials, request failures, or empty Groq responses.
+        Raised for missing credentials, request failures, or empty cloud responses.
     Connects to:
-        Raised by `groq_generate` and handled by the preferred-model pipeline.
+        Raised by `openrouter_generate` and handled by the preferred-model pipeline.
     """
     pass
 
@@ -279,23 +309,93 @@ def dedupe_consecutive_units(text: str) -> str:
         cleaned_lines.append(line)
         previous = normalized
 
-    text = "\n".join(cleaned_lines)
-    text = re.sub(r"\n{3,}", "\n\n", text).strip()
-
-    parts = re.split(r"(?<=[\.\!\?\u061f])\s+", text)
-    merged = []
-    previous = ""
-    for part in parts:
-        part = part.strip()
-        if not part:
+    deduped_lines = []
+    for line in cleaned_lines:
+        if not line:
+            deduped_lines.append("")
             continue
-        normalized = normalize_for_compare(part)
-        if normalized and normalized == previous:
-            continue
-        merged.append(part)
-        previous = normalized
 
-    return " ".join(merged).strip()
+        parts = re.split(r"(?<=[\.\!\?\u061f])\s+", line)
+        merged = []
+        previous = ""
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+            normalized = normalize_for_compare(part)
+            if normalized and normalized == previous:
+                continue
+            merged.append(part)
+            previous = normalized
+        deduped_lines.append(" ".join(merged))
+
+    text = "\n".join(deduped_lines)
+    return re.sub(r"\n{3,}", "\n\n", text).strip()
+
+
+def repair_mojibake(text: str) -> str:
+    """Repair common UTF-8 text displayed as Windows-1252 artifacts."""
+    replacements = {
+        "â€™": "'",
+        "â€˜": "'",
+        "â€œ": '"',
+        "â€": '"',
+        "â€“": "-",
+        "â€”": "-",
+        "â€‘": "-",
+        "â€¯": " ",
+        "Â ": " ",
+        "Â": "",
+        "â†": "<-",
+        "â†’": "->",
+        "â€¢": "-",
+        "â€¦": "...",
+    }
+    for bad, good in replacements.items():
+        text = text.replace(bad, good)
+    return text
+
+
+def normalize_markdown_layout(text: str) -> str:
+    """Clean Markdown layout after model generation.
+
+    Purpose:
+        Keep bullets, numbered lists, tables, and headings readable even when the model
+        returns several items on one line.
+    Args:
+        text: Generated transcript text.
+    Returns:
+        Text with repaired encoding, list spacing, and paragraph breaks.
+    Workflow:
+        Fixes mojibake, splits glued list markers onto new lines, trims whitespace, and
+        limits blank lines.
+    Connects to:
+        Called after each model response and once on the final combined transcript.
+    """
+    text = repair_mojibake(text)
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+
+    # Split glued bullets like "text. - Next point" and "text. 1. Next step".
+    text = re.sub(r"(?<=[\.\!\?:\)])\s+-\s+(?=(?:\*\*)?[A-Za-z0-9`])", "\n- ", text)
+    text = re.sub(r"(?<=[\.\!\?:\)])\s+(\d+\.\s+)(?=(?:\*\*)?[A-Za-z])", r"\n\1", text)
+
+    # Put Markdown headings that were glued to the previous sentence on a new paragraph.
+    text = re.sub(r"(?<=[a-z0-9\.\)])\s+(#{1,4}\s+)", r"\n\n\1", text)
+
+    # Keep horizontal rules and table rows readable.
+    text = re.sub(r"\s+---\s+", "\n\n---\n\n", text)
+    text = re.sub(r"\s+(\|[^|\n]+(?:\|[^|\n]+)+\|)", r"\n\1", text)
+
+    lines = [re.sub(r"[ \t]+", " ", line).strip() for line in text.splitlines()]
+    cleaned = []
+    for line in lines:
+        if not line:
+            if cleaned and cleaned[-1] != "":
+                cleaned.append("")
+            continue
+        cleaned.append(line)
+
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(cleaned)).strip()
 
 
 def ollama_generate(prompt: str) -> str:
@@ -336,16 +436,15 @@ def load_local_env(path: Path = Path(".env")) -> None:
     """Load basic environment variables from a local `.env` file.
 
     Purpose:
-        Make local Groq credentials available without hard-coding secrets.
+        Make local cloud-model credentials available without hard-coding secrets.
     Args:
         path: Path to the environment file.
     Returns:
         None.
     Workflow:
-        Reads non-comment `KEY=VALUE` lines and sets only variables not already present
-        in the process environment.
+        Reads non-comment `KEY=VALUE` lines and sets them in the process environment.
     Connects to:
-        Called by `groq_generate` before reading `GROQ_API_KEY`.
+        Called by `openrouter_generate` before reading `OPENROUTER_API_KEY`.
     """
     if not path.exists():
         return
@@ -358,12 +457,12 @@ def load_local_env(path: Path = Path(".env")) -> None:
         key, value = line.split("=", 1)
         key = key.strip()
         value = value.strip().strip('"').strip("'")
-        if key and key not in os.environ:
+        if key:
             os.environ[key] = value
 
 
-def groq_generate(prompt: str) -> str:
-    """Generate cleaned transcript text with Groq's chat-completions API.
+def openrouter_generate(prompt: str) -> str:
+    """Generate cleaned transcript text with OpenRouter's chat-completions API.
 
     Purpose:
         Use the configured cloud model as the preferred transcript cleaner.
@@ -379,44 +478,50 @@ def groq_generate(prompt: str) -> str:
         response shape, and extracts the first message content.
     Connects to:
         Calls `load_local_env`; passed to the shared cleaner by
-        `clean_transcript_file_with_groq`.
+        `clean_transcript_file_with_openrouter`.
     """
     load_local_env()
-    api_key = os.environ.get("GROQ_API_KEY", "").strip()
+    api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if not api_key:
-        raise CloudCleanerUnavailable("GROQ_API_KEY is not set.")
+        raise CloudCleanerUnavailable("OPENROUTER_API_KEY is not set.")
+
+    model = os.environ.get("OPENROUTER_MODEL", OPENROUTER_MODEL).strip() or OPENROUTER_MODEL
+    url = os.environ.get("OPENROUTER_API_URL", OPENROUTER_URL).strip() or OPENROUTER_URL
+    max_tokens = int(os.environ.get("OPENROUTER_MAX_TOKENS", OPENROUTER_MAX_TOKENS))
+    timeout_seconds = int(os.environ.get("OPENROUTER_TIMEOUT_SECONDS", OPENROUTER_TIMEOUT_SECONDS))
 
     payload = {
-        "model": GROQ_MODEL,
+        "model": model,
         "messages": [
             {"role": "system", "content": SYSTEM_RULES},
             {"role": "user", "content": prompt},
         ],
         "temperature": 0.2,
         "top_p": 0.9,
-        "max_completion_tokens": 4096,
-        "reasoning_effort": "low",
+        "max_tokens": max_tokens,
     }
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
+        "HTTP-Referer": os.environ.get("OPENROUTER_SITE_URL", "https://lecturescribe.app"),
+        "X-Title": os.environ.get("OPENROUTER_APP_NAME", "LectureScribe AI"),
     }
 
     try:
         response = requests.post(
-            GROQ_URL,
+            url,
             json=payload,
             headers=headers,
-            timeout=180,
+            timeout=timeout_seconds,
         )
         response.raise_for_status()
     except requests.RequestException as exc:
-        raise CloudCleanerUnavailable(f"Groq cleaner failed: {exc}") from exc
+        raise CloudCleanerUnavailable(f"OpenRouter cleaner failed: {exc}") from exc
 
     data = response.json()
     choices = data.get("choices") or []
     if not choices:
-        raise CloudCleanerUnavailable("Groq returned no choices.")
+        raise CloudCleanerUnavailable("OpenRouter returned no choices.")
 
     message = choices[0].get("message") or {}
     content = message.get("content", "").strip()
@@ -425,11 +530,16 @@ def groq_generate(prompt: str) -> str:
         usage = data.get("usage") or {}
         completion_tokens = usage.get("completion_tokens", "unknown")
         raise CloudCleanerUnavailable(
-            "Groq returned an empty response "
+            "OpenRouter returned an empty response "
             f"(finish_reason={finish_reason}, completion_tokens={completion_tokens})."
         )
 
     return content
+
+
+def groq_generate(prompt: str) -> str:
+    """Backward-compatible wrapper for the old Groq function name."""
+    return openrouter_generate(prompt)
 
 
 ProgressCallback = Callable[[str, dict[str, Any]], None]
@@ -459,7 +569,7 @@ def clean_transcript_with_generator(
         provider for each chunk, deduplicates responses, and saves the combined output.
     Connects to:
         Calls prompt/chunk/deduplication helpers and provider functions; wrapped by
-        `clean_transcript_file` and `clean_transcript_file_with_groq`.
+        `clean_transcript_file` and `clean_transcript_file_with_openrouter`.
     """
     if not input_txt.exists():
         print(f"Input file not found: {input_txt.resolve()}")
@@ -502,10 +612,39 @@ def clean_transcript_with_generator(
                 },
             )
         out = generate_fn(make_user_prompt(ch))
-        cleaned_chunks.append(dedupe_consecutive_units(out))
+        out = normalize_markdown_layout(out)
+        if has_arabic_script(out):
+            print(f"{provider_name} repair pass for chunk {i}/{len(chunks)} ...")
+            if progress_callback:
+                progress_callback(
+                    "formatting",
+                    {
+                        "detail": f"{provider_name} translating remaining Arabic in chunk {i} of {len(chunks)}",
+                        "chunk_index": i,
+                        "chunk_total": len(chunks),
+                    },
+                )
+            out = generate_fn(make_english_repair_prompt(out))
+            out = normalize_markdown_layout(out)
+        cleaned_chunks.append(normalize_markdown_layout(dedupe_consecutive_units(out)))
 
     cleaned = "\n\n".join(cleaned_chunks).strip()
-    cleaned = dedupe_consecutive_units(cleaned)
+    cleaned = normalize_markdown_layout(dedupe_consecutive_units(cleaned))
+    if has_arabic_script(cleaned):
+        print(f"{provider_name} final English repair pass ...")
+        if progress_callback:
+            progress_callback(
+                "formatting",
+                {
+                    "detail": f"{provider_name} translating remaining Arabic in final transcript",
+                    "chunk_index": len(chunks),
+                    "chunk_total": len(chunks),
+                },
+            )
+        cleaned = normalize_markdown_layout(
+            dedupe_consecutive_units(generate_fn(make_english_repair_prompt(cleaned)))
+        )
+    cleaned = normalize_markdown_layout(cleaned)
     output_txt.write_text(cleaned, encoding="utf-8")
 
     print("\n DONE")
@@ -542,11 +681,11 @@ def clean_transcript_file(
     )
 
 
-def clean_transcript_file_with_groq(
+def clean_transcript_file_with_openrouter(
     input_txt: Path,
     progress_callback: ProgressCallback | None = None,
 ) -> Path | None:
-    """Clean a transcript with the remote Groq provider.
+    """Clean a transcript with the remote OpenRouter provider.
 
     Purpose:
         Expose the preferred cloud-cleaning operation to the main pipeline.
@@ -556,20 +695,29 @@ def clean_transcript_file_with_groq(
     Returns:
         Path to the cleaned file, or None when the input is unavailable or empty.
     Raises:
-        CloudCleanerUnavailable: When Groq cannot return usable cleaned text.
+        CloudCleanerUnavailable: When OpenRouter cannot return usable cleaned text.
     Workflow:
-        Configures the shared cleaner with `groq_generate` and Groq's smaller chunk size.
+        Configures the shared cleaner with `openrouter_generate` and the smaller cloud
+        chunk size.
     Connects to:
         Calls `clean_transcript_with_generator`; used by
         `clean_transcript_with_preferred_model`.
     """
     return clean_transcript_with_generator(
         input_txt,
-        groq_generate,
-        "Groq",
-        GROQ_CHUNK_CHARS,
+        openrouter_generate,
+        "OpenRouter",
+        CLOUD_CHUNK_CHARS,
         progress_callback,
     )
+
+
+def clean_transcript_file_with_groq(
+    input_txt: Path,
+    progress_callback: ProgressCallback | None = None,
+) -> Path | None:
+    """Backward-compatible wrapper for the old Groq cleaner function name."""
+    return clean_transcript_file_with_openrouter(input_txt, progress_callback)
 
 
 # if you want to run this file alone to clean a transcript without running the faster-whisper code, you can do that by putting the name of the transcript file in the same directory as this cleaner.py file and then run it. it will produce a cleaned version of the transcript with the name "OutputForOllama_" + input_file_name + "_cleanedv5.txt"

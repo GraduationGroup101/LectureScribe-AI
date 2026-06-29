@@ -16,7 +16,7 @@ import url_to_mp3
 from clean_with_Llama import (
     CloudCleanerUnavailable,
     clean_transcript_file,
-    clean_transcript_file_with_groq,
+    clean_transcript_file_with_openrouter,
 )
 
 
@@ -41,6 +41,33 @@ LEGACY_FILENAME_CACHE_FIELDS = (
     "llama_folder_filenames",
 )
 ProgressCallback = Callable[[str, dict[str, Any]], None]
+
+
+def estimate_whisper_seconds(video_duration_seconds: int | float | None) -> int | None:
+    """Estimate Whisper time from the lecture length.
+
+    Purpose:
+        Give the API a practical ETA based on the observed rule that Whisper takes
+        about one third of the video duration on this machine.
+    Args:
+        video_duration_seconds: YouTube duration in seconds, when available.
+    Returns:
+        Estimated Whisper seconds, or None when duration is unknown.
+    Workflow:
+        Converts the supplied duration to seconds and divides it by three.
+    Connects to:
+        Called by `transcribe_audio` and `process_youtube_url`; its output is passed
+        through progress events to `api.build_progress_update`.
+    """
+    if video_duration_seconds is None:
+        return None
+    try:
+        duration = float(video_duration_seconds)
+    except (TypeError, ValueError):
+        return None
+    if duration <= 0:
+        return None
+    return max(30, int(round(duration / 3)))
 
 
 def emit_progress(
@@ -234,7 +261,7 @@ def save_cleaned_cache_entry(
         original_url: URL submitted by the user.
         canonical_url: Normalized single-video URL.
         raw_path: Path to the Faster-Whisper transcript.
-        cleaned_path: Path to the Groq or Ollama result.
+        cleaned_path: Path to the OpenRouter or Ollama result.
         cleaner_provider: Provider that produced the cleaned file, when known.
     Returns:
         The cache entry that was saved.
@@ -319,43 +346,43 @@ def clean_transcript_with_preferred_model(
     allow_ollama_fallback: bool,
     progress_callback: ProgressCallback | None = None,
 ) -> tuple[Path | None, str | None, str | None]:
-    """Clean a raw transcript using Groq first and optionally Ollama second.
+    """Clean a raw transcript using OpenRouter first and optionally Ollama second.
 
     Purpose:
         Implement the model-selection policy shared by fast and better-format modes.
     Args:
         raw_path: Faster-Whisper transcript to clean.
-        allow_ollama_fallback: Whether a Groq failure should start local Ollama cleaning.
+        allow_ollama_fallback: Whether an OpenRouter failure should start local Ollama cleaning.
         progress_callback: Optional callback for formatting-stage updates.
     Returns:
-        `(cleaned_path, provider_name, groq_error)`; values may be None when no cleaner
+        `(cleaned_path, provider_name, cloud_error)`; values may be None when no cleaner
         succeeds or fallback is disabled.
     Workflow:
-        Attempts Groq, records any failure, returns early in fast mode, or invokes Ollama
-        as the better-format fallback.
+        Attempts OpenRouter, records any failure, returns early in fast mode, or invokes
+        Ollama as the better-format fallback.
     Connects to:
         Calls both cleaner entry points and `emit_progress`; used by
         `process_youtube_url`.
     """
-    groq_error = None
+    cloud_error = None
 
     try:
-        emit_progress(progress_callback, "formatting", detail="Formatting transcript with Groq")
-        print("Running Groq cleaner ...")
-        cleaned = clean_transcript_file_with_groq(raw_path, progress_callback=progress_callback)
+        emit_progress(progress_callback, "formatting", detail="Formatting transcript with OpenRouter")
+        print("Running OpenRouter cleaner ...")
+        cleaned = clean_transcript_file_with_openrouter(raw_path, progress_callback=progress_callback)
         if cleaned:
-            return cleaned, "groq", None
+            return cleaned, "openrouter", None
     except (CloudCleanerUnavailable, Exception) as exc:
-        groq_error = f"{type(exc).__name__}: {exc}"
-        print(f"Groq cleaner unavailable: {groq_error}")
+        cloud_error = f"{type(exc).__name__}: {exc}"
+        print(f"OpenRouter cleaner unavailable: {cloud_error}")
 
     if not allow_ollama_fallback:
-        return None, None, groq_error
+        return None, None, cloud_error
 
-    emit_progress(progress_callback, "formatting", detail="Groq unavailable. Formatting transcript with Ollama")
+    emit_progress(progress_callback, "formatting", detail="OpenRouter unavailable. Formatting transcript with Ollama")
     print("Running Ollama cleaner ...")
     cleaned = clean_transcript_file(raw_path, progress_callback=progress_callback)
-    return cleaned, "ollama", groq_error
+    return cleaned, "ollama", cloud_error
 
 
 def find_existing_raw_output(video_id: str) -> Path | None:
@@ -542,6 +569,7 @@ def transcribe_audio(
     device: str = DEVICE,
     compute_type: str = COMPUTE_TYPE,
     language: str = DEFAULT_LANGUAGE,
+    video_duration_seconds: int | float | None = None,
     progress_callback: ProgressCallback | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     """Transcribe an audio file with Faster-Whisper and save raw text.
@@ -555,6 +583,7 @@ def transcribe_audio(
         device: Execution device.
         compute_type: Model numerical precision.
         language: Whisper language code supplied to transcription.
+        video_duration_seconds: YouTube video length used to estimate Whisper time.
         progress_callback: Optional callback for transcription-stage updates.
     Returns:
         `(raw_transcript_path, metadata)` containing detected language information.
@@ -570,7 +599,18 @@ def transcribe_audio(
     if not audio_path.exists():
         raise FileNotFoundError(f"File not found: {audio_path.resolve()}")
 
-    emit_progress(progress_callback, "transcribing", detail="Loading faster-whisper model")
+    whisper_estimate_seconds = estimate_whisper_seconds(video_duration_seconds)
+    progress_details = {
+        "video_duration_seconds": video_duration_seconds,
+        "estimated_stage_seconds": whisper_estimate_seconds,
+    }
+
+    emit_progress(
+        progress_callback,
+        "transcribing",
+        detail="Loading faster-whisper model",
+        **progress_details,
+    )
     print(f"Loading faster-whisper model: {model_size} on {device} ({compute_type}) ...")
     model = get_whisper_model(
         model_path=model_path,
@@ -578,7 +618,12 @@ def transcribe_audio(
         compute_type=compute_type,
     )
 
-    emit_progress(progress_callback, "transcribing", detail="Whisper is transcribing the lecture")
+    emit_progress(
+        progress_callback,
+        "transcribing",
+        detail="Whisper is transcribing the lecture",
+        **progress_details,
+    )
     print("Transcribing ...")
     kwargs: dict[str, Any] = {
         "language": language,
@@ -608,8 +653,15 @@ def transcribe_audio(
     metadata = {
         "detected_language": info.language,
         "language_probability": getattr(info, "language_probability", None),
+        "video_duration_seconds": video_duration_seconds,
+        "whisper_estimate_seconds": whisper_estimate_seconds,
     }
-    emit_progress(progress_callback, "transcribing", detail="Whisper transcription finished")
+    emit_progress(
+        progress_callback,
+        "transcribing",
+        detail="Whisper transcription finished",
+        **progress_details,
+    )
     return out, metadata
 
 
@@ -629,7 +681,7 @@ def process_youtube_url(
         model cleaning, cache persistence, and MP3 cleanup.
     Args:
         youtube_url: YouTube lecture URL to process.
-        clean: Enables Ollama fallback when Groq is unavailable.
+        clean: Enables Ollama fallback when OpenRouter is unavailable.
         skip_audio_cache: Forces yt-dlp to download audio again.
         use_cached_outputs: Allows reuse of cleaned and raw transcript files.
         language: Whisper language code.
@@ -642,7 +694,7 @@ def process_youtube_url(
         Download, transcription, or cleaner exceptions when required work fails.
     Workflow:
         Checks cleaned then raw caches, downloads only when needed, transcribes missing
-        raw text, tries Groq and optional Ollama, saves successful cleaned output in the
+        raw text, tries OpenRouter and optional Ollama, saves successful cleaned output in the
         cache, and deletes downloaded MP3 audio before successful completion.
     Connects to:
         Orchestrates helpers in this module, `url_to_mp3`, and `clean_with_Llama`; called
@@ -663,6 +715,8 @@ def process_youtube_url(
         "used_cached_raw_transcript": False,
         "used_cached_cleaned_transcript": False,
         "transcription_info": None,
+        "video_duration_seconds": None,
+        "whisper_estimate_seconds": None,
         "cleaner_provider": None,
         "cleaner_error": None,
         "audio_deleted": False,
@@ -723,17 +777,22 @@ def process_youtube_url(
             return result
 
     emit_progress(progress_callback, "downloading", detail="Downloading audio from YouTube")
-    audio_path = Path(
-        url_to_mp3.download_youtube_mp3(
-            youtube_url,
-            skip_cache=skip_audio_cache,
-        )
+    download_result = url_to_mp3.download_youtube_mp3(
+        youtube_url,
+        skip_cache=skip_audio_cache,
+        return_metadata=True,
     )
+    audio_path_text, video_metadata = download_result
+    video_duration_seconds = video_metadata.get("duration")
+    whisper_estimate_seconds = estimate_whisper_seconds(video_duration_seconds)
+    audio_path = Path(audio_path_text)
     emit_progress(progress_callback, "downloading", detail="Audio download finished")
     raw_path, cleaned_path = get_output_paths_for_audio(audio_path)
     result["audio_path"] = str(audio_path)
     result["raw_transcript_path"] = str(raw_path)
     result["cleaned_transcript_path"] = str(cleaned_path)
+    result["video_duration_seconds"] = video_duration_seconds
+    result["whisper_estimate_seconds"] = whisper_estimate_seconds
 
     if use_cached_outputs and cleaned_path.exists():
         emit_progress(progress_callback, "cache_hit", detail="Using saved cleaned transcript")
@@ -756,6 +815,7 @@ def process_youtube_url(
         raw_path, transcription_info = transcribe_audio(
             audio_path,
             language=language,
+            video_duration_seconds=video_duration_seconds,
             progress_callback=progress_callback,
         )
         result["raw_transcript_path"] = str(raw_path)
