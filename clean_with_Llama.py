@@ -23,15 +23,18 @@ ARABIC_CHAR_RE = re.compile(r"[\u0600-\u06ff]")
 # =========================
 # PROMPT
 # =========================
-SYSTEM_RULES = """You convert ASR lecture transcripts into polished English study notes.
+SYSTEM_RULES = """You format ASR lecture transcripts into faithful English text.
 Rules:
 - Output English only. Translate any Arabic or mixed Arabic-English text into English.
-- Preserve the lecture's original meaning, facts, order, and technical terms.
-- Fix ASR mistakes, broken encoding, punctuation, repeated phrases, filler words, and stuttering.
-- Use clear Markdown: headings, short paragraphs, and bullet points when helpful.
+- Preserve every lecture detail, fact, example, number, symptom, drug, test, and technical term.
+- Do not summarize, shorten, merge unrelated points, or replace a term with a different term.
+- Do not add information that is not present in the transcript.
+- Keep the original lecture order.
+- Fix only obvious ASR issues: broken encoding, punctuation, repeated phrases, filler words, and stuttering.
+- Use clear Markdown: headings, short paragraphs, and bullet points only when the transcript naturally lists items, steps, symptoms, examples, or comparisons.
 - Put each bullet, numbered item, and table row on its own line.
 - Keep technical explanations correct. Do not make cumulative ACKs, sequence numbers, or other technical terms mean something they do not mean.
-- If an ASR phrase is unclear, keep the closest safe wording or mark it as unclear; do not invent a new topic.
+- If a word or phrase is unclear, keep the closest safe wording  .
 - Do not invent information, add commentary, or mention these instructions.
 - Return only the final formatted transcript.
 """
@@ -51,8 +54,11 @@ def make_user_prompt(text: str) -> str:
     Connects to:
         Called by `clean_transcript_with_generator` before invoking a model generator.
     """
-    return f"""Convert this transcript chunk into polished English study notes.
-Keep the lecture order and do not add new information.
+    return f"""Format this transcript chunk into faithful English notes.
+Do not summarize. Do not delete any details. Do not change facts or technical terms.
+Keep the lecture order and keep all examples, numbers, symptoms, tests, medicines, and exceptions.
+Use bullet points only for natural lists, steps, symptoms, examples, or comparisons.
+Use short paragraphs for normal explanation text.
 If the transcript contains encoding artifacts such as "â€™", "â€“", or "â€œ", repair them.
 Use clean Markdown. Do not put multiple bullets on one line.
 Do not add unrelated sections or examples that are not supported by this transcript chunk.
@@ -70,8 +76,8 @@ def has_arabic_script(text: str) -> bool:
 def make_english_repair_prompt(text: str) -> str:
     """Build a strict repair prompt for outputs that still contain Arabic text."""
     return f"""The text below still contains Arabic or mixed-language content.
-Rewrite it in English only while preserving the same meaning and formatting.
-Do not add new information.
+Translate it into English only while preserving every detail, fact, example, number, and technical term.
+Do not summarize, shorten, add new information, or change the formatting style.
 Repair broken encoding artifacts and keep each bullet on its own line.
 
 Text:

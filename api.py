@@ -553,7 +553,10 @@ def frontend_jobs() -> FileResponse:
     Connects to:
         The page calls `list_jobs`, `get_job`, and transcript endpoints through JavaScript.
     """
-    return FileResponse(Path("front") / "jobs.html")
+    return FileResponse(
+        Path("front") / "jobs.html",
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @app.get("/health")

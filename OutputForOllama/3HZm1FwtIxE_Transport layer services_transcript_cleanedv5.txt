@@ -1,0 +1,98 @@
+# Transport Layer
+
+## Goals of the Chapter
+- Multiplexing
+- Flow control
+- Congestion control
+- Understanding UDP and TCP
+
+## End‑to‑End Protocols
+- The Transport Layer provides **logical communication** between any two devices.
+- Protocols that operate in the Transport Layer are called **end‑to‑end protocols** because they exist only at the communicating hosts, not within the core network routers.
+- Routers normally implement only the **Network Layer**; they do not have a Transport Layer.
+- Some routers that act as gateways may include a **Transport Gateway**, but this is an exception.
+- Application‑layer protocols such as **HTTP** and **SMTP** are also end‑to‑end protocols.
+
+## Segment as the Transport‑Layer Message Unit
+- The Transport Layer transmits data in units called **segments**.
+- The sender takes messages from applications (e.g., Facebook, email) and **breaks them into segments**, even if the original message is large.
+- Each segment will later be **encapsulated inside an IP packet** (and ultimately inside a data‑link frame).
+
+## Sender Operations
+- Application‑layer messages → **segments** (via TCP or UDP).
+- Segments are prepared for transmission to the network.
+
+## Receiver Operations (Physical Flow)
+1. The segment is delivered to the **IP layer** (Network Layer).
+2. The segment is **encapsulated** in an IP packet.
+3. The IP packet is placed inside a **data‑link frame**.
+4. The frame is transmitted as **bits and signals** over the physical medium.
+5. At the destination, the reverse process occurs:
+- Signals → Frame → IP packet → **decapsulation** → original **segment** (from TCP or UDP).
+
+## Available Transport Protocols
+- **TCP** (Transmission Control Protocol)
+- **UDP** (User Datagram Protocol)
+- Some special protocols exist for specific vendors (e.g., Apple), but they are not the focus of this material.
+
+## Internet Case Study
+- The textbook and lecture concentrate on the **Internet** as the primary example.
+- The two transport protocols used on the Internet are **TCP** and **UDP**.
+
+## Transport Layer Services
+- The Transport Layer and its protocols provide **logical communication** between end hosts, supporting multiplexing, flow control, and congestion control.
+
+## Transport Layer and Logical Communication
+
+The transport layer provides **logical communication between processes**.
+- A *process* here refers to the program and its execution context as defined by the operating system.
+- Communication is therefore **program‑to‑program** (e.g., Facebook ↔ Facebook, Email ↔ Email, etc.).
+
+In contrast, the network layer (IP) provides logical communication **between hosts** – i.e., between computer devices.
+
+---
+
+## Internet Transport‑Layer Protocols
+
+The two main transport‑layer protocols are **TCP** and **UDP**.
+
+### TCP (Transmission Control Protocol)
+- **Reliability** – uses acknowledgments.
+- **In‑order delivery** – employs sequence numbers to order segments.
+- **Congestion control**.
+- **Flow control**.
+- **Connection setup** (three‑way handshake).
+
+(Details of these mechanisms will be covered later.)
+
+### UDP (User Datagram Protocol)
+- **Unreliable** – no acknowledgments, no sequence numbers.
+- **Connectionless** – provides unordered delivery.
+- **No‑frills** – no extensions or add‑ons; it simply hands datagrams to IP.
+- Often described as **best‑effort**, a term also used for IP service.
+
+---
+
+## Services Not Provided by TCP or UDP
+
+Both TCP and UDP **do not guarantee** the following:
+- **Delay guarantees** – no maximum‑delay assurance.
+- **Bandwidth guarantees** – no minimum‑bandwidth assurance.
+
+These guarantees are not part of the transport‑layer services.
+
+---
+
+## Application‑Layer Services for Guarantees
+
+To obtain delay and bandwidth guarantees, newer services are defined at the **application layer**:
+- **Integrated Services (IntServ)**.
+- **Differentiated Services (DiffServ)**.
+
+These mechanisms provide the missing guarantees through higher‑layer support.
+
+---
+
+## Conclusion
+
+The lecture ends here. The next session will continue with new topics.
