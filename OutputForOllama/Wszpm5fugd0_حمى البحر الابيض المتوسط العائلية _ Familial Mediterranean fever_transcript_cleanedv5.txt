@@ -1,0 +1,177 @@
+## Family Mediterranean Fever (FMF)
+
+### Overview
+- FMF is a hereditary autoinflammatory disorder that causes recurrent episodes of fever and pain.
+- Typical attacks involve high body temperature together with pain in the abdomen, joints, or chest.
+
+### Epidemiology
+- FMF is most common among populations native to the Mediterranean region:
+- Arabs, Jews, Italians, Armenians, and other groups.
+- Because of increased migration and inter‑marriage, the disease can now be found in virtually any ethnicity or gender.
+
+### Genetics
+- FMF is caused by mutations in the **MEFV** gene.
+- The defective MEFV gene leads to uncontrolled inflammatory attacks.
+
+### Pathophysiology
+- Mutations in MEFV trigger inflammation of serosal membranes (the thin linings of body cavities).
+- Typical serosal sites involved:
+- **Peritoneum** – inflammation around the intestines (abdominal pain).
+- **Pleura** – inflammation of the lung lining (chest pain).
+- **Synovium** – inflammation of joint linings (joint pain).
+
+### Clinical Manifestations
+- **Recurrent fever** – sudden rise in temperature during attacks.
+- **Abdominal pain** – due to peritoneal inflammation.
+- **Chest pain** – caused by pleural inflammation.
+- **Joint pain** – resulting from synovial inflammation.
+
+### Complications (Rare)
+- **Amyloidosis** (AA amyloid deposition):
+- Excess amyloid protein can accumulate in organs.
+- May involve the liver, leading to hepatic dysfunction.
+- May affect the kidneys, causing proteinuria and potentially renal failure.
+
+### Unclear Symptom Description (as presented in the transcript)
+> The transcript becomes difficult to interpret after the discussion of classic symptoms. The speaker mentions “the eye gets a fever,” “rise of the temperature at×××sum,” “my eye limp,” and other fragmented phrases. These portions are **unclear** and have been retained verbatim to reflect the original recording.
+
+---
+
+*Remember to like the video if you found this summary helpful.*
+
+## Familial Mediterranean Fever (FMF) – Clinical Overview
+
+### Common Clinical Manifestations
+- **Recurrent fever**
+- Episodes last 2–3 days and resolve spontaneously.
+- **Arthralgia / arthritis**
+- Knee pain with swelling, ankle (talocrural) joint pain, or other large joints.
+- **Serositis**
+- Pleuritis → chest pain with fever (inflammation of the pleural membrane).
+- Pericarditis → chest pain with fever (inflammation of the pericardial membrane).
+- **Skin involvement**
+- Rash, especially under the knees.
+- **Genitourinary symptoms (in males)**
+- Unilateral testicular pain, swelling, and inflammation (possible testicular torsion – a surgical emergency).
+- **Headache** – may accompany attacks.
+
+### Rare Complications
+- **Pleural effusion** – fluid accumulation around the lungs.
+- **Amyloidosis** – deposition of amyloid in the kidneys (suspect when proteinuria is present).
+
+### Important Clinical Pearls
+- Patients may undergo **unnecessary surgeries** (e.g., cholecystectomy, splenectomy) because early diagnosis is difficult.
+- Some patients experience **fever alone** without obvious joint or serosal symptoms.
+
+---
+
+## Diagnostic Approach
+
+### 1. Clinical Diagnosis (Primary)
+- Detailed history and physical examination.
+- Exclude other causes of recurrent fever and serositis (e.g., rheumatoid arthritis, systemic lupus erythematosus).
+
+### 2. Genetic Testing
+- **MEFV gene analysis** detects many pathogenic variants, but not all.
+- **Interpretation**
+- **Positive result + compatible symptoms** → supports FMF diagnosis.
+- **Negative result + compatible symptoms** → does **not** rule out FMF; many pathogenic variants may be missed.
+
+### 3. Laboratory Evaluation (during an attack)
+- **Complete blood count (CBC)** – often shows leukocytosis.
+- **Inflammatory markers** – CRP and ESR are markedly elevated.
+- **Serum ferritin** – may be high.
+- **After the attack** – these values usually return to baseline.
+
+### 4. Urine Analysis
+- Check for **proteinuria** (suggests amyloidosis).
+- Measure **urea and creatinine** to assess renal function.
+
+### 5. Imaging (if indicated)
+- **Chest X‑ray** – to detect pleural effusion or other pulmonary involvement.
+- **Other radiographs** as clinically warranted.
+
+### 6. Tissue Sampling (when amyloidosis is suspected)
+- **Kidney biopsy** or **rectal mucosa biopsy** to look for amyloid deposits.
+
+---
+
+## Management
+
+### First‑Line Therapy
+- **Colchicine**
+- Highly effective for preventing attacks and reducing the risk of amyloidosis.
+- Generally safe and well‑tolerated.
+
+### Monitoring
+- Track attack frequency, inflammatory markers, and renal function regularly.
+- Adjust colchicine dose based on response and side‑effects.
+
+---
+
+**Key Takeaway:** FMF is diagnosed primarily on clinical grounds, supported by genetic testing and laboratory findings. Early recognition prevents unnecessary surgeries and allows timely colchicine therapy, which controls attacks and protects against long‑term complications such as amyloidosis.
+
+## Colchicine Therapy
+
+- **Purpose**
+- Prevents amyloidosis and suppresses fever attacks.
+- Occasionally used as a diagnostic test: if a patient suspected of having FMF (Familial Mediterranean Fever) responds dramatically to colchicine, the diagnosis is considered confirmed.
+- **Initial Dosing**
+- 0.5 mg every 12 hours (total 1 mg/day).
+- **Dose Adjustment**
+- After 3 months, if the response is insufficient, increase to:
+- 0.5 mg three times daily **or**
+- 0.5 mg four times daily.
+- **Maximum dose:** 2.4 mg per day.
+- **Safety in Special Populations**
+- Considered safe during pregnancy and lactation.
+- **Long‑Term Management**
+- Patients are generally advised to continue colchicine for life.
+- If a patient has been on colchicine for ≥5 years, experiences no attacks, and has normal ESR and CRP, a dose reduction or discontinuation may be considered **only after consulting a specialist**.
+- The majority of patients remain on lifelong therapy.
+- **Monitoring**
+- **Liver function:** If transaminases rise > 2‑fold, reduce the colchicine dose.
+- **Renal function:** In the presence of renal failure, the dose should also be lowered.
+- **Special Populations (Ashkenazi Jews / Ashkenazi‑derived Americans)**
+- These groups often have very infrequent attacks.
+- Colchicine can be given **only during an attack** rather than continuously.
+
+---
+
+## When Colchicine Is Not Sufficient
+
+- **Biologic IL‑1 Inhibitors** (used alone or with colchicine)
+- **Anakinra**
+- **Canakinumab**
+
+- **Indications for Adding/Using Biologics**
+- Inadequate response to colchicine alone.
+- Intolerance or inability to tolerate colchicine at effective doses.
+
+---
+
+## Additional Symptomatic Treatments
+
+- **During an Attack**
+- Analgesics (e.g., NSAIDs).
+- **Chronic Joint Inflammation**
+- Disease‑modifying antirheumatic drugs (DMARDs) commonly used for rheumatoid arthritis may be employed.
+- **Corticosteroids**
+- Systemic (oral or IV) for severe inflammation.
+- Intra‑articular injections for localized joint involvement.
+- **Renal Failure**
+- Patients with significant renal impairment should receive dialysis as needed.
+
+---
+
+## Take‑Home Points
+
+- Start colchicine at 0.5 mg twice daily; titrate up to a maximum of 2.4 mg/day based on clinical response.
+- Monitor liver enzymes and renal function; adjust dose accordingly.
+- Consider biologic IL‑1 blockers when colchicine alone is ineffective or not tolerated.
+- Use NSAIDs, DMARDs, or corticosteroids for symptomatic relief as appropriate.
+- Lifelong colchicine is standard, but dose reduction or cessation may be contemplated after several years of remission, under specialist guidance.
+
+---
+
+*Thank you for watching. Please subscribe, like, and share the video.*

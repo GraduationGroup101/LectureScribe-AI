@@ -2,7 +2,7 @@
 
 LectureScribe AI converts YouTube lectures into readable text. It downloads the
 lecture audio, transcribes it with Faster-Whisper, optionally formats the
-transcript with Groq or Ollama, and keeps the text output for future cache hits.
+transcript with OpenRouter or Ollama, and keeps the text output for future cache hits.
 
 Public website:
 
@@ -18,7 +18,7 @@ https://lecturescribe.app
 - Persistent job history and a Previous Jobs page.
 - YouTube video-ID cache across different URL formats.
 - Original-language Faster-Whisper transcription.
-- Groq cloud cleaning with local Ollama fallback.
+- OpenRouter cloud cleaning with local Ollama fallback.
 - Automatic MP3 deletion after a job completes successfully.
 - Raw and cleaned transcript files remain available for reuse.
 
@@ -35,7 +35,7 @@ Fast Output sends:
 ```
 
 The pipeline reuses cached output when available. For a new transcript, it runs
-Faster-Whisper and then tries Groq. If Groq is unavailable or its quota is
+Faster-Whisper and then tries OpenRouter. If OpenRouter is unavailable or its quota is
 exhausted, the raw Whisper transcript is returned immediately. Ollama is not
 used as a fallback in this mode.
 
@@ -49,7 +49,7 @@ Better Formatting sends:
 }
 ```
 
-The pipeline tries Groq first. If Groq is unavailable, it uses the local Ollama
+The pipeline tries OpenRouter first. If OpenRouter is unavailable, it uses the local Ollama
 model. The cleaned transcript is saved in the persistent cache.
 
 ## Workflow
@@ -62,8 +62,8 @@ model. The cleaned transcript is saved in the persistent cache.
 6. If no reusable output exists, `yt-dlp` downloads the audio.
 7. FFmpeg converts the audio to MP3.
 8. Faster-Whisper creates the raw transcript.
-9. Groq is attempted for formatting.
-10. Better Formatting uses Ollama if Groq fails.
+9. OpenRouter is attempted for formatting.
+10. Better Formatting uses Ollama if OpenRouter fails.
 11. Transcript paths and cache metadata are saved.
 12. The MP3 is deleted after successful job completion.
 13. The frontend displays the cleaned transcript, or raw Whisper output when no
@@ -79,10 +79,10 @@ needed to diagnose or retry the failed operation.
 | `api.py` | FastAPI server, frontend routes, background jobs, persistence, and progress |
 | `MainCode_FasterWhisper.py` | Main cache, transcription, cleaning, and cleanup pipeline |
 | `url_to_mp3.py` | YouTube validation, video-ID extraction, yt-dlp, and MP3 conversion |
-| `clean_with_Llama.py` | Groq and Ollama cleaners, chunking, and duplicate removal |
+| `clean_with_Llama.py` | OpenRouter and Ollama cleaners, chunking, and duplicate removal |
 | `front/` | End-user website and Previous Jobs interface |
 | `OutputForWhisper/` | Raw Faster-Whisper transcripts |
-| `OutputForOllama/` | Cleaned Groq or Ollama transcripts |
+| `OutputForOllama/` | Cleaned OpenRouter or Ollama transcripts |
 | `jobs.json` | Persistent API job history, ignored by Git |
 | `transcript_cache.json` | Persistent cache keyed by YouTube video ID, ignored by Git |
 | `downloads/` | Temporary MP3 storage, ignored by Git |
@@ -94,7 +94,7 @@ needed to diagnose or retry the failed operation.
 - FFmpeg.
 - A local Faster-Whisper `large-v3` model.
 - Ollama for Better Formatting fallback.
-- A Groq API key for cloud formatting.
+- An OpenRouter API key for cloud formatting.
 
 Install Python dependencies:
 
@@ -111,7 +111,10 @@ ollama pull llama3.1:8b-instruct-q4_K_M
 Create a local `.env` file:
 
 ```text
-GROQ_API_KEY=your_groq_api_key
+OPENROUTER_API_KEY=your_openrouter_api_key
+OPENROUTER_MODEL=openai/gpt-oss-120b
+OPENROUTER_MAX_TOKENS=8192
+OPENROUTER_TIMEOUT_SECONDS=300
 ```
 
 Do not commit `.env`.

@@ -1,0 +1,174 @@
+## Introduction
+
+- **Greeting:** “Assalamu alaikum wa rahmatullahi wa barakatuhu. Bismillahir‑rahmanir‑rahim.”
+- In the previous session we discussed **RTP** (Real‑Time Transport Protocol) and **RTSP** (Real‑Time Streaming Protocol).
+
+## Quick Review of RTP and RTSP
+
+- **RTSP** is a control protocol that lets a client send commands (e.g., *pause*, *forward*, *stop*) to a server to manage video playback.
+- RTSP runs over **TCP**, similar to HTTP.
+- **RTP** carries the actual media data and runs over **UDP**.
+
+## Real‑Time Control Protocol (RTCP)
+- **RTCP** stands for *Real‑Time Control Protocol*.
+- It works **in conjunction with RTP**; it does not operate independently.
+- Each participant in an RTP session periodically sends RTCP control packets to all other participants.
+
+### What RTCP Provides
+
+- Reports and statistics such as:
+- Number of packets sent
+- Number of packets lost
+- Inter‑arrival jitter
+- Delay and variation of delay (jitter)
+- These metrics allow the sender and receiver to **adjust transmission parameters** (e.g., bitrate, sending rate).
+
+### Feedback Loop
+
+- The feedback from RTCP is used by the opposite side (client ↔ server) to modify its transmission behavior.
+- Example: If a client reports high packet loss, the server may reduce its sending rate.
+
+## Multicast in RTP
+
+- RTP can use **multicast addresses** to send the same media stream to multiple receivers simultaneously (one sender, many receivers).
+
+## Port Numbers
+
+- RTP and RTCP use **different port numbers** to keep their traffic separate.
+- This separation prevents RTCP control traffic from interfering with the RTP data stream.
+
+## Bandwidth Management for RTCP
+
+- RTCP traffic is intentionally kept **smaller than the RTP data traffic**.
+- As the number of participants in a conference grows, each participant’s allocated RTCP bandwidth **decreases** to avoid overwhelming the network.
+- Example scaling:
+- With 2 participants, a certain bandwidth is reserved for RTCP.
+- Adding a 3rd, 4th, etc., participant reduces the per‑participant RTCP bandwidth proportionally.
+
+---
+
+These notes capture the key concepts of RTP, RTSP, and RTCP, their interactions, and how they manage control information and network resources in real‑time streaming applications.
+
+## RTP/RTCP Overview
+- The sender transmits **RTP** packets for media data and **RTCP** packets that carry control information.
+- RTCP packets contain reports on **packet loss**, **delay**, and other quality metrics.
+- Clients (receivers) also send RTCP packets to provide feedback to the sender.
+
+## RTCP Packet Types
+- **Receiver Report (RR)** – sent by a receiver.
+- **Sender Report (SR)** – sent by a sender.
+- **Source Description (SDES)** – provides descriptive information about the source.
+
+## Receiver Report (RR)
+- Includes the following fields:
+- **Fraction of packets lost**
+- **Highest sequence number received** (last sequence number)
+- **Average inter‑arrival jitter**
+- This information helps the sender adjust transmission parameters.
+
+## Sender Report (SR)
+- Contains a **Synchronization Source identifier (SSRC)**:
+- Each participant that generates a stream chooses a random 32‑bit SSRC and registers it.
+- The SSRC is placed in **every RTP packet** and in all RTCP packets so that receivers can associate packets with the correct source.
+- Provides transmission statistics:
+- **Current NTP timestamp** (wall‑clock time)
+- **RTP timestamp** of the most recently sent RTP packet
+- **Number of RTP packets sent**
+- **Number of RTP payload bytes sent**
+
+## Source Description (SDES) Packets
+- Carry human‑readable information about the source:
+- **CNAME (canonical name)** – a unique identifier for the source.
+- **User name**
+- **Email address**
+- **SSRC** – links the descriptive fields to the specific stream.
+- The SDES packet creates a mapping between the SSRC and the user’s identity, allowing participants to know who is sending each stream.
+
+## Synchronizing Multiple Media Streams
+- RTCP can synchronize different media streams (e.g., audio and video) within a single RTCP session.
+- In a video‑conferencing application:
+- One RTCP stream is generated for **video**.
+- Another RTCP stream is generated for **audio**.
+- The timestamps carried in RTCP are tied to the **media sampling clock** of each stream, not to the local device’s wall‑clock time.
+
+## Timestamp Handling in Sender Reports
+- Each SR includes:
+- The **RTP timestamp** of the most recently generated RTP packet, reflecting the media sampling clock.
+- The **full NTP timestamp**, representing the absolute wall‑clock time at which the RTP packet was generated.
+- This dual‑timestamp information enables receivers to:
+- Align media playback across different streams.
+- Perform jitter calculations and delay compensation.
+
+## RTCP Timestamp Synchronization
+
+- Each RTP packet carries a **full clock timestamp** that indicates the exact time the packet was created.
+- The timestamp is derived from the media samples and reflects the **real device time** at packet generation.
+- By comparing the timestamps of the last packet sent with the timestamps received, the receiver can **match and link** the two streams.
+- This association allows the receiver to **synchronize playback** so that audio and video are presented together at the correct moments.
+
+> *If the synchronization fails, you may notice a “hollow” movement where the voice does not match the speaker’s lip‑movement.*
+
+---
+
+## RTCP Bandwidth Scaling
+
+- The bandwidth allocated to RTCP control traffic is **limited** because RTCP adds overhead on top of the media stream.
+- **Rule of thumb:** RTCP control traffic must not exceed **5 % of the total available bandwidth**.
+
+### Example
+| Role | Video bandwidth | 5 % of total (RTCP limit) |
+|--------|----------------|---------------------------|
+| Sender | 2 Mbps video | 100 kbps RTCP (5 % of 2 Mbps) |
+
+---
+
+## Splitting the RTCP Bandwidth
+
+When multiple participants are present, the 5 % RTCP budget is divided as follows:
+- **25 %** of the RTCP budget → **Sender**
+- **75 %** of the RTCP budget → **All Receivers** (shared equally)
+
+### Allocation per Receiver
+
+If the total RTCP budget is 100 kbps:
+| Number of Receivers | Bandwidth per Receiver |
+|---------------------|------------------------|
+| 10 | 7.5 kbps (75 kbps ÷ 10) |
+| 5 | 15 kbps (75 kbps ÷ 5) |
+
+The sender retains the full **25 kbps** portion.
+
+---
+
+## Determining the RTCP Packet Transmission Period
+
+Each participant (sender or receiver) decides **how often** to send an RTCP packet based on:
+1. **Average RTCP packet size** (bits)
+2. **Allocated RTCP rate** (bits per second)
+
+\[
+\text{Transmission interval} = \frac{\text{Average packet size}}{\text{Allocated rate}}
+\]
+
+### Example Calculation
+
+- **Average RTCP packet size:** 1 kilobit = 1 000 bits
+- **Allocated RTCP bandwidth for a receiver:** 10 kilobits/s
+
+\[
+\frac{1\,000\ \text{bits}}{10\,000\ \text{bits/s}} = 0.1\ \text{s} = 100\ \text{ms}
+\]
+
+- The receiver will therefore transmit an RTCP packet **every 100 ms**.
+- Sending at this rate would consume the entire allocated RTCP bandwidth; increasing the interval (e.g., to 200 ms) frees up bandwidth for other control traffic.
+
+---
+
+## Summary
+
+- RTCP timestamps enable precise synchronization of audio and video streams.
+- RTCP control traffic is limited to **5 %** of the total session bandwidth.
+- The 5 % budget is split **25 % for the sender** and **75 % for all receivers**, with the receiver share divided equally among them.
+- Participants calculate their RTCP transmission interval by dividing the **average packet size** by the **allocated RTCP rate**.
+
+*The next lecture will cover SIP (Session Initiation Protocol).*

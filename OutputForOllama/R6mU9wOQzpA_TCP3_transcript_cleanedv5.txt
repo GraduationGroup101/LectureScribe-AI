@@ -1,0 +1,125 @@
+**Reliable Data Transfer (RDT) in TCP**
+
+- TCP is built on top of IP. - **IP** is an unreliable service: it provides no acknowledgments, ordering, or delivery guarantees. - **TCP** adds a **Reliable Data Transfer (RDT)** service that ensures data arrives correctly and in order. - Key characteristics of TCP’s RDT:
+- **Pipeline** operation (multiple packets in flight). - **Congestion control** and **flow control** (not covered in this simplified view). - **Cumulative acknowledgments** – an ACK with number *N* confirms that all bytes up to *N‑1* have been received. - **Single retransmission timer** – only one timer is maintained for the oldest unacknowledged segment. - **Retransmission triggers**
+1. **Timeout** – the timer for the oldest unacknowledged segment expires. 2. **Duplicate acknowledgments** – three duplicate ACKs for the same sequence number indicate a lost segment. ---
+
+**Simplified TCP Sender (ignoring duplicate ACKs, flow control, and congestion control)**
+
+1. **Event: Data received from the application layer**
+- The application (e.g., a web browser, email client, etc.) passes data down to TCP. - **Action:**
+- **Create a segment** and assign it a **sequence number**. - *Sequence number* = byte offset of the first data byte in the segment (i.e., the number of the first byte of the segment in the overall byte stream). - **Start the timer** if no timer is currently running. - The timer is associated with the **oldest unacknowledged segment**. - It measures the **timeout interval** for that segment. 2. **Event: Timeout occurs**
+- The timer for the oldest unacknowledged segment expires. - **Action:**
+- **Retransmit** the segment that caused the timeout (the oldest unacknowledged segment). - **Restart the timer** for that segment. These two events (data arrival from the application and timer expiration) drive the basic behavior of a TCP sender in the simplified model. **TCP Segment Processing – Two Core Events**
+
+---
+
+### 1. Event: **Acknowledgment (ACK) Received**
+
+| Situation | Action | Reason |
+|-----------|--------|--------|
+| An ACK arrives that **covers a previously un‑acknowledged segment** (i.e., the ACK number is greater than the current *last acknowledged byte*). | 1. **Update the acknowledgment state** – mark the segment(s) as acknowledged. <br>2. **Adjust the send‑side variables**: <br> • `SND.UNA` (send‑base) ← ACK number <br> • `SND.NXT` remains unchanged (it already points to the next byte to be sent). | The ACK field always contains the **next expected byte** – the first byte **not yet received** by the receiver. Therefore the byte just before it (`ACK – 1`) is the *last acknowledged byte*. |
+| After updating `SND.UNA` | **Restart the retransmission timer**: <br>• If no timer is running → start a new timer. <br>• If a timer is already running → reset it. <br>• If there are still unacknowledged packets after the reset → keep the timer active. | The timer protects against loss of the next ACK; it must be running as long as there is at least one unacknowledged segment. |
+| Multiple unacknowledged segments exist | The ACK may **skip over several segments**. The sender slides the **send window** forward to the new `SND.UNA`. | Sliding the window frees buffer space for new data and allows the sender to transmit additional segments. |
+| No ACK received within the timer interval | **Retransmit** the earliest unacknowledged segment (the one beginning at `SND.UNA`). | Guarantees eventual delivery despite possible packet loss. |
+
+**Key Concepts**
+
+- **ACK field** = *first byte the receiver expects* (i.e., *first unacknowledged byte*). - **Last acknowledged byte** = `ACK – 1`. - **`SND.UNA` (Send Unacknowledged)** = sequence number of the first byte not yet acknowledged. - **`SND.NXT` (Next Sequence Number)** = sequence number to be used for the next new data byte. - **Retransmission timer** is started/restarted whenever there is at least one unacknowledged segment. ---
+
+### 2. Event: **Data Received from the Application Layer (to be sent)**
+
+| Step | Description |
+|------|-------------|
+| **Create a new segment** | The application hands data to TCP. |
+| **Assign sequence number** | Set the segment’s **Sequence Number** = `SND.NXT` (the next sequence number). |
+| **Place data in the segment** | The first byte of the segment gets the current `SND.NXT`. |
+| **Update `SND.NXT`** | Increment `SND.NXT` by the number of bytes placed in the segment (e.g., `SND.NXT ← SND.NXT + data_length`). |
+| **Send the segment** | Pass the segment down to the IP layer for transmission. |
+| **Timer handling** | If the retransmission timer is not running, **start it** now (because there is at least one unacknowledged segment). |
+
+**Why this matters**
+
+- The **sequence number** uniquely identifies each byte in the TCP byte stream, allowing the receiver to reorder and acknowledge correctly. - Updating `SND.NXT` ensures that subsequent data gets a fresh, non‑overlapping sequence number. - Starting the timer guarantees that the sender will detect loss of the newly sent segment and retransmit if necessary. ---
+
+### Summary of Variables
+
+| Variable | Meaning |
+|----------|---------|
+| `ACK` (in received segment) | First byte **not yet received** by the receiver (i.e., next expected byte). |
+| `Last Acknowledged Byte` | `ACK – 1`. |
+| `SND.UNA` | Sequence number of the **first unacknowledged** byte on the sender side. |
+| `SND.NXT` | Sequence number that will be used for the **next byte** the sender transmits. |
+| **Retransmission Timer** | Runs while there is at least one unacknowledged segment; reset on each new ACK. |
+
+These two events—processing an incoming ACK and sending new data from the application—are the fundamental actions that drive TCP’s reliable, ordered delivery mechanism. **TCP‑Like Data Transfer – Sequence Numbers, Timers, and ACK Handling**
+
+---
+
+### 1. Preparing the Next Segment
+
+| Concept | Description |
+|---------|-------------|
+| **Next Sequence Number** | When a segment is sent, the sender must compute the *next* sequence number as:<br>`next_seq = current_seq + segment_length` |
+| **Segment Length** | The length is expressed in bytes. If a segment occupies 100 bytes, the next segment will start at sequence number + 100. |
+| **Application Layer Interaction** | The application supplies data; the transport layer attaches the appropriate sequence number before transmission. |
+
+---
+
+### 2. Timer Management
+
+1. **Start Timer** – As soon as a segment is placed on the wire, a retransmission timer is started. 2. **Timeout Event** – If the timer expires before an acknowledgment (ACK) is received, the sender **re‑transmits** the unacknowledged segment and **restarts** the timer. 3. **ACK Reception** – When a valid ACK arrives, the timer is cancelled (or moved to the next outstanding segment). *Only three distinct events are involved:*
+
+- **Timer start** (when a segment is sent)
+- **Timeout** (triggering retransmission)
+- **ACK arrival** (confirming receipt)
+
+---
+
+### 3. Example Scenarios
+
+#### Example 1 – Simple Send / Timeout / ACK
+
+| Step | Action | Sequence Numbers | Outcome |
+|------|--------|------------------|---------|
+| 1 | Sender transmits a segment that **starts at 92** and is **8 bytes long** (covers bytes 92‑99). | `seq = 92`, `len = 8` | – |
+| 2 | Expected ACK should indicate **next expected byte = 100**. | `ACK = 100` | – |
+| 3 | Host waits for the ACK. The timer expires → **timeout**. | – | Sender retransmits the segment (92‑99) and restarts the timer. |
+| 4 | ACK = 100 finally arrives. | – | Transmission is considered successful; timer is cancelled. |
+
+#### Example 2 – Pipelining Before ACK
+
+1. **First segment**: seq = 92, length = 8 (bytes 92‑99). 2. **Second segment** is sent **immediately** (before the ACK for the first arrives) with **seq = 100**. 3. The receiver sends an ACK for **100** (covering the first segment) **and then an ACK for 120** (covering the second segment) **before the timeout fires**. 4. Because the ACK for 120 arrives, the sender **does not retransmit** the segment that started at 100. *Result:* Pipelining works as long as cumulative ACKs reach the sender before the timeout. #### Example 3 – Lost Segment, Cumulative ACK
+
+| Situation | Details |
+|-----------|---------|
+| **Sent** | Several 8‑byte segments. The segment that should start at **100** is lost on the wire. |
+| **Received** | The next segment (bytes 100‑119) arrives at the receiver. |
+| **ACK** | The receiver sends a **cumulative ACK = 120** (meaning “all bytes up to 119 have been received”). |
+| **Sender Reaction** | The sender assumes everything up to 119 is acknowledged, even though the 100‑byte segment was lost. It therefore **continues sending from 120**. |
+| **Key Point** | The cumulative ACK “covers” the missing segment, preventing unnecessary retransmission. |
+
+---
+
+### 4. Receiver Behaviour
+
+1. **Segment Arrival Event** – When a segment is received, the receiver does **not** immediately send an ACK for each packet. 2. **Delayed Cumulative ACK** – The receiver waits a short, fixed interval (e.g., **500 ms**) and then sends **one cumulative ACK** that acknowledges the highest contiguous byte received. - This reduces the number of ACK packets on the network. - It also anticipates that the next segment will follow shortly, so a single ACK can cover multiple data packets. 3. **Second Segment Arrival** – If another segment arrives before the timer expires, the pending ACK is updated to the new highest sequence number and the timer is reset. *Result:* The receiver’s delayed, cumulative ACK strategy improves efficiency while still providing reliable feedback to the sender. ---
+
+### 5. Summary of Core Mechanics
+
+- **Next Sequence Number** = previous sequence number + segment length. - **Retransmission Timer** starts with every new segment; a timeout triggers immediate retransmission and timer restart. - **ACKs** are cumulative: an ACK for sequence *N* confirms receipt of **all bytes up to N‑1**. - **Pipelining** (sending multiple segments before receiving ACKs) works as long as cumulative ACKs reach the sender before the timeout. - **Receiver’s delayed ACK** (e.g., 500 ms) reduces traffic and leverages the expectation of subsequent segments. These rules together ensure reliable, ordered delivery of data across an unreliable network medium. **Lecture Notes – Managing Coverage and Reporting Targets**
+
+---
+
+### 1. Arrival of the Second Unit
+- The second device has now been received. - One unit is still “tied” to its technology‑management system (i.e., not yet fully integrated). ### 2. Direct Transmission to the Drone
+- The system sends data **directly to the drone** (referred to as “the dragon”). - The transmission **covers the drone** (the “neck” reference is a visual metaphor for the coverage envelope). ### 3. Coverage Example
+- In a previous demonstration we saw that a **120 % signal level was sufficient to cover a 100 % target area**. - This illustrates that the system can exceed the required coverage level. ### 4. Receiver Reachability
+- The receiver initially reached **approximately 17 units** (e.g., meters, km, or another distance metric). - The expected target was **18 units**. - The receiver **did not reach 18 or 19**, but it **did reach 20 units**. ### 5. Technology‑Management Decision Rule
+- **Do not automatically report the highest measured value (20).**
+- Instead, **report the value that matches the required target** (e.g., 17 or 18). - Procedure:
+1. Identify the required target (e.g., “needs to reach 18”). 2. If the actual measurement is higher (e.g., 20), **still report the target value (18)**. 3. If the measurement is lower (e.g., 17), **report that lower value** and note the shortfall. ### 6. Filling the Gap
+- The system continues to **send updates to the unit that needs coverage** in order to **bridge any remaining gaps**. ---
+
+**Key Takeaway:**
+When managing coverage, align reported results with the **pre‑defined target values** rather than always reporting the maximum observed measurement. This ensures consistency with project requirements and avoids over‑ or under‑estimating performance.

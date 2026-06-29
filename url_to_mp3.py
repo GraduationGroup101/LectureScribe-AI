@@ -203,7 +203,8 @@ def download_youtube_mp3(
     youtube_url: str,
     output_dir="downloads",
     skip_cache: bool = False,
-) -> str:
+    return_metadata: bool = False,
+) -> str | tuple[str, dict]:
     """Download one YouTube video's audio and convert it to MP3.
 
     Purpose:
@@ -212,8 +213,10 @@ def download_youtube_mp3(
         youtube_url: YouTube video URL to process.
         output_dir: Directory where MP3 files are stored.
         skip_cache: When True, download again instead of reusing an existing MP3.
+        return_metadata: When True, return `(mp3_path, metadata)` instead of only
+            the path string.
     Returns:
-        String path to the downloaded or cached MP3 file.
+        String path to the downloaded or cached MP3 file, or a path/metadata tuple.
     Raises:
         ValueError: If the URL is invalid.
         FileNotFoundError: If yt-dlp finishes without producing an MP3.
@@ -244,13 +247,20 @@ def download_youtube_mp3(
         info = ydl.extract_info(clean_url, download=False)
         title = sanitize_filename(info.get("title", "lecture"))
         video_id = info.get("id") or extract_youtube_video_id(clean_url)
+        metadata = {
+            "video_id": video_id,
+            "title": info.get("title"),
+            "duration": info.get("duration"),
+            "duration_string": info.get("duration_string"),
+            "webpage_url": info.get("webpage_url") or clean_url,
+        }
 
     filename_base = f"{video_id}_{title}" if video_id else title
     expected_mp3 = output_dir / f"{filename_base}.mp3"
 
     if expected_mp3.exists() and not skip_cache:
         print(f" Lecture already exists. Using cached file:\n{expected_mp3}")
-        return str(expected_mp3)
+        return (str(expected_mp3), metadata) if return_metadata else str(expected_mp3)
 
     if not skip_cache:
         cached = sorted(
@@ -260,7 +270,7 @@ def download_youtube_mp3(
         )
         if cached:
             print(f" Found cached file for video id {video_id}:\n{cached[0]}")
-            return str(cached[0])
+            return (str(cached[0]), metadata) if return_metadata else str(cached[0])
 
     ydl_opts = {
         "format": "bestaudio/best",
@@ -283,7 +293,7 @@ def download_youtube_mp3(
     resolved_mp3 = output_dir / f"{filename_base}.mp3"
     if resolved_mp3.exists():
         print(f"Download completed:\n{resolved_mp3}")
-        return str(resolved_mp3)
+        return (str(resolved_mp3), metadata) if return_metadata else str(resolved_mp3)
 
     matches = sorted(
         output_dir.glob(f"{video_id}_*.mp3"),
@@ -293,7 +303,7 @@ def download_youtube_mp3(
     if matches:
         latest = matches[0]
         print(f"Download completed:\n{latest}")
-        return str(latest)
+        return (str(latest), metadata) if return_metadata else str(latest)
 
     raise FileNotFoundError(
         f"yt-dlp finished, but no MP3 file was found in {output_dir.resolve()}"

@@ -39,6 +39,16 @@ function cacheLabel(job) {
   return "cache not used";
 }
 
+function jobActionLabel(job) {
+  if (job.status === "completed") {
+    return "Open Result";
+  }
+  if (job.status === "running" || job.status === "queued") {
+    return "View Status";
+  }
+  return "View Details";
+}
+
 function filteredJobs() {
   const query = jobSearch.value.trim().toLowerCase();
   const status = statusFilter.value;
@@ -62,7 +72,7 @@ function renderJobs() {
   for (const job of jobs) {
     const item = document.createElement("article");
     item.className = `job-card ${job.status}`;
-    const canOpen = job.status === "completed";
+    const actionLabel = jobActionLabel(job);
     item.innerHTML = `
       <div class="job-card-main">
         <strong>${job.request?.youtube_url || job.job_id}</strong>
@@ -77,7 +87,7 @@ function renderJobs() {
       </div>
       <div class="job-actions">
         <button type="button" data-action="reuse">Reuse URL</button>
-        <button type="button" data-action="open" ${canOpen ? "" : "disabled"}>Open Result</button>
+        <button type="button" data-action="open">${actionLabel}</button>
       </div>
     `;
 
