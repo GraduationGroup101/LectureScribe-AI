@@ -1,0 +1,257 @@
+# Socket Programming Lecture
+
+**Opening**
+- “In the name of God, the Most Gracious, the Most Merciful. Peace be upon you, everyone.”
+- Today’s topic: **socket programming**.
+- We will first study **UDP** and then **TCP** programming.
+- Goal: **learn how to build client‑server applications that communicate using sockets**.
+
+---
+
+## Distributed Systems and Sockets
+
+- Any network program is a **distributed system**:
+- One program runs on the **client** side.
+- Another program runs on the **server** side.
+- These two programs interact **through the network**, specifically **through sockets** – this is called **socket programming**.
+- A **socket** is like a **door or gate** between the **application layer** and the **transport layer**.
+- The programmer can access the socket directly.
+- After the socket, the work belongs to the **transport layer**, which we call the **end‑to‑end transport protocol**.
+- “End‑to‑end” means the transport layer on one host communicates logically with the transport layer on the other host.
+- **Client–Server Interaction via Sockets**
+- The client sends data to the server **through its own socket**.
+- The server receives data **through its socket** and can send data back to the client **through its socket**.
+- The same principle applies in reverse for the server sending to the client.
+
+---
+
+## Process → Socket Relationship
+
+- Before a socket exists, there is a **process** (the program under execution).
+- The process runs, and **the socket is created at the end of the process**.
+- Interaction with the process and the application **up to the socket** is **controlled by the programmer** (or developer).
+- **After the socket**, control is handed over to the **operating system**.
+
+---
+
+## Two Socket Types for Two Transport Services
+| Transport Service | Socket Type | Characteristics |
+|-------------------|------------|-----------------|
+| **UDP** | Unreliable **datagram** protocol | No connection is established between client and server. |
+| **TCP** | Reliable **stream‑oriented** protocol | Provides guaranteed, ordered delivery of data. |
+
+- **TCP** is always reliable and is the default **Transport Control Protocol** used in most applications.
+
+---
+
+## Example Application (Simple Client‑Server)
+
+The example demonstrates a very simple distributed system consisting of a **client** and a **server**.
+1. **Client side**
+- Reads a line of characters (a sentence) from the keyboard.
+- Sends the entered data to the server **through its socket**.
+2. **Server side**
+- Receives the data from its socket.
+- Converts all characters to **upper case** (the client originally sent lower‑case text).
+- Sends the modified (upper‑case) data back to the client **through its socket**.
+3. **Client side (after receiving)**
+- Receives the upper‑case line.
+- Displays the line on its screen (prints the capitalized sentence).
+- This flow shows how the client and server communicate using sockets.
+
+---
+
+## UDP Specific Note
+
+- **UDP does not create a connection** between the client and the server.
+- Data is sent as independent datagrams without establishing a persistent link.
+
+---
+
+*End of transcript chunk.*
+
+## UDP Overview
+
+- UDP has **no setup** and **no connection**; it is **not connection‑oriented**.
+- There is **no handshaking** before data is sent (no “hello” or “nice to meet you” exchange).
+- The **sender explicitly attaches** the destination IP address **and** the destination port number to **each packet**.
+- Consequently, **every packet must contain** the destination IP address **and** the destination port number.
+- The **receiver extracts** the **sender’s IP address** and **sender’s port number** from the received packet.
+
+### Reliability Characteristics
+
+- **UDP‑transmitted data may be lost or received out of order** – this is the nature of **unreliable transmission**.
+- Lost data is **not recovered**; once a packet is lost, it is gone.
+- Because of this unreliability, UDP is **commonly used for multimedia** (video, audio, other real‑time streams) where occasional loss of a small amount of data is acceptable.
+- UDP **is not suitable for file transfer** (e.g., FTP, email) because those applications require **no data loss**; they typically use **TCP** from an application viewpoint.
+
+### Data Units
+
+- UDP provides **unreliable transfer of groups of bytes called *datagrams*** between a client and a server.
+
+---
+
+## Client‑Server Socket Interaction for UDP
+
+### Server Side
+
+1. **Create a socket** on a chosen port (e.g., port **12 000** or **5 500**).
+2. The socket is created with:
+- **Address family** = **Internet** (AF_INET).
+- **Socket type** = **Datagram** (SOCK_DGRAM).
+
+### Client Side
+
+- The client creates a **socket** with the **same address family** (Internet) and **socket type** (Datagram).
+- In code, the objects are often named **`server_socket`** and **`client_socket`**, but **they are the same type of socket**; there is no functional difference between them for UDP.
+
+### Communication Steps
+
+- **Client creates a datagram** (packet) that includes:
+- The **message** to be sent.
+- The **server’s full address** – both the **IP address** and the **port number**.
+- Many people consider the combination **IP address + port number** to be the **socket identifier** for the remote endpoint.
+- Thus, the **server’s socket** is identified by its **IP address** and **port number**.
+- The **client’s socket** is similarly identified by its own **IP address** and **port number**.
+- The client **sends the datagram** via its socket (**`client_socket`**) to the server’s address.
+
+*The client pushes the datagram out through its socket (the “gateway” it has), completing the transmission.*
+
+## UDP Communication Flow
+
+- The packet is sent to the opposite side. As soon as it is pushed from the **socket**, it reaches the other side.
+- **Server side**
+- `read datagram from server‑socket` – the server is waiting, listening for incoming packets.
+- When a packet arrives, the server reads the datagram that was received.
+- The server records (writes) a **reply** and pushes it **from its own socket** (the server‑socket).
+- In the packet that the server will send back to the client, the **client address must be specified**: the client’s IP address and port number.
+- **Client side**
+- `read datagram from client‑socket` – the client reads the datagram that arrived from the server.
+- The datagram contains the sentence that the server transformed to **UPPERCASE**.
+- The original sentence was sent by the client in **lowercase**; the server converted it to uppercase and sent it back.
+- The client reads the datagram **directly from its own client‑socket**.
+- The client prints the received sentence on the screen, then **closes the client‑socket**.
+- The whole transaction is now complete.
+
+---
+
+## Python Implementation (UDP client example)
+
+### Imports and Setup
+
+- `from socket import *` – include the Python socket library.
+- Define the server’s identity:
+- `server_name = host_name` **or** an IP address.
+- `server_port = 12000`.
+
+### Create the client socket
+
+```python
+client_socket = socket(AF_INET, SOCK_DGRAM)
+```
+- `AF_INET` – address family (IPv4).
+- `SOCK_DGRAM` – datagram (UDP) socket.
+
+### Get user input (lower‑case sentence)
+
+```python
+message = raw_input("Enter a lower‑case sentence: ")
+```
+- The user types a lower‑case sentence on the keyboard.
+- The entered string is stored in the variable **message**.
+
+### Attach server address and send the message
+
+```python
+client_socket.sendto(message, (server_name, server_port))
+```
+- Parameters passed to `sendto` (or `sendto`‑like method):
+- The **message** string to be sent.
+- The server’s address tuple: `(server_name, server_port)`.
+
+### Receive the modified (upper‑case) message
+
+```python
+modified_message, server_address = client_socket.recvfrom(1024)
+```
+- The client receives the reply on the **same socket** it used to send.
+- `modified_message` holds the upper‑case sentence returned by the server.
+- `server_address` captures the server’s IP address and port (useful if needed).
+
+### Display the result and clean up
+
+```python
+print "Received from server:", modified_message
+client_socket.close()
+```
+- The client prints the upper‑case sentence.
+- The client socket is closed, ending the communication.
+
+## Client Code
+
+- Obtain the **server address** and assign it to a variable.
+- Read reply characters from the socket into a string.
+- The client socket receives data **from the server address**.
+- The maximum message length is **2048** bytes.
+- Receive the message and store the server’s address.
+- `print(modified_message)` – display the message on the screen.
+- The message is now **uppercase**; print it, then close the client socket with `socket.close()`.
+- This marks the end of the client’s work.
+
+*The client and server run in parallel; the server must be running so they can communicate.*
+
+---
+
+## Server Code
+
+- Import the socket library:
+
+```python
+from socket import *
+```
+
+- Define the **server port** as **12000**.
+- **Create a UDP socket** and name it `server_socket`.
+
+```python
+server_socket = socket(AF_INET, SOCK_DGRAM)
+```
+
+- The client also uses a UDP socket (same class), but each side has its own socket instance (`client_socket` on the client side, `server_socket` on the server side).
+- **Bind** the server socket to the local port **1200**0:
+
+```python
+server_socket.bind(('', 12000))
+```
+
+- Print a status message:
+
+```
+the server is ready to receive
+```
+
+- Enter an infinite loop (`while 1:`) to wait for incoming datagrams.
+- Use `recvfrom` to receive a message **and** the client’s address in one call:
+
+```python
+message, client_address = server_socket.recvfrom(2048)
+```
+
+- `message` is stored in a string variable.
+- `client_address` holds the address of the client that sent the datagram.
+- Create a modified version of the message:
+
+```python
+modified_message = message.upper()
+```
+
+- Send the modified message back to the client:
+
+```python
+server_socket.sendto(modified_message, client_address)
+```
+
+- The server uses the **client address extracted from the received datagram** to direct the reply.
+- This completes the UDP programming example.
+
+*In the next video we will cover TCP programming.*
