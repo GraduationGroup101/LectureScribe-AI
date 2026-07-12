@@ -1,0 +1,122 @@
+## Introduction
+
+* “In the name of God, the Most Gracious, the Most Merciful.”
+
+We will now move on to a new topic: **ICMP – Internet Control Message Protocol**.
+
+---
+
+## What is ICMP?
+- ICMP is a protocol used for sending control messages between hosts and routers.
+- Each ICMP message consists of:
+1. **Type**
+2. **Code**
+3. The **first 8 bytes of the IP datagram** that caused the problem.
+
+These messages are used for:
+- Error reporting (e.g., unreachable host, unreachable network, unreachable port, protocol unreachable)
+- Echo request / echo reply (the “ping” operation)
+
+---
+
+## Position of ICMP in the Network Stack
+
+- The network layer contains a set of protocols, one of which is IP.
+- In the protocol diagram, **ICMP sits above IP** because it is **encapsulated inside an IP packet**.
+- Just as IP can carry TCP or UDP segments, it can also carry an ICMP message.
+
+---
+
+## Common ICMP Message Types and Codes
+
+- **Type 0 – Echo Reply**
+- Code 0
+
+- **Type 3 – Destination Unreachable**
+- Code 0 – Destination network unreachable
+- Code 1 – Destination host unreachable
+- Code 2 – Protocol unreachable
+- Code 3 – Destination port unreachable (the IP address is reachable, but the specific port does not exist)
+- **Type 11 – Time‑to‑Live (TTL) Expired**
+- Code 0 – TTL expired in transit
+
+- **Other** – “Bad IP header” (a type/code not detailed in the transcript)
+
+---
+
+## Time‑to‑Live (TTL)
+- TTL is **not a measure of time**; it is the **maximum number of hops** a packet may traverse.
+- Each router that forwards the packet **decrements the TTL by 1**.
+- Example:
+- Initial TTL = 5
+- After first router → TTL = 4
+- After second router → TTL = 3
+- …
+- When TTL reaches **0**, the packet is discarded and an ICMP “TTL expired” message (type 11, code 0) is sent back to the source.
+
+---
+
+## How Traceroute Uses ICMP
+
+1. **Goal:** Discover every router (hop) on the path from the source to a target host (e.g., `ibm.com` or an address in Germany or Britain).
+2. **Mechanism:**
+- Traceroute sends a series of **UDP datagrams** to the destination **using an intentionally invalid port number**.
+- As each packet’s TTL expires at successive routers, those routers generate **ICMP “TTL expired” messages** (type 11, code 0) and send them back to the source.
+- The source records the IP address (and often the hostname) of each router that returns the ICMP message, thereby building the route list.
+
+Thus, traceroute relies on the interaction between **UDP** (the probe packets) and **ICMP** (the error messages) to map the network path.
+
+## ICMP Probes with Invalid Port Numbers and TTL Behavior
+
+- **Setup**
+- The speaker attempts to send an **ICMP** packet (referred to as “ibm” in the original transcript).
+- An **invalid destination port number** is used – the port does not exist on the target server.
+- **Probes Sent**
+- **Three probes** are transmitted, not just one.
+- The intermediate probe will be examined later.
+- **TTL = 1 Probe**
+- The packet is sent with a **Time‑to‑Live (TTL) of 1**.
+- It reaches the **first router**; the TTL is decremented to **0**.
+- Because the TTL has expired, the router generates an **ICMP Type 11, Code 0** message (“TTL expired in transit”) and sends it back to the source.
+- **TTL = 2 Probe**
+- The packet is sent with a **TTL of 2**.
+- It reaches the **second router**:
+- After the first hop, TTL becomes **1**.
+- After the second hop, TTL becomes **0**.
+- The second router then returns an **ICMP Type 11, Code 0** (“TTL expired”) message to the source.
+- **Effect of the Invalid Port Number**
+- When the set of datagrams arrives at a router, the router **discards the datagrams** because the destination port is not valid.
+- The router does **not forward** the packets further.
+- **ICMP Source Message Details**
+- The source receives an **ICMP Type 11, Code 0** message, indicating that the **TTL has expired**.
+- This message is generated **by the router where the TTL reached zero**.
+- **Summary of TTL Expiration Process**
+1. **TTL reaches 0** at a router.
+2. The router **drops** the original packet.
+3. The router sends an **ICMP Time‑Exceeded (Type 11, Code 0)** message back to the original sender.
+- **Additional Remarks**
+- The speaker mentions testing the port on the router and expresses a wish that “STL commit you to us.” (Exact meaning unclear from the transcript.)
+- Closing statements: “Thank you for watching the episode. Do what you love. Bye.”
+
+## Traceroute Operation and Stopping Criteria
+
+- The tool obtains **the name of each router and its IP address**, allowing it to identify every router on the path and the corresponding IP addresses.
+- **When ICMP messages arrive**, the source records **RTTs (Round‑Trip Times)**.
+- *RTT* = *Round‑Trip Time* – the elapsed time for a packet to go out to a router and return.
+- Recording the RTT for each router gives the latency to that hop.
+- **Stopping criteria** – how does the trace stop?
+- The trace continues until the packet reaches the final destination address (e.g., `ibm.com`, any `.com` or `.net` address).
+- The UDP segment eventually arrives at the **destination host**.
+- **Destination response**
+- The destination host returns an **ICMP “Port Unreachable”** message.
+- This is an **ICMP Type 3, Code 3** message, indicating that the packet reached the target but used an incorrect (intentionally wrong) destination port.
+- Upon receiving this message, the **source stops sending further datagrams**.
+- **Traceroute program**
+- The small utility that performs this operation is called **`traceroute`** (or `tracert` on Windows).
+- It resides in the operating system’s networking component.
+- By running `traceroute`, you can see every router on the path and, at the end, receive the “Port Unreachable” message from the final host, which signals the completion of the trace.
+- **Practical step**
+- Execute the `traceroute` command until you obtain the described result (list of router names/IPs with RTTs, ending with the ICMP Type 3 Code 3 message).
+- Verify the output yourself to confirm the behavior.
+
+*End of lesson.*

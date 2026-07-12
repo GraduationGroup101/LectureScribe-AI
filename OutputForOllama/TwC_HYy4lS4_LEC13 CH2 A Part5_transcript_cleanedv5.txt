@@ -1,0 +1,255 @@
+## Review of the Previous Video
+
+- We previously examined the image histogram using the command `hist(image)`.
+- Adding the command `axis tight` increased the axis limits, showing a higher maximum value on the histogram.
+
+## Problem with Low‑Contrast Images
+
+- The original image’s histogram is **concentrated in the middle** of the intensity range instead of being spread over the full range.
+- Because the pixel values are clustered, the image contrast appears poor.
+
+## Solutions for Enhancing Contrast
+
+Given a poorly contrasted image, we want to **spread out its histogram** to improve visual quality. Two standard techniques are:
+1. **Histogram Stretching** (also called *Contrast Stretching*)
+2. **Histogram Equalization**
+
+In this lecture we will cover **Histogram Stretching**; Histogram Equalization will be discussed in the next video.
+
+---
+
+## Histogram Stretching – Example
+
+We illustrate the method with a **synthetic example** (not a real photograph) that contains only 16 possible gray‑level values.
+| Gray‑level (value) | Number of pixels (repetition) |
+|--------------------|-------------------------------|
+| 0 | 15 |
+| 5 | 70 |
+| 6 | 110 |
+| 9 | 35 |
+| 15 | 15 |
+
+- The histogram of this image would show peaks at the listed gray levels with the corresponding frequencies.
+- Most of the pixel values are **concentrated between 5 and 9**, which is the region we want to expand.
+
+## Stretching Function
+
+- Histogram stretching uses a **piecewise‑linear transformation function**.
+- The function consists of straight‑line segments that map input intensity values to new output values.
+- In the diagram (not shown here), the line has a lower segment, a middle segment, and an upper segment.
+
+**Key idea:** Apply the transformation only to the pixel values that are clustered in the middle of the histogram (the range 5 – 9). This spreads those values over a larger intensity range, thereby enhancing the image contrast.
+
+## Histogram Distribution
+
+- The histogram values are concentrated in the middle of the range.
+- The goal is to **distribute** the histogram values so that they are spread over the entire range, moving them away from the middle.
+
+## Straight‑Line Equation for Point Processing
+
+- To define a straight line we need **two points** on the line.
+- The axes are visualized as:
+- **X‑axis** – horizontal axis
+- **Y‑axis** – vertical axis
+
+- The chosen points are:
+1. **First point**: \( (X_1, Y_1) = (5, 2) \)
+2. **Second point**: \( (X_2, Y_2) = (9, 14) \)
+- With these two points we can derive the equation of the straight line that will be used for pixel value mapping.
+
+## Applying the Equation to Pixel Values
+
+- The range of interest on the X‑axis is from **5 to 9**.
+- For each original pixel value (X) within this range we compute a **new pixel value (Y)** using the straight‑line relationship.
+- Example: an original pixel value of **5** is mapped to a new value of **7** (illustrating the point‑processing step).
+- The point‑processing formula is:
+
+\[
+\frac{Y - Y_1}{X - X_1} \;=\; \frac{Y_2 - Y_1}{X_2 - X_1}
+\]
+
+- Where:
+- \(Y\) = new pixel value to be computed
+- \(X\) = original pixel value
+- \((X_1, Y_1)\) and \((X_2, Y_2)\) are the two reference points defined above.
+- By solving this equation for each pixel, we obtain the transformed pixel values that spread the histogram across the full intensity range.
+
+## Linear Mapping Formula
+
+- General linear‑contrast‑stretching equation
+
+\[
+y = \frac{y_{2}-y_{1}}{x_{2}-x_{1}}\;(x-x_{1}) + y_{1}
+\]
+
+- Substituting the example numbers
+
+* \(y_{1}=2\)
+* \(y_{2}=14\)
+* \(x_{1}=5\)
+* \(x_{2}=9\)
+- Compute the slope
+
+\[
+\frac{y_{2}-y_{1}}{x_{2}-x_{1}} = \frac{14-2}{9-5}= \frac{12}{4}=3
+\]
+
+- Final mapping equation
+
+\[
+y = 3\,(x-5) + 2
+\]
+
+---
+
+## Mapping Individual Pixel Values
+
+Using the equation \(y = 3(x-5)+2\):
+| Old pixel value \(x\) | New pixel value \(y\) |
+|-----------------------|-----------------------|
+| 5 | 2 |
+| 6 | 5 |
+| 7 | 8 |
+| 8 | 11 |
+| 9 | 14 |
+
+*The lecturer also gave a spoken example where an old value of 6 produced a new value of 8; the formula above gives 5, but the spoken result is retained as‑is.*
+
+---
+
+## Effect on the Histogram
+
+### Original histogram (selected intensities)
+- Value **8** – 70 occurrences
+- Value **9** – 35 occurrences
+- Value **7** – 45 occurrences
+- Value **5** – 70 occurrences
+- Value **6** – 110 occurrences
+
+### Histogram after applying the linear mapping
+
+- 8 → **11** (still 70 occurrences)
+- 9 → **14** (still 35 occurrences)
+- 7 → **8** (still 45 occurrences)
+- 5 → **2** (still 70 occurrences)
+- 6 → **5** (still 110 occurrences)
+
+### Interpretation
+
+- The new pixel values are spread over a much larger intensity range, i.e., the contrast has been **stretched**.
+- The original histogram was clustered around the middle of the intensity axis; the new histogram occupies (or “covers”) the full dynamic range.
+
+---
+
+## Visual Comparison
+
+- Plotting the **old** and **new** histograms side‑by‑side shows:
+
+* The old histogram concentrated near the centre of the gray‑level scale.
+* The new histogram distributed across the entire gray‑level scale, confirming successful contrast stretching.
+
+---
+
+## MATLAB `imadjust` Function
+
+- **Purpose** – Performs the same linear contrast stretching described above, based on two reference points \((x_{1},y_{1})\) and \((x_{2},y_{2})\).
+
+### Typical call syntax
+
+```matlab
+adjustedImage = imadjust(originalImage, [x1 x2], [y1 y2]);
+```
+
+### Parameters
+| Parameter | Description |
+|-----------|-------------|
+| `originalImage` | Input image. Can be of type **double** (values normalized to the range \([0,1]\)) or **uint8** (values in \([0,255]\)). |
+| `[x1 x2]` | Input intensity limits (the “old” pixel range). For a double image these are fractions of 1; for a uint8 image they are integer gray‑levels. |
+| `[y1 y2]` | Desired output intensity limits (the “new” pixel range). Same scaling rules as for `[x1 x2]`. |
+
+### How it works
+
+- Pixels **≤ x₁** are mapped to **y₁**.
+- Pixels **≥ x₂** are mapped to **y₂**.
+- Pixels with values between **x₁** and **x₂** are linearly interpolated according to the formula above.
+
+### Example workflow
+
+1. Load the image (e.g., `I = imread('myImage.png');`).
+2. Choose the two points:
+
+* \(A = (x_{1},y_{1}) = (5,2)\)
+* \(B = (x_{2},y_{2}) = (9,14)\)
+3. Call the function:
+
+```matlab
+J = imadjust(I, [5/255 9/255], [2/255 14/255]); % for an 8‑bit image
+% or, if I is already double in [0,1]:
+J = imadjust(I, [5/255 9/255], [2/255 14/255]);
+```
+
+4. `J` is the contrast‑stretched image; its histogram will now be spread over the full intensity range.
+- The lecturer emphasized that once the two points are defined, `imadjust` automatically carries out the linear mapping, making contrast stretching a one‑line operation.
+
+---
+
+*All numbers, examples, and terminology are kept exactly as presented in the original lecture.*
+
+## Image‑adjustment function (contrast stretching)
+- The function receives an input pixel value **I** and maps it to a new value according to two parameters **C** (lower bound) and **D** (upper bound).
+- **If the pixel value is less than C**, the output becomes the new value assigned to **C**.
+- **If the pixel value is greater than D**, the output becomes the new value assigned to **D**.
+
+### Using the full range
+
+- When you decide to use the entire possible range, you tell the function that the **maximum value is 1** and the **minimum value is 0** (the usual normalized image range).
+- For the Y (luminance) channel, the maximum is 1 and the minimum is 0.
+- The same idea applies to **C** and **D**:
+- Minimum value for **C** = 0
+- Maximum value for **D** = 1
+- If you want the output to span the whole range, you can either:
+- Explicitly set the limits to **0** and **1**, **or**
+- Use empty brackets `[]` to indicate “use the full 0‑to‑1 range”.
+
+### Inversion (complement)
+- When the function is inverted (complemented):
+- Pixel value **0** becomes **1** and pixel value **1** becomes **0**.
+- In an 8‑bit image, **255** becomes **0** and **0** becomes **255**.
+- This operation is equivalent to applying a photographic negative: it flips the intensity curve, producing a mirror‑image of the original tonal distribution.
+
+### Optional gamma parameter
+
+- The image‑adjust function also accepts an optional **gamma** value.
+- Gamma controls the **shape of the mapping curve** between the specified coordinates (the lower and upper bounds).
+- Adjusting gamma changes how quickly the output values rise between the minimum and maximum, allowing for nonlinear contrast enhancement.
+
+## Function Shape and Curvature
+
+- The function can be **linear** (a straight‑line function).
+- You have the option to define the function in a linear form.
+- In addition to the usual parameters, you can supply a **third variable** (often denoted **γ** – “gamma”) that controls the **curvature** of the function.
+- By adjusting γ, the curve can become **convex upward** (bulging upward) or take other shapes.
+
+### Visual Examples
+
+- **When γ is set to a certain value**, the function’s graph looks like this:
+
+![Shape A]
+
+- **When γ is set to a different value**, the graph looks like this:
+
+![Shape B]
+
+### Relation to the Straight‑Line Equation
+
+- The equation for a straight line (linear equation) is the baseline case.
+- If γ is chosen such that the curvature disappears, the function **reduces to the straight‑line equation** (the “Riemann straight‑line” form).
+- This is the same equation we have already seen earlier in the lecture.
+
+### Summary of γ Effects
+
+- **γ → straight line**: the function becomes a linear relationship.
+- **γ → positive curvature**: the curve takes the shape shown in the first example.
+- **γ → negative curvature**: the curve takes the shape shown in the second example.
+
+> *“I will stop here and demonstrate the application in a separate video so the lecture does not become too long.”*
