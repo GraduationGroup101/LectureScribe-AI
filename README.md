@@ -1,275 +1,252 @@
-# LectureScribe AI
+<div align="center">
 
-LectureScribe AI converts YouTube lectures into readable text. It downloads the
-lecture audio, transcribes it with Faster-Whisper, optionally formats the
-transcript with OpenRouter or Ollama, and keeps the text output for future cache hits.
+# 🎓 LectureScribe AI
 
-Public website:
+### Turn long YouTube lectures into clean, searchable text
+
+**Faster-Whisper · FastAPI · FFmpeg · OpenRouter · Ollama · Background jobs · Persistent transcript cache**
+
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Whisper](https://img.shields.io/badge/Faster--Whisper-large--v3-5A45FF)](https://github.com/SYSTRAN/faster-whisper)
+[![FFmpeg](https://img.shields.io/badge/FFmpeg-Audio-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/)
+[![AI](https://img.shields.io/badge/LLM-OpenRouter_%7C_Ollama-111111)](#ai-cleaning)
+
+🌐 **Live project:** [lecturescribe.app](https://lecturescribe.app)
+
+</div>
+
+---
+
+## The idea
+
+Students often have hours of recorded lectures but no practical way to search, review, or reuse what was said. LectureScribe AI converts a YouTube lecture into a readable transcript and keeps the result available for future requests.
+
+The system is designed as a real processing pipeline rather than a one-shot script: it validates URLs, queues work, downloads audio, transcribes with Faster-Whisper, optionally cleans the result with an LLM, tracks live progress, caches outputs, and exposes everything through a browser interface.
+
+---
+
+## What makes it interesting
+
+| Capability | Implementation |
+| --- | --- |
+| 🎙️ **Accurate transcription** | Faster-Whisper `large-v3` on CUDA with original-language handling |
+| ⚡ **Two processing modes** | Fast Output for speed, Better Formatting for higher-quality cleaned text |
+| 🤖 **Cloud + local AI** | OpenRouter for formatting with Ollama fallback in Better Formatting mode |
+| 📥 **YouTube ingestion** | URL validation + `yt-dlp` + FFmpeg audio conversion |
+| 🧵 **Background processing** | FastAPI job creation, queueing, stage tracking, and live progress |
+| ♻️ **Persistent cache** | Video-ID based reuse across watch/short/playlist URL variants |
+| 🧹 **Automatic cleanup** | Temporary MP3 files are deleted after successful processing |
+| 🕘 **Job history** | Persistent job metadata and a Previous Jobs interface |
+| 🌐 **Browser experience** | End-user web interface instead of CLI-only execution |
+
+---
+
+## Pipeline
+
+```mermaid
+flowchart LR
+    A[YouTube URL] --> B[Validate + Extract Video ID]
+    B --> C{Cached transcript?}
+    C -- Yes --> H[Return saved transcript]
+    C -- No --> D[yt-dlp Download]
+    D --> E[FFmpeg → MP3]
+    E --> F[Faster-Whisper Transcription]
+    F --> G{Formatting mode}
+    G -- Fast --> I[Try OpenRouter]
+    G -- Better --> J[OpenRouter → Ollama fallback]
+    I --> K[Save transcript]
+    J --> K
+    K --> L[Delete temporary MP3]
+    L --> H
+```
+
+---
+
+## Processing modes
+
+### ⚡ Fast Output
+
+Best when the priority is getting text quickly.
+
+- Reuses cached output when available.
+- Runs Faster-Whisper for new lectures.
+- Attempts OpenRouter formatting.
+- If cloud formatting is unavailable, returns the raw Whisper transcript immediately.
+
+### ✨ Better Formatting
+
+Best when readability matters more than speed.
+
+- Runs the same transcription pipeline.
+- Tries OpenRouter first.
+- Falls back to local Ollama when cloud formatting is unavailable.
+- Saves the cleaned result for future cache hits.
+
+---
+
+## AI cleaning
+
+Lecture transcripts often contain repeated words, filler, broken punctuation, and technical terms mixed across Arabic and English. The cleaning stage improves readability without replacing the original speech with invented content.
+
+The project supports:
+
+- OpenRouter-compatible cloud models
+- Local Ollama fallback
+- Chunked transcript processing
+- Duplicate cleanup
+- Preservation of Arabic script and English technical terminology
+
+---
+
+## Background job model
+
+The web API exposes each lecture as a job with observable state:
 
 ```text
-https://lecturescribe.app
+status
+stage
+stage_label
+progress_percent
+current_step / total_steps
+estimated_stage_seconds
+chunk_index / chunk_total
 ```
 
-## Features
+Only one heavy transcription job is executed at a time using `ThreadPoolExecutor(max_workers=1)`, while additional jobs wait in the queue. This avoids uncontrolled GPU contention on the host machine.
 
-- Browser interface for submitting YouTube lecture URLs.
-- Fast Output and Better Formatting modes.
-- Live job stage, progress percentage, chunk progress, and estimated time.
-- Persistent job history and a Previous Jobs page.
-- YouTube video-ID cache across different URL formats.
-- Original-language Faster-Whisper transcription.
-- OpenRouter cloud cleaning with local Ollama fallback.
-- Automatic MP3 deletion after a job completes successfully.
-- Raw and cleaned transcript files remain available for reuse.
+---
 
-## Processing Modes
+## Cache strategy
 
-### Fast Output
+The cache uses the 11-character YouTube video ID instead of the raw URL, so different URL forms can resolve to the same lecture.
 
-Fast Output sends:
+Lookup order:
 
-```json
-{
-  "clean": false
-}
+1. Valid entry in `transcript_cache.json`
+2. Existing cleaned transcript
+3. Existing raw transcript
+4. Full download + transcription pipeline
+
+This turns repeated requests from a compute-heavy GPU task into an immediate file lookup.
+
+---
+
+## Tech stack
+
+**Backend**  
+Python · FastAPI · background jobs · persistent JSON metadata
+
+**Speech & media**  
+Faster-Whisper · CUDA · FFmpeg · yt-dlp
+
+**AI formatting**  
+OpenRouter · Ollama · chunked transcript cleaning
+
+**Frontend**  
+Browser-based submission · progress UI · job history · transcript viewer
+
+**Delivery**  
+Cloudflare Tunnel · GitHub · environment-based secrets
+
+---
+
+## Project structure
+
+```text
+api.py                       # FastAPI server, frontend routes and jobs
+MainCode_FasterWhisper.py    # Transcription + cache + cleaning pipeline
+url_to_mp3.py                # URL validation, yt-dlp and FFmpeg conversion
+clean_with_Llama.py          # OpenRouter/Ollama cleaning logic
+front/                       # Web interface and Previous Jobs UI
+OutputForWhisper/            # Raw transcripts
+OutputForOllama/             # Cleaned transcripts
 ```
 
-The pipeline reuses cached output when available. For a new transcript, it runs
-Faster-Whisper and then tries OpenRouter. If OpenRouter is unavailable or its quota is
-exhausted, the raw Whisper transcript is returned immediately. Ollama is not
-used as a fallback in this mode.
+---
 
-### Better Formatting
+## Run locally
 
-Better Formatting sends:
+### Requirements
 
-```json
-{
-  "clean": true
-}
-```
+- Python 3.10+
+- NVIDIA CUDA GPU for the current configuration
+- FFmpeg
+- Faster-Whisper `large-v3`
+- Ollama for local fallback
+- OpenRouter API key for cloud formatting
 
-The pipeline tries OpenRouter first. If OpenRouter is unavailable, it uses the local Ollama
-model. The cleaned transcript is saved in the persistent cache.
-
-## Workflow
-
-1. The user submits a YouTube URL.
-2. The API validates the URL and creates a UUID job.
-3. The pipeline extracts the YouTube video ID.
-4. It checks the cleaned transcript cache.
-5. It checks existing files in `OutputForOllama/` and `OutputForWhisper/`.
-6. If no reusable output exists, `yt-dlp` downloads the audio.
-7. FFmpeg converts the audio to MP3.
-8. Faster-Whisper creates the raw transcript.
-9. OpenRouter is attempted for formatting.
-10. Better Formatting uses Ollama if OpenRouter fails.
-11. Transcript paths and cache metadata are saved.
-12. The MP3 is deleted after successful job completion.
-13. The frontend displays the cleaned transcript, or raw Whisper output when no
-    cleaner result is available.
-
-Failed or interrupted jobs can retain their MP3 because the audio may still be
-needed to diagnose or retry the failed operation.
-
-## Project Structure
-
-| Path | Purpose |
-| --- | --- |
-| `api.py` | FastAPI server, frontend routes, background jobs, persistence, and progress |
-| `MainCode_FasterWhisper.py` | Main cache, transcription, cleaning, and cleanup pipeline |
-| `url_to_mp3.py` | YouTube validation, video-ID extraction, yt-dlp, and MP3 conversion |
-| `clean_with_Llama.py` | OpenRouter and Ollama cleaners, chunking, and duplicate removal |
-| `front/` | End-user website and Previous Jobs interface |
-| `OutputForWhisper/` | Raw Faster-Whisper transcripts |
-| `OutputForOllama/` | Cleaned OpenRouter or Ollama transcripts |
-| `jobs.json` | Persistent API job history, ignored by Git |
-| `transcript_cache.json` | Persistent cache keyed by YouTube video ID, ignored by Git |
-| `downloads/` | Temporary MP3 storage, ignored by Git |
-
-## Requirements
-
-- Python 3.10 or newer.
-- NVIDIA CUDA GPU for the current Faster-Whisper configuration.
-- FFmpeg.
-- A local Faster-Whisper `large-v3` model.
-- Ollama for Better Formatting fallback.
-- An OpenRouter API key for cloud formatting.
-
-Install Python dependencies:
-
-```powershell
+```bash
 pip install -r requirements.txt
 ```
 
-Install the configured Ollama model:
+Start Ollama when using the local fallback:
 
-```powershell
-ollama pull llama3.1:8b-instruct-q4_K_M
-```
-
-Create a local `.env` file:
-
-```text
-OPENROUTER_API_KEY=your_openrouter_api_key
-OPENROUTER_MODEL=openai/gpt-oss-120b
-OPENROUTER_MAX_TOKENS=8192
-OPENROUTER_TIMEOUT_SECONDS=300
-```
-
-Do not commit `.env`.
-
-## Machine-Specific Configuration
-
-The current project contains Windows-specific paths in
-`MainCode_FasterWhisper.py` and `url_to_mp3.py`:
-
-- `MODEL_PATH`
-- The FFmpeg directory added to `PATH`
-
-Update these values when running the project on another computer.
-
-Current Faster-Whisper configuration:
-
-```python
-MODEL_SIZE = "large-v3"
-DEVICE = "cuda"
-COMPUTE_TYPE = "int8_float16"
-DEFAULT_LANGUAGE = "ar"
-```
-
-The initial prompt asks Whisper to preserve the original spoken language, use
-Arabic script for Arabic speech, and retain English technical terms.
-
-## Run Locally
-
-Start Ollama:
-
-```powershell
+```bash
 ollama serve
 ```
 
-Start the API and website:
+Start the app:
 
-```powershell
+```bash
 python api.py
 ```
 
-Open:
+Then open:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-Health check:
+> Do not use Uvicorn `--reload` while jobs are running; generated job/cache files can trigger a restart during processing.
 
-```text
-http://127.0.0.1:8000/health
-```
+---
 
-Do not use Uvicorn `--reload` while jobs are running. Generated transcript,
-cache, and job files can trigger a restart and interrupt the background worker.
-
-You can also run the pipeline without the API:
-
-```powershell
-python MainCode_FasterWhisper.py
-```
-
-## API
-
-Interactive API documentation is intentionally disabled because the public root
-serves the end-user website.
+## API examples
 
 Create a job:
 
-```powershell
-curl.exe -X POST http://127.0.0.1:8000/jobs `
-  -H "Content-Type: application/json" `
+```bash
+curl -X POST http://127.0.0.1:8000/jobs \
+  -H "Content-Type: application/json" \
   -d '{"youtube_url":"https://www.youtube.com/watch?v=VIDEO_ID","clean":true}'
 ```
 
-Check one job:
+Useful endpoints:
 
 ```text
-GET /jobs/JOB_UUID
-```
-
-List all jobs:
-
-```text
+GET /health
 GET /jobs
+GET /jobs/{job_id}
+GET /jobs/{job_id}/transcript
+GET /jobs/{job_id}/transcript?kind=raw
 ```
 
-Get the preferred transcript:
+---
 
-```text
-GET /jobs/JOB_UUID/transcript
-```
+## Engineering lessons
 
-Get raw Faster-Whisper output:
+Building LectureScribe AI required solving more than speech-to-text. The project combines:
 
-```text
-GET /jobs/JOB_UUID/transcript?kind=raw
-```
+- long-running background work,
+- GPU-bound processing,
+- media conversion,
+- cloud/local model fallback,
+- caching and idempotency,
+- progress reporting,
+- cleanup of temporary assets,
+- and a usable web experience around the pipeline.
 
-Job responses include:
+That combination is what turns a transcription script into an actual application.
 
-- `status`
-- `stage`
-- `stage_label`
-- `progress_percent`
-- `current_step`
-- `total_steps`
-- `estimated_stage_seconds`
-- `chunk_index`
-- `chunk_total`
+---
 
-Only one job runs at a time. Additional jobs remain queued because the API uses
-`ThreadPoolExecutor(max_workers=1)`.
+<div align="center">
 
-## Cache And Storage
+### Graduation Project — LectureScribe AI
 
-The cache key is the 11-character YouTube video ID, so watch, short, and playlist
-URL variants resolve to the same lecture.
+Built by **GraduationGroup101**
 
-When cache reuse is enabled, lookup order is:
+[Live Website](https://lecturescribe.app) · [Repository](https://github.com/GraduationGroup101/LectureScribe-AI)
 
-1. Valid entry in `transcript_cache.json`.
-2. Matching cleaned file in `OutputForOllama/`.
-3. Matching raw file in `OutputForWhisper/`.
-4. Full download and transcription pipeline.
-
-Set `use_cached_outputs` to `false` to bypass transcript reuse.
-
-The MP3 is temporary. Successful downloaded jobs delete it, including Fast
-Output jobs that return only raw Whisper text. Successful cache-hit jobs also
-remove stale MP3 files associated with the same video ID.
-
-## Public Domain
-
-The website is exposed from the local laptop through the named Cloudflare
-Tunnel `lecturescribe`:
-
-```powershell
-cloudflared tunnel --url http://127.0.0.1:8000 run lecturescribe
-```
-
-The public website works only while:
-
-1. The laptop is powered on and online.
-2. `python api.py` is running.
-3. The Cloudflare tunnel is running.
-4. Ollama is running when local fallback is required.
-
-## Current Limitations
-
-- Job history and transcript cache use JSON files instead of a database.
-- Only one job is processed at a time.
-- Running jobs cannot resume after the API process or laptop restarts.
-- The API endpoints are public and do not currently require authentication.
-- The public deployment depends on the laptop and Cloudflare Tunnel.
-- Faster-Whisper and FFmpeg paths are machine-specific.
-
-For production use, add authentication, rate limiting, database storage, a
-durable task queue, and a dedicated GPU server.
+</div>
