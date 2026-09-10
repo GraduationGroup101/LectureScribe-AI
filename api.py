@@ -402,6 +402,64 @@ def get_job_or_404(job_id: str) -> dict:
         return deepcopy(job)
 
 
+PIPELINE_ERROR_HINTS = (
+    (
+        ("http error 403", "unable to download video data", "unable to extract", "nsig extraction failed"),
+        "YouTube refused the download. This is almost always a stale extractor: "
+        "run `pip install -U yt-dlp` and restart the server.",
+    ),
+    (
+        ("sign in to confirm", "confirm you're not a bot", "cookies"),
+        "YouTube asked this server to prove it is not a bot. Pass browser cookies to yt-dlp, "
+        "or try again from a different network.",
+    ),
+    (
+        ("private video", "video unavailable", "removed by the uploader", "not available in your country"),
+        "This video cannot be reached: it is private, deleted, or region-locked. "
+        "Try a different upload of the same lecture.",
+    ),
+    (
+        ("members-only", "join this channel"),
+        "This video is members-only, so its audio cannot be downloaded.",
+    ),
+    (
+        ("age-restricted", "age restricted", "inappropriate for some users"),
+        "This video is age-restricted, which blocks anonymous download.",
+    ),
+    (
+        ("ffmpeg", "ffprobe"),
+        "FFmpeg is missing or not on PATH, so the audio could not be converted to MP3.",
+    ),
+    (
+        ("cuda", "cudnn", "out of memory"),
+        "The GPU rejected the transcription. Free VRAM, or run Whisper on the CPU.",
+    ),
+)
+
+
+def describe_pipeline_error(exc: Exception) -> str:
+    """Turn a pipeline exception into a message that names the recovery.
+
+    Purpose:
+        Give the browser a failure the reader can act on instead of a raw traceback string.
+    Args:
+        exc: The exception raised by `process_youtube_url`.
+    Returns:
+        A one-or-two sentence message, always ending with the raw detail for debugging.
+    Workflow:
+        Matches the lowercased exception text against known failure signatures and
+        prefixes the matching hint; falls back to the bare class and message.
+    Connects to:
+        Called by `run_transcription_job` when the pipeline raises.
+    """
+    raw = f"{type(exc).__name__}: {exc}".strip()
+    haystack = raw.lower()
+    for needles, hint in PIPELINE_ERROR_HINTS:
+        if any(needle in haystack for needle in needles):
+            return f"{hint} ({raw})"
+    return raw
+
+
 def run_transcription_job(job_id: str, request_data: dict) -> None:
     """Execute one transcription job inside the background thread pool.
 
@@ -437,12 +495,13 @@ def run_transcription_job(job_id: str, request_data: dict) -> None:
             ),
         )
     except Exception as exc:
+        message = describe_pipeline_error(exc)
         update_job(
             job_id,
             status="failed",
-            error=f"{type(exc).__name__}: {exc}",
+            error=message,
             finished_at=time(),
-            **build_progress_update("failed", request_data, {"detail": f"{type(exc).__name__}: {exc}"}),
+            **build_progress_update("failed", request_data, {"detail": message}),
         )
         return
 

@@ -1,0 +1,158 @@
+Peace be upon you, and God’s mercy and blessings. This is the Authority Feedback, which means the easiest and simplest method, the one we are currently using; of course, if we start taking from this method, what do we set?
+
+We take **E**, we find that **E** equals the input **R** that is present here, and we note that **H** multiplied by **C**, and **C** equals **G**, and we take the form with its capacities; when we take the type we will not be able to work with it well.
+
+We will attempt to convert the system from non‑unity to non‑unity using the simplest method available.
+
+## Example from the Textbook
+
+Continuing, we have an example from the textbook, section 7.8, page 359; the problem presented here is: for the system shown, determine the appropriate error constant associated with the system type and the steady‑state error for a unit‑step input, assuming the input and output units are the same.
+
+Here, as you can see, the feedback is not unity, so in order to obtain the system type we cannot proceed because the formula for the type requires a unity feedback present.
+
+If we use the initial method, we convert this system to make it unity, as we said; this is the **GFS** and this is the **HFS**, and to convert them, what do we do?
+
+## Unity‑Feedback Representation
+
+We say **GFS** over 1 plus **GFS** multiplied by the **HFS** minus 1, and we set the result to 1; this makes the loop a unity‑feedback configuration.
+If we continue, we obtain this solution after we have determined that the system is indeed stable; of course we drop the word “always” that we used earlier.
+
+## Checking Stability Before Error Analysis
+
+The first thing we must verify is that our system is stable, as we mentioned.
+If the system were unstable, the calculations we perform would have no meaning, and there would be no steady‑state error to discuss.
+When we say the system is stable, we write the closed‑loop transfer function as **C(s) / R(s)**, and we examine the poles.
+If the poles of the system are in the left‑half plane, we proceed; otherwise we stop.
+
+## Declaring System Type
+
+In the steady‑state error analysis we may inclusively declare the system to be type 1.
+Some people say that a type 1 system is “sad” (a mistranslation), but we see that we have a single s‑term at the origin, which would suggest type 1.
+That statement is actually incorrect because the feedback we have is non‑unity, so we cannot simply call it type 1.
+This may not be the case since there is a non‑unity feedback element; therefore we cannot label the system as type 1.
+
+## Converting to Unity Feedback
+
+Because we have non‑unity feedback, we first convert the loop to an equivalent unity‑feedback configuration and then determine the system type.
+The first step in fixing the problem is to transform the problem into a set of procedures.
+
+## Defining the Transfer Functions
+
+As we said, **G(s)** is \(100s + 10\) and **H(s)** is \(1s + 5\).
+We called this the **G E** (gain‑error) constant.
+Thus we have **G(s)** over 1, i.e., **G(s)** multiplied by **H(s)** over 1, or simply **G(s) H(s)**.
+After substituting the expressions for **G(s)** and **H(s)** we obtain the overall transfer function that we will analyze.
+
+## Determining the System Type
+
+Now we ask what the type of this system is.
+As we noted, the system is type 0 because there are no poles at the origin.
+
+## Steady‑State Error for a Type‑0 System
+
+What do we know when the system is type 0?
+From the table we consulted, a type 0 system subjected to a unit‑step input exhibits a finite steady‑state error.
+The corresponding error constant, \(K_p\), is obtained as the limit of the open‑loop transfer function as \(s \to 0\).
+
+## Calculating \(K_p\)
+
+We compute \(K_p = \displaystyle \lim_{s \to 0} G(s)H(s) = \frac{500}{400} = \frac{5}{4}\).
+Thus the static error constant \(K_p\) equals \(1.25\).
+
+## Computing the Static Error
+
+The static error for a unit‑step input is
+
+\[
+e_{ss} = \frac{1}{1 + K_p} = \frac{1}{1 + \frac{5}{4}} = \frac{1}{\frac{9}{4}} = \frac{4}{9} \approx 0.44 .
+\]
+
+In the transcript the lecturer wrote the expression as “1 + Kp” in the denominator, then simplified to “1 – Kp” by mistake; the correct result is a positive error of about 0.44.
+
+## Interpreting the Result
+
+The input is a unit step of magnitude 1, and the steady‑state output settles at approximately 0.56, because the error of 0.44 is subtracted from the input.
+Therefore the static‑error calculation yields a negative value of –0.44 when written as “1 – 5/4”, which simply reflects that the output is lower than the input.
+
+## Numerical Example
+
+Let us pause and look at a concrete example.
+Suppose we have a non‑unity‑feedback system as shown in the YouTube video we referenced earlier.
+The video discusses static‑error analysis for a non‑unity‑feedback configuration.
+Our goal is to convert that non‑unity feedback into an equivalent unity‑feedback loop so that we can apply the standard error‑constant formulas.
+
+## Concluding Remarks
+
+In summary, the original system is type 0, it has no pure integrators in the open‑loop transfer function, and its static error constant \(K_p\) is \(5/4\).
+The resulting steady‑state error for a unit‑step input is \(e_{ss}=4/9\), meaning the output settles at \(1 - 4/9 = 5/9\) of the input magnitude.
+This completes the conversion from non‑unity feedback to unity feedback and the subsequent steady‑state error analysis.
+
+## Unity and Non‑Unity Feedback
+
+Unity uses the same method that we used in this lecture for the Non‑Unity Feedback, the GFS, and the HFS began to appear in this form.
+We convert it from this form and make it into that form.
+What we do is apply the CFS to the RFS.
+It is, as we said, GFS over one plus GFS HFS.
+So we take this step here; we have the first step present.
+Here is the second step, the third step, the method we used; in the end, of course, the result comes.
+Here we have GFS over one, like GFS HFS, which gives us GFS.
+This is what we need to do.
+
+Thus, the example we have here.
+Here we have the GFS and the HFS, which we did not give S plus 5.
+So let's stop here.
+
+Here is the G of E or G prime, as we denote it, which is G of S.
+It is over one, like G of S, in the H of S minus, which is G of S.
+Of course, as someone might say, this could be Type 2, but we cannot call it Type 2 because, as we said, we must have Unity.
+Therefore we cannot say this system is Type 2.
+Let's obtain the Transfer Function of the two blocks together.
+Then we determine the type according to the completed system.
+And this, of course, explains the G of S, the H of S, and this yields.
+
+So what does the system give us?
+We have Type 0, of course, not Type 0 in our system, okay.
+We have arrived here; this system yields Type 0.
+Thus, for Type 0 we need the Unity Stip to have a value.
+
+Yes, example 2 is present here; we have a Unity feedback system, and the formula is present.
+As we did, as we know, we then determine the gain.
+Yes, of course examples are present; we continue with other examples, we will take examples from the book, which are indeed available.
+
+## Example and Problem Discussion
+
+Let's take, for example, example 42 that is in the book, chapter 7.
+Of course, problem 42 tells us here: for each of the systems shown in the figure.
+We will look at the figure; now problem 7.17 tells us to find the following.
+The section is 7.6, which is present; of course, we need to get something from section 7.6.
+System type; of course, if we know the system type, the problem is solved.
+The most important thing is to always obtain the system type and the appropriate static error constant.
+What we need to obtain will be, once we know the gain, whether kb has a value, or ka, or kv, the input waveform to yield constant error.
+Then part d, the steady‑state error for a unit input of the waveform found in part c, we need to compute it.
+The steady‑state value of the actual signals, if we know we are given two systems.
+
+This is the first system and this is the second system.
+The first system, as you will see, has the G of S and the feedback; as you can see, the feedback is not unity, the same idea applies.
+We are also given a system here, and we are given non‑unity feedback; as we said, we cannot call the type of this system Type 1 because we must, of course, have non‑unity, and we need to obtain the G of S of this over one, like G of S, H of S minus G of S.
+And then we will see what the type of the system is; if we go to our solution, which is present here, we are at…
+
+## System Type Determination
+
+Let's enlarge it a bit; this is what we have.
+Here we have the G of S, which is present as one plus G of S in the denominator minus G of S.
+All of this is present, and the answer turns out to be ten over s plus 2 plus 11 s² plus 132 s plus 300.
+As we saw, the type of the system is zero because we do not have any poles at the origin.
+
+## Type‑Zero System Analysis
+
+The Norgen, as long as we have **type zero**, then **Kp** has a value, while **K** and **Ki** have no value because the system is type zero. If we have a type‑zero system, and the plant is also type zero, of course **Kp** and **Ki**, as we said, are something like the limit as s → 0 in the G(s) … and we return, of course, to the zero. Here zero becomes ten‑by‑ten, which is one hundred on 300, meaning one‑third. If we take **Kp** = 1/3, then the input, which is the value that is the step, the step will equal, for us, the step that we have: step = 1 + Kp · (3/4). So the step is (3/4). Okay, that is for the first system.
+
+The second system also exists; if we derived it, the second system is present, which is here, present with us, this thing that we have, okay, present with us. Ah, **B**‑equivalent **unity‑feedback** system, this forward‑transfer function of **H** is present with us on a “one plus” form. Those terms also appear here; we also have … **different** … it does not appear for us because this is the one‑system that we request **Kp** and **Ki** … **vai sli fica** … and because we have … **ahahaha** about it!
+
+One over **K** if we have this … **Utzten** … this … we see at the sides … what we have … successful … or … **Uqfin** … present with us here … and we substitute it, multiply it by the **SS** … it goes with the **SS** … **zero** … it becomes ten‑by‑ten, one hundred by one hundred and two. If we have it, the answer comes out as **point nine‑eight** … which is one hundred by one hundred and two. Then, to get the **steady‑state error**, we take one over **K** … which gives one‑point‑zero … this answer is the one we have here.
+
+Of course we continue; we have … what we continue in this lecture, as we see, the most important thing we always have, we always, to get from **unity‑feedback** and make it **unity**, we use the formula we have; it looks like this, and we convert it to this form. We have this **bode** … we start with this and we end it with this, as we said, always put **G(s)** on “one plus G(s) · H(s)”. Of course we always have to make sure that our system is **stable**; to verify stability we obtain the **closed‑loop transfer function**, which is **C(s)/R(s)**, and we look at the poles we have, which are the denominators of the characteristic equation. We find the seven roots; if the poles are in the left‑half plane, the system is stable, and if there is a steady‑state error we continue.
+
+## Section 7.6 – Unity‑Feedback System
+
+For section 7.6 we have a **unity‑feedback** system. Of course, the next topic is 7.7, which deals with **sensitivity**. This sensitivity will, God willing, make the next lecture simple, God willing. In the next lecture we will continue with section 7.7, which is **sensitivity** – the sensitivity of the system. Sensitivity means how sensitive the system is; we examine whether the system is sensitive to changes or not affected by the changes around it. We stop here, God willing, and thank you all. See you in the next lecture, God willing.

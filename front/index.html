@@ -186,14 +186,14 @@
                     <input type="radio" name="mode" value="fast" checked>
                     <span>
                       <span class="mode-name">Fast output</span>
-                      <span class="mode-note">Whisper's text, tidied by the cloud cleaner when it answers. Falls back to the raw transcript rather than waiting.</span>
+                      <span class="mode-note">Whisper's own words, in the language they were spoken. Cleaned by the cloud model when it answers, otherwise handed over raw rather than making you wait.</span>
                     </span>
                   </label>
                   <label class="mode">
                     <input type="radio" name="mode" value="formatted">
                     <span>
                       <span class="mode-name">Better formatting</span>
-                      <span class="mode-note">Cloud cleaner first, local Ollama if it is down. Slower, but punctuation and paragraphs hold up.</span>
+                      <span class="mode-note">Every sentence kept and nothing summarised, with punctuation, paragraphs and headings added. Falls back to local Ollama. Slower, and the text comes back translated into English.</span>
                     </span>
                   </label>
                 </div>
@@ -249,6 +249,6 @@
 
     </main>
 
-    <script src="/front/app.js?v=concourse-1"></script>
+    <script src="/front/app.js?v=concourse-4"></script>
   </body>
 </html>

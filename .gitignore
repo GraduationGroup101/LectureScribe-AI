@@ -7,3 +7,6 @@ transcript_cache.json.tmp
 .env
 downloads/
 API_WORKFLOW.md
+server.out.log
+server.err.log
+.impeccable/review/

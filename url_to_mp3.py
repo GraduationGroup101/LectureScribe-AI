@@ -9,7 +9,21 @@ for stream in (sys.stdout, sys.stderr):
     if hasattr(stream, "reconfigure"):
         stream.reconfigure(encoding="utf-8", errors="replace")
 
-os.environ["PATH"] += os.pathsep + r"C:\Users\Mahmoud\Downloads\Compressed\ffmpeg-8.1-essentials_build\ffmpeg-8.1-essentials_build\bin"
+# FFmpeg location. FFMPEG_BIN wins when set; otherwise fall back to the local
+# build. A missing directory is skipped so this module still imports elsewhere.
+_FFMPEG_CANDIDATES = (
+    os.environ.get("FFMPEG_BIN"),
+    r"C:\Users\Mahmoud\Downloads\Compressed\ffmpeg-8.1-essentials_build\ffmpeg-8.1-essentials_build\bin",
+)
+for _candidate in _FFMPEG_CANDIDATES:
+    if _candidate and Path(_candidate).is_dir() and _candidate not in os.environ["PATH"]:
+        os.environ["PATH"] += os.pathsep + _candidate
+        break
+
+# YouTube signs its media URLs with a JavaScript challenge. With no runtime to
+# solve it, yt-dlp still reads metadata but the media fetch returns 403, so every
+# runtime yt-dlp knows is offered here and it picks whichever is installed.
+JS_RUNTIMES = {"deno": {}, "node": {}, "bun": {}, "quickjs": {}}
 
 # --------------------------------------------------
 # 1) Check if URL is a YouTube link
@@ -241,6 +255,7 @@ def download_youtube_mp3(
         "quiet": True,
         "skip_download": True,
         "noplaylist": True,
+        "js_runtimes": JS_RUNTIMES,
     }
 
     with yt_dlp.YoutubeDL(info_opts) as ydl:
@@ -282,6 +297,7 @@ def download_youtube_mp3(
             "preferredquality": "192",
         }],
         "quiet": False,
+        "js_runtimes": JS_RUNTIMES,
         "concurrent_fragment_downloads": 1,
         "no_warnings": False,
         "extract_flat": False,

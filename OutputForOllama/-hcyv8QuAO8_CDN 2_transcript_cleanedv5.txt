@@ -1,0 +1,45 @@
+We still have a small part in the subject of the CDN, which is dedicated to Netflix.
+
+As we saw a little while ago, when Bob dealt with the company Net Cinema, and he wanted a specific film or a specific video, he first dealt with the company Net Cinema and then gave it the title of the video in another place, and then gave it to the CDN, which was called King CDN.
+
+In the case of Netflix, of course, it has a different approach.
+
+The difference is not big.
+
+The following happens.
+
+In the case of Netflix, the client, Bob for example, first deals with the company's infrastructure itself, Netflix, in terms of registration, in terms of accounting, account payment, and so on.
+
+Then he deals with the Amazon's cloud.
+
+Here he shows what movies are available on Netflix through the cloud.
+
+He shows and shows, and finally he chooses a specific video.
+
+He chooses a specific video and asks to watch this video.
+
+So he gets all the manifest files, the XML files, which contain the places in which this video is located, the title and so on, the information about the video, the metadata, all of them come to the client.
+
+Then the client, that is, the automatic program, does like Bing or Echo for a group of nearby servers, the closest thing he has, and he chooses the one with the least delay.
+
+Where is the server with the least delay?
+
+And then he chooses this server and starts showing the film from this server.
+
+So this is how Netflix, which we used to call Bring Home, this is their approach.
+
+Because the client is the one who chooses.
+
+But in Akamai's other approach, if you remember, it was called Enter Deep, which distributes the point of presence, distributes its servers very deep and very close to the user in the access points.
+
+So in every access point or in some of the famous access points, it has servers close to the users.
+
+So we finished the whole CDN topic.
+
+## Voice over IP
+
+And the next part will be, God willing, the voice over IP topic.
+
+God willing, it will be online on Zoom.
+
+I will give you the link.

@@ -78,8 +78,9 @@ const notesByStage = {
     "The first run for a lecture is the slow one. The next request for it is not.",
   ],
   formatting: [
-    "The cleaner is fixing punctuation, paragraphs, and run-on sentences.",
+    "The cleaner is punctuating and paragraphing the lecture, and translating it into English.",
     "The text is cleaned in chunks, which is why this stop has its own count.",
+    "Repeated phrases and false starts get dropped, but nothing the lecturer said is summarised away.",
   ],
   saving: [
     "Writing the transcript to the archive.",
@@ -176,6 +177,28 @@ function setSource(url) {
 function setSubmitDisabled(disabled) {
   submitButton.disabled = disabled;
   queueNote.classList.toggle("is-hidden", !disabled);
+}
+
+/* A cleaner that never ran is a fact the reader is owed, with the reason
+   named rather than buried in the job payload. */
+function describeCleanerFailure(raw) {
+  if (!raw) {
+    return "";
+  }
+  const text = String(raw).toLowerCase();
+  if (text.includes("401") || text.includes("unauthorized") || text.includes("expired")) {
+    return "The cloud cleaner was skipped: its API key was rejected as expired or invalid.";
+  }
+  if (text.includes("429") || text.includes("rate limit") || text.includes("quota")) {
+    return "The cloud cleaner was skipped: its account is out of quota for now.";
+  }
+  if (text.includes("timeout") || text.includes("timed out")) {
+    return "The cloud cleaner was skipped: it did not answer in time.";
+  }
+  if (text.includes("connection") || text.includes("refused") || text.includes("ollama")) {
+    return "The cloud cleaner was skipped and the local Ollama fallback was not reachable.";
+  }
+  return "The cloud cleaner was skipped, so this is Whisper's own text.";
 }
 
 function stageIndex(stage) {
@@ -461,11 +484,13 @@ function renderJob(job) {
   } else if (status === "running") {
     setMessage("");
   } else if (status === "completed") {
-    setMessage(
-      cacheHit
-        ? "This lecture was already in the archive, so nothing had to be transcribed again."
-        : "The transcript is saved. Asking for this lecture again will be near-instant."
-    );
+    const cleanerNote = job.result?.cleaned_transcript_path
+      ? ""
+      : describeCleanerFailure(job.result?.cleaner_error);
+    const savedNote = cacheHit
+      ? "This lecture was already in the archive, so nothing had to be transcribed again."
+      : "The transcript is saved. Asking for this lecture again will be near-instant.";
+    setMessage(cleanerNote ? `${cleanerNote} ${savedNote}` : savedNote);
     setProgress(100);
     stepLabel.textContent = "Transcript ready";
     etaLabel.textContent = "Took";
@@ -498,7 +523,7 @@ async function loadTranscript(job) {
       ? `Transcript, cleaned and formatted by ${provider}`
       : "Transcript, cleaned and formatted";
   } else {
-    resultSummary.textContent = "Transcript, straight from Whisper and uncleaned";
+    resultSummary.textContent = "Transcript, straight from Whisper and in the spoken language";
   }
 
   try {

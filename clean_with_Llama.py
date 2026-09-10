@@ -23,20 +23,32 @@ ARABIC_CHAR_RE = re.compile(r"[\u0600-\u06ff]")
 # =========================
 # PROMPT
 # =========================
-SYSTEM_RULES = """You format ASR lecture transcripts into faithful English text.
-Rules:
-- Output English only. Translate any Arabic or mixed Arabic-English text into English.
-- Preserve every lecture detail, fact, example, number, symptom, drug, test, and technical term.
-- Do not summarize, shorten, merge unrelated points, or replace a term with a different term.
-- Do not add information that is not present in the transcript.
-- Keep the original lecture order.
-- Fix only obvious ASR issues: broken encoding, punctuation, repeated phrases, filler words, and stuttering.
-- Use clear Markdown: headings, short paragraphs, and bullet points only when the transcript naturally lists items, steps, symptoms, examples, or comparisons.
-- Put each bullet, numbered item, and table row on its own line.
-- Keep technical explanations correct. Do not make cumulative ACKs, sequence numbers, or other technical terms mean something they do not mean.
-- If a word or phrase is unclear, keep the closest safe wording  .
-- Do not invent information, add commentary, or mention these instructions.
-- Return only the final formatted transcript.
+SYSTEM_RULES = """You are a copy-editor for ASR lecture transcripts. You are NOT a summarizer and NOT a note-taker.
+
+Your job is to return the SAME lecture, sentence for sentence, only readable.
+
+Absolute rules:
+- Reproduce the transcript in FULL. Every sentence in the input must survive into the output.
+- Never summarize, condense, compress, paraphrase into notes, or "tighten" the wording.
+- Never drop recaps, repetitions the lecturer makes on purpose, asides, examples, digressions, or sentences that merely restate an earlier point. The lecturer said them; they stay.
+- Never turn running speech into bullet points. Prose stays prose.
+- Your output must be AT LEAST as long as the input. If it is shorter, you have failed.
+- Output English only. Translate Arabic or mixed Arabic-English into English sentence by sentence, keeping the same number of sentences.
+
+The only edits you may make:
+- Punctuation, capitalization, and sentence boundaries.
+- Delete pure ASR noise: stutters, immediately repeated words or phrases, and filler ("uh", "yaani", "you know").
+- Repair broken encoding artifacts such as "â€™", "â€“", "â€œ".
+- Split the text into paragraphs at natural topic shifts.
+- Insert a short Markdown heading (##) where the lecturer clearly moves to a new topic. A heading is a signpost placed ABOVE the full prose, never a replacement for it.
+- Use a bullet list ONLY where the lecturer is literally enumerating items out loud, and keep the surrounding explanation as prose.
+- Keep every number, symbol, equation, name, and technical term exactly as spoken.
+- Never guess what a garbled term "really" was. If the recognizer produced
+  something odd like "GFS" or "EFAS", leave it exactly as it is. A reader can
+  decode a mishearing; a confident wrong symbol silently corrupts the lecture.
+
+Do not add information, do not add commentary, do not mention these instructions.
+Return only the edited transcript.
 """
 
 
@@ -54,18 +66,88 @@ def make_user_prompt(text: str) -> str:
     Connects to:
         Called by `clean_transcript_with_generator` before invoking a model generator.
     """
-    return f"""Format this transcript chunk into faithful English notes.
-Do not summarize. Do not delete any details. Do not change facts or technical terms.
-Keep the lecture order and keep all examples, numbers, symptoms, tests, medicines, and exceptions.
-Use bullet points only for natural lists, steps, symptoms, examples, or comparisons.
-Use short paragraphs for normal explanation text.
-If the transcript contains encoding artifacts such as "â€™", "â€“", or "â€œ", repair them.
-Use clean Markdown. Do not put multiple bullets on one line.
-Do not add unrelated sections or examples that are not supported by this transcript chunk.
+    word_count = len(text.split())
+    return f"""Copy-edit this transcript chunk so it reads well. Do NOT take notes on it.
 
-Transcript:
+This chunk contains about {word_count} words. Your output must contain at least
+that many words. Returning fewer means you summarized, which is a failure.
+
+Keep every sentence the lecturer said, in the same order, including recaps,
+restatements, examples, and asides. Keep prose as prose; do not convert
+explanation into bullet points. Only fix punctuation, capitalization, paragraph
+breaks, ASR stutters, filler words, and broken encoding such as "â€™" or "â€œ".
+Add a "## " heading only where a clearly new topic begins, above the full text.
+Keep every number, equation, name, and technical term exactly as spoken. Do not
+guess at garbled terms: leave an odd token such as "GFS" or "EFAS" untouched
+rather than replacing it with a symbol you think was meant.
+
+Transcript chunk:
 {text}
 """
+
+
+def make_expansion_prompt(original: str, shortened: str) -> str:
+    """Ask the model to restore content it dropped while cleaning a chunk.
+
+    Purpose:
+        Recover from a summarizing pass without discarding the formatting already done.
+    Args:
+        original: The raw transcript chunk that was sent for cleaning.
+        shortened: The model output that came back too short.
+    Returns:
+        A prompt instructing the model to reinstate every missing sentence.
+    Workflow:
+        Shows the model both texts and demands a full-length replacement.
+    Connects to:
+        Called by `clean_transcript_with_generator` when the coverage guard trips.
+    """
+    return f"""Your previous output dropped part of the lecture. That is not allowed.
+
+Below are the ORIGINAL transcript chunk and your SHORTENED version. Rewrite the
+edited version so that every sentence from the original is present again, in the
+original order, with the same copy-editing (punctuation, paragraphs, headings).
+Do not summarize. Do not use bullet points for running explanation. The result
+must be at least as long as the original.
+
+ORIGINAL:
+{original}
+
+YOUR SHORTENED VERSION:
+{shortened}
+
+Return only the corrected full-length text.
+"""
+
+
+# A faithful copy-edit runs slightly longer than its source once punctuation and
+# paragraphing land; anything under this has dropped what the lecturer said.
+MIN_COVERAGE_RATIO = 0.85
+
+
+def coverage_ratio(source: str, cleaned: str) -> float:
+    """Report how much of a source chunk survived into the cleaned text.
+
+    Purpose:
+        Detect a summarizing cleaner mechanically instead of trusting the prompt.
+    Args:
+        source: The transcript chunk that was sent to the model.
+        cleaned: The model's returned text.
+    Returns:
+        Cleaned word count divided by source word count; 1.0 when the source is empty.
+    Workflow:
+        Strips Markdown scaffolding from the cleaned text so headings and bullet
+        markers cannot inflate the count, then compares plain word totals.
+    Connects to:
+        Called by `clean_transcript_with_generator` to gate each chunk.
+    """
+    source_words = len(source.split())
+    if not source_words:
+        return 1.0
+    body = MARKDOWN_SCAFFOLD_RE.sub(" ", cleaned)
+    return len(body.split()) / source_words
+
+
+MARKDOWN_SCAFFOLD_RE = re.compile(r"(?m)^\s{0,3}(#{1,6}\s+|[-*+]\s+|\d+\.\s+|>\s+)|[*_`|]+")
 
 
 def has_arabic_script(text: str) -> bool:
@@ -613,6 +695,36 @@ def clean_transcript_with_generator(
             )
         out = generate_fn(make_user_prompt(ch))
         out = normalize_markdown_layout(out)
+
+        # Coverage guard. The prompt forbids summarizing, but a model that ignores
+        # it fails silently, so the shortfall is measured and repaired mechanically.
+        source_words = len(ch.split())
+        if source_words and coverage_ratio(ch, out) < MIN_COVERAGE_RATIO:
+            print(
+                f"{provider_name} chunk {i}/{len(chunks)} came back "
+                f"{coverage_ratio(ch, out):.0%} of the source; asking for the missing text ..."
+            )
+            if progress_callback:
+                progress_callback(
+                    "formatting",
+                    {
+                        "detail": f"{provider_name} restoring dropped text in chunk {i} of {len(chunks)}",
+                        "chunk_index": i,
+                        "chunk_total": len(chunks),
+                    },
+                )
+            retry = normalize_markdown_layout(generate_fn(make_expansion_prompt(ch, out)))
+            if coverage_ratio(ch, retry) > coverage_ratio(ch, out):
+                out = retry
+            if coverage_ratio(ch, out) < MIN_COVERAGE_RATIO:
+                # The cleaner is still eating the lecture. A readable summary is
+                # worth less than the words the student actually needs.
+                print(
+                    f"{provider_name} still short for chunk {i}/{len(chunks)}; "
+                    "keeping the original text for this chunk."
+                )
+                out = normalize_markdown_layout(ch)
+
         if has_arabic_script(out):
             print(f"{provider_name} repair pass for chunk {i}/{len(chunks)} ...")
             if progress_callback:
