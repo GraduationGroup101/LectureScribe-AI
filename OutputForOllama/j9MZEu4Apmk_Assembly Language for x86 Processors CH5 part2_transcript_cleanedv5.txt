@@ -1,0 +1,358 @@
+## Chapter Five – Part Two: Definition and Using Procedures
+
+**Opening**
+- “In the name of Allah, the Most Gracious, the Most Merciful. Peace and blessings be upon you, dear students of the Assembly Language course.”
+
+**Overview of the Session**
+- Today we will cover the second part of Chapter 5, which focuses on **definition and use of procedures**.
+- In the first part of this chapter we explained:
+- What a procedure is.
+- How we can store data and retrieve it again using registers, flags, and other mechanisms.
+
+**Why We Use Procedures**
+- As many of you who have studied C, C++, and Java know, we always try to **divide a large program into separate, smaller parts**.
+- This division helps us understand the program better.
+- The smaller parts can be **called whenever needed** during program execution.
+
+**Procedures in Assembly Language**
+- In assembly language we refer to these callable units as **procedures** (also called **subroutines** or **functions**).
+- A procedure is a block of code that can be **invoked from elsewhere in the program**.
+
+**Comparison with High‑Level Languages**
+- In high‑level languages (e.g., C, Java, etc.) the concept of a subroutine is **fully supported and integrated**.
+
+---
+
+*The lecture will continue with detailed syntax, calling conventions, and examples of defining and using procedures in assembly.*
+
+## Procedures in Assembly
+
+- In object‑oriented programming (OOP) we speak of **methods** or **functions** because they are defined inside a class.
+- In Assembly language there is no class concept; instead we work with a **collection of procedures**.
+- All procedures are grouped together, not placed in separate classes.
+
+## Linking to Libraries
+
+- The same idea appears in other sections such as **Linking to an External Library** or the **Urban Library**.
+- These libraries are essentially collections of procedures that we call to perform specific operations in a given part of the program.
+
+## Definition and Using Procedures
+
+- In this section we will learn how to **create a procedure**.
+- We will also study the **instructions** used to invoke and exit a procedure: **Call** and **Return**.
+- For each instruction we will explain its role.
+
+## Call and Return Instructions
+
+- **Call**: transfers control to the target procedure and saves the return address.
+- **Return**: forces the microprocessor to jump back to the address that follows the Call.
+
+## Nested Procedures
+
+- A **nested procedure** is a procedure that calls another procedure, which may itself call a third one, similar to a **nested loop** (loop inside a loop).
+- We will see how procedures can be invoked inside other procedures within a program.
+
+## Passing Registers, Arguments, and Procedures to Procedures
+
+- When a procedure is called, it may require **input arguments** (registers or memory values) and may produce **output results**.
+- Understanding how to **pass arguments** to a procedure and retrieve results is essential.
+
+## Example: Summing an Integer Array
+
+- We will work through an example that **sums the elements of an integer array** using a procedure.
+
+## Saving and Restoring Registers
+
+- Procedures often need to **save** the current contents of registers before using them and **restore** them before returning, to preserve the caller’s state.
+
+## Procedure Syntax
+
+- A procedure is simply a **group of statements** with a clearly defined start and end.
+- To define a procedure:
+
+```assembly
+Proc ; start of the procedure
+; ... statements ...
+End Procedure ; end of the procedure
+```
+
+## Main Procedure
+
+- Every Assembly program must contain a **Main Procedure** and a corresponding **End Main Procedure**.
+- The identifiers for these must be **valid** (follow the language’s naming rules).
+- The Main Procedure is the entry point of the program; it is required in every program.
+
+## Subroutines and Return
+
+- After the Main Procedure, you can create additional **subroutines** (secondary procedures).
+- Each subroutine should end with a **Return** instruction and be given a distinct name.
+
+Example:
+
+```assembly
+SampleProc ; start of a subroutine
+; ... statements ...
+Return ; return to the caller
+End Procedure
+```
+
+- Note that **Return is not used in the Main Procedure** because the Main Procedure itself is the program’s execution entry point.
+- When a subroutine is
+
+### Labels and Jumps Within Procedures
+
+- When performing a **RETURN**, we are not talking about the label of the Procedure itself; we are referring to the identifiers that must be **inside** the Procedure.
+- A **Subroutine** can contain another Subroutine, and each may have its own quirks that belong to that Subroutine or Procedure.
+- **Best practice:**
+- Define any **label** you create **inside** the Procedure.
+- Reference that label **inside** the same Procedure.
+- Consequently, if you use a **Loop** or a **Jump** inside a Procedure, the target label should be defined within that Procedure.
+- The **Jump** instruction’s destination label should be local to the Procedure where the Jump appears.
+- **Example:**
+- I have a `Jump` and I want to jump to a certain destination.
+- That destination label should be defined inside the same Procedure that contains the `Jump`.
+- It is **not** advisable to call a label that is defined outside the Procedure, even if we have worked around this by making the label **global** for the whole program, because the label could originate from any other Procedure.
+- Therefore, always define labels inside the Procedure that uses them.
+
+- *Why?* (the lecturer poses this question but does not answer it in this segment).
+
+## Stack Usage in Procedures
+
+- Every procedure has **its own stack**.
+- The stack follows a specific **layout** that the procedure expects.
+- If you try to **exit the procedure’s stack frame** (for example, by jumping to a label that is outside the procedure), the stack becomes **corrupted**, even if the addresses are saved sequentially.
+- A certain type of corruption will always occur, which interferes with the stack that belongs to the current procedure.
+
+---
+
+## Documenting Procedures – Recommended Practices
+
+When creating a procedure, document every aspect of it. This is especially important because a procedure’s **input, output, and internal operations** must be clearly defined.
+
+### 1. Clear Description of the Procedure’s Task
+- Write a detailed description of **what the procedure does**.
+- Example: “This procedure adds two numbers.”
+
+### 2. List of Input Parameters (Receivers)
+- Identify all inputs that the procedure needs.
+- Example for the addition procedure:
+- **Two inputs** (the two operands to be added).
+- Place each input under the heading **“Receivers”** (or a similar label).
+- If the procedure has more inputs, list them all (e.g., Input 1, Input 2, Input 3, …).
+
+### 3. Description of Return Value
+- State explicitly **what value(s) the procedure returns**.
+- Return values may be:
+- A value stored in a specific **register** (e.g., the AX register).
+- A value placed in a **flag register**.
+- The result of a particular calculation performed inside the procedure.
+
+### 4. Special Requirements (Preconditions)
+- Document any **preconditions** that must be satisfied before the procedure can be executed.
+- These are often added to the **List of Attributes** (the same place where Receivers are listed), because they are required for the procedure to function correctly.
+
+---
+
+## Example: Documenting a “Sum” Procedure
+
+```
+Procedure Name: Sum
+Purpose: Calculating the sum of three 32‑bit integers
+```
+
+- **Receivers**
+- The three integers are supplied in **general‑purpose registers** (e.g., H registers).
+- The integers may be **signed or unsigned**.
+- **Return Value**
+- The **AX register** will contain the sum of the three integers after the procedure finishes.
+- **Statement / Instructions**
+- The body of the procedure contains the actual arithmetic instructions that compute the sum.
+
+---
+
+## Call and Return Instructions
+
+- **Call Instruction**
+- When executed, the processor **jumps to the address of the target procedure** (which resides in memory).
+- It also saves the return address so that execution can continue later in the main program.
+- **Return Instruction**
+- After the procedure finishes, the **Return** restores the saved return address and transfers control back to the **main program**.
+
+These two instructions are essential for **switching execution** from the main program to a procedure and then back again.
+
+## Call Instruction Mechanics
+
+- When a **Call** is executed, the processor **pushes** the address of the next instruction (the return address) onto the stack.
+- The **Instruction Pointer (IP)** is then overwritten with the address of the called procedure.
+- Execution continues at the first instruction of that procedure.
+
+## Example Walkthrough
+
+- Assume the main program is at address **25** and it executes `Call MySub`.
+- The Call instruction **pushes 25** onto the stack.
+- The IP is changed to **address 40**, the start of `MySub`.
+- The IP now points to 40, so `MySub` begins execution at that address.
+
+## Return Instruction Mechanics
+
+- When a **Return** is executed inside a sub‑procedure, the processor **pops** the return address from the stack.
+- The popped value (e.g., **25**) is placed back into the IP.
+- Execution resumes in the main program at the instruction following the original Call.
+
+## Detailed Sequence of Operations
+
+1. **Call**
+- **Push** the *actual* address (the return address) onto the stack.
+- **Copy** the *next* address into the Instruction Pointer.
+2. **Return**
+- **Pop** the saved return address from the stack.
+- **Copy** that value into the Instruction Pointer.
+- The stack pointer (often denoted **ASP** or **SP**) is decremented by the size of the address word (typically **4 bytes** for a 32‑bit system, or **2 bytes** for a 16‑bit system) after the push and before the pop.
+- In summary, the sequence is: **Push → Copy → … → Pop → Copy**.
+
+## Nested Procedure Calls
+
+- A **nested procedure** is a procedure that calls another procedure, which may in turn call a third, and so on.
+- Example flow:
+1. **Main** executes `Call Sub1`.
+- Push the return address of Main onto the stack.
+- Copy the address of `Sub1` into the IP.
+2. Inside **Sub1**, execute `Call Sub2`.
+- Push the return address of Sub1 onto the stack.
+- Copy the address of `Sub2` into the IP.
+3. Inside **Sub2**, execute `Call Sub3`.
+- Push the return address of Sub2 onto the stack.
+- Copy the address of `Sub3` into the IP.
+- At each level, the stack holds the return address of the caller, and the IP is updated to point to the newly called sub‑procedure.
+- When a **Return** is executed in `Sub3`, the processor pops the return address of `Sub2`, restores the IP, and continues execution in `Sub2`. The same process repeats for `Sub2` returning to `Sub1`, and finally `Sub1` returning to **Main**.
+
+## Practical Note
+
+- Because nested calls involve multiple pushes and pointer updates, the control flow can become complex.
+- It is generally advisable to avoid excessive jumping between procedures to keep the call stack manageable and the program flow clear.
+
+## Passing Register Arguments to Procedures
+
+- Every **procedure** has defined **inputs** (arguments) and an **output**.
+- When you need to pass **specific variables** (e.g., names) into a procedure, a common technique is to place the data in a **single array** and pass:
+* the **address** of the array, and
+* the **number of elements** in the array.
+- The procedure can then access any element of the array by using the **reference address** together with the element index.
+
+### Example of Address‑Based Access
+1. Suppose an array is allocated at **address 2** in memory, regardless of where the rest of the program resides.
+2. The procedure receives:
+* **Base address** = 2
+* **Number of elements** = (the size of the array)
+3. To reach **element 3** of the array, the procedure adds the index (3) to the base address (2):
+
+```
+effective_address = base_address + element_index ; 2 + 3 = 5
+```
+
+4. While this method works, it can become cumbersome in more complex situations.
+
+### Using Registers Instead of Pure Address Arithmetic
+
+- In assembly language, the preferred approach is to **use registers** to hold argument values.
+- Typical steps:
+1. **Push** the register containing the actual argument value onto the **stack**.
+2. **Call** the procedure; the procedure can then **pop** the value from the stack into a register for its own use.
+3. After the procedure finishes, the original register values are restored from the stack.
+- This push/pop mechanism is standard in assembly and is ideal for passing **input arguments** to procedures.
+
+### Sample Procedure: `SumOf`
+
+- Goal: add the contents of **three registers** and return the sum in **AX**.
+- **Main program** (`MainProc`):
+1. Load the three values to be summed into registers (e.g., `BX`, `CX`, `DX`).
+2. Store the **instruction pointer (IP)** or the address of `SumOf` for the `CALL`.
+3. Execute `CALL SumOf`.
+- **Inside `SumOf`**:
+1. Retrieve the three registers (already containing the arguments).
+2. Perform the addition:
+
+```
+ADD BX, CX
+ADD BX, DX ; BX now holds the sum
+```
+
+3. Move the result into **AX** before returning:
+
+```
+MOV AX, BX
+RET
+```
+
+- After `RET`, control returns to the instruction following the `CALL`; the result is now in `AX`.
+
+### Saving and Restoring Registers
+
+- Because procedures may modify **general‑purpose registers**, it is essential to **save** the original register values at the start of a procedure and **restore** them before returning.
+- The typical practice:
+
+* **Push** all registers that will be altered (except those used for returning a result, such as `AX`).
+* Perform the needed computations.
+* **Pop** the registers in reverse order before executing `RET`.
+- The **AX register** is usually **not saved** because it commonly holds function results or is used as an operand in many operations.
+
+### `USE S` Operator
+
+- The `USE S` operator can be attached directly to a procedure definition.
+- When used, it automatically generates code that **saves all registers used within the procedure** at entry and **restores them** on exit, eliminating the need to write explicit push/pop instructions.
+
+---
+
+**Key Takeaways**
+
+- Pass arguments to procedures via **array address + size** or, more commonly, via **registers**.
+- Use the **stack (push/pop)** to preserve original register values when they must be used as arguments.
+- Return results in a designated register (conventionally `AX`).
+- The `USE S` operator provides an automatic save/restore mechanism for registers used inside a procedure.
+
+## Defining and Using Procedures – The **USES** Directive
+
+- **Purpose of `USES`**
+- Tells the assembler which registers must be saved (pushed) at the start of a procedure and restored (popped) at the end.
+- **What happens when `USES` is omitted**
+- You must write the push and pop instructions yourself.
+- Forgetting a push or pop can scramble the values of the registers.
+- **Automatic save/restore sequence**
+1. **Push Instruction** – saves every register listed in `USES` onto the stack at the beginning of the procedure.
+2. **Procedure body** – you can use those registers freely.
+3. **Pop Instruction** – restores the saved registers from the stack when the procedure ends.
+- **Example**
+
+```assembly
+MyProc PROC USES ESI, ECX
+; … procedure code …
+MyProc ENDP
+```
+
+- The assembler generates a `push esi` and `push ecx` at the start of `MyProc`.
+- At the `ENDP` (or before the `RET`), it generates `pop ecx` and `pop esi` in the reverse order.
+- After the procedure finishes, `ESI` and `ECX` contain the same values they had before the call.
+- **Why `USES` is helpful**
+- Saves you from manually writing multiple push/pop instructions.
+- Reduces the chance of errors that would corrupt register values.
+- Makes the code clearer and easier to maintain.
+- **How to write `USES`**
+- Place the keyword `USES` after the procedure name.
+- List the registers you want saved, separated by commas **or** spaces.
+- **Without `USES`** (manual method)
+
+```assembly
+MyProc PROC
+push esi
+push ecx
+; … procedure code …
+pop ecx
+pop esi
+MyProc ENDP
+```
+
+- If you forget any of these instructions, the register values become inconsistent.
+
+---
+
+*This concludes the section on defining and using procedures. The next lecture will be the third and final part of Chapter 5.*

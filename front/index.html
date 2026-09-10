@@ -3,134 +3,252 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>LectureScribe AI</title>
+    <meta name="color-scheme" content="dark">
+    <meta name="description" content="Paste a YouTube lecture and LectureScribe transcribes it into text you can search, quote, and keep.">
+    <title>LectureScribe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Fira+Mono:wght@400;500;700&family=Noto+Naskh+Arabic:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="/front/styles.css">
   </head>
   <body>
-    <main class="shell">
-      <section class="workspace">
-        <header class="topbar">
-          <div class="brand-block">
-            <span class="brand-kicker">Lecture workflow</span>
-            <h1>LectureScribe AI</h1>
-            <p>Turn lecture videos into readable transcripts.</p>
-          </div>
-          <nav class="nav-links" aria-label="Main navigation">
-            <a class="active" href="/">New Job</a>
-            <a href="/app/jobs">Previous Jobs</a>
-          </nav>
-        </header>
+    <a class="skip-link" href="#main">Skip to the form</a>
 
-        <section class="app-grid">
-          <section class="panel start-panel">
-            <div class="section-title">
-              <div>
-                <span class="section-kicker">New request</span>
-                <h2>Start A Transcript</h2>
+    <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+      <defs>
+        <symbol id="i-mark" viewBox="0 0 24 24"><path d="M2 9h2v6H2zM5.5 6h2v12h-2zM9 10h2v4H9zM13 6h9v2h-9zM13 11h9v2h-9zM13 16h6v2h-6z"/></symbol>
+        <symbol id="i-new" viewBox="0 0 24 24"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></symbol>
+        <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 5h3v3H3zM9 5h12v3H9zM3 10.5h3v3H3zM9 10.5h12v3H9zM3 16h3v3H3zM9 16h12v3H9z"/></symbol>
+        <symbol id="i-queue" viewBox="0 0 24 24"><path d="M5 3h14v2l-5 7 5 7v2H5v-2l5-7-5-7V3z"/></symbol>
+        <symbol id="i-archive" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M2 4h20v6H2V4zm0 8h20v8H2v-8zm8 2h4v2h-4v-2z"/></symbol>
+        <symbol id="i-download" viewBox="0 0 24 24"><path d="M11 3h2v9h4l-5 6-5-6h4V3zM4 19h16v2H4z"/></symbol>
+        <symbol id="i-transcribe" viewBox="0 0 24 24"><path d="M3 10h2v4H3zM7 7h2v10H7zM11 4h2v16h-2zM15 7h2v10h-2zM19 10h2v4h-2z"/></symbol>
+        <symbol id="i-clean" viewBox="0 0 24 24"><path d="M3 4h1.6v16H3zM7 5h14v2.4H7zM7 10h14v2.4H7zM7 15h14v2.4H7z"/></symbol>
+        <symbol id="i-save" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M10.8 2h2.4v5.2h2.6L12 11.8 8.2 7.2h2.6V2zM2 13h20v8H2v-8zm8 2h4v2h-4v-2z"/></symbol>
+        <symbol id="i-arrival" viewBox="0 0 24 24"><path d="M9.6 19.2 2.8 12.4l2.6-2.6 4.2 4.2 9-9 2.6 2.6z"/></symbol>
+        <symbol id="i-closed" viewBox="0 0 24 24"><path d="M18.9 3 12 9.9 5.1 3 3 5.1 9.9 12 3 18.9 5.1 21 12 14.1 18.9 21 21 18.9 14.1 12 21 5.1z"/></symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M9 2h13v13h-2V4H11v1H9V2zM2 7h13v15H2zM4 9v11h9V9H4z"/></symbol>
+        <symbol id="i-search" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M10.5 2a8.5 8.5 0 1 0 5.2 15.2l4.6 4.6 1.9-1.9-4.6-4.6A8.5 8.5 0 0 0 10.5 2zm0 2.6a5.9 5.9 0 1 1 0 11.8 5.9 5.9 0 0 1 0-11.8z"/></symbol>
+        <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 8.5 12h-2.8A6.4 6.4 0 1 1 12 5.6c1.8 0 3.4.7 4.6 1.9L13 11h8V3l-2.6 2.6A8.97 8.97 0 0 0 12 3z"/></symbol>
+        <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M13.2 3.6 21.6 12l-8.4 8.4-2.1-2.1 4.8-4.8H2.4v-3h13.5l-4.8-4.8z"/></symbol>
+        <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M10.8 3.6 2.4 12l8.4 8.4 2.1-2.1-4.8-4.8h13.5v-3H8.1l4.8-4.8z"/></symbol>
+      </defs>
+    </svg>
+
+    <header class="signband">
+      <div class="corridor">
+        <a class="mark" href="/app">
+          <span class="tile"><svg class="pict"><use href="#i-mark"></use></svg></span>
+          LectureScribe
+        </a>
+        <nav class="destinations" aria-label="Sections">
+          <a class="dest" href="/app" aria-current="page"><svg><use href="#i-new"></use></svg>New transcript</a>
+          <a class="dest" href="/app/jobs"><svg><use href="#i-history"></use></svg>History</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section id="status-panel" class="is-hidden" aria-live="polite">
+        <div class="band band-quiet" id="status-band">
+          <div class="corridor">
+            <div class="band-message">
+              <span class="tile" id="stage-tile"><svg class="pict"><use href="#i-queue"></use></svg></span>
+              <div class="band-text">
+                <span class="sr-only" id="job-status">Queued</span>
+                <p class="band-headline" id="step-label">Preparing the job</p>
               </div>
             </div>
+            <div class="band-figure">
+              <span id="eta-label">Remaining</span>
+              <strong id="eta">Calculating</strong>
+            </div>
+          </div>
+        </div>
 
-            <form id="job-form">
-              <label class="field-label" for="youtube-url">Lecture YouTube URL</label>
-              <div class="url-row">
+        <div class="progress-rule" id="progress-rule">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+
+        <div class="rail-wrap">
+          <div class="corridor">
+            <ol class="rail" id="stage-rail"></ol>
+          </div>
+        </div>
+
+        <div class="facts-wrap">
+          <div class="corridor">
+            <dl class="facts">
+              <div>
+                <dt>Stop</dt>
+                <dd id="step-count">&mdash;</dd>
+              </div>
+              <div>
+                <dt>Elapsed</dt>
+                <dd id="elapsed">0s</dd>
+              </div>
+              <div>
+                <dt>Archive</dt>
+                <dd id="job-cache">&mdash;</dd>
+              </div>
+              <div>
+                <dt>Mode</dt>
+                <dd id="job-mode">&mdash;</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+
+        <div class="corridor status-foot">
+          <div>
+            <p class="note" id="job-message">Waiting for the job to start.</p>
+            <p class="hint" id="waiting-note">Keep this tab open. The page picks the job back up if you reload it.</p>
+            <p class="hint is-hidden" id="chunk-row">
+              <span class="sr-only">Cleaner: </span><span id="chunk-status">&mdash;</span>
+            </p>
+          </div>
+          <dl class="ident">
+            <div>
+              <dt>Lecture</dt>
+              <dd><a id="job-source" href="/app" rel="noreferrer noopener" target="_blank">&mdash;</a></dd>
+            </div>
+            <div>
+              <dt>Job</dt>
+              <dd id="job-id">&mdash;</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <section id="result-panel" class="is-hidden">
+        <div class="band band-quiet">
+          <div class="corridor">
+            <div class="band-message">
+              <span class="tile"><svg class="pict"><use href="#i-mark"></use></svg></span>
+              <div class="band-text">
+                <p class="band-headline" id="result-summary">Transcript ready</p>
+              </div>
+            </div>
+            <button id="copy-transcript" class="action" type="button" disabled>
+              <svg><use href="#i-copy"></use></svg>
+              <span class="action-label">Copy text</span>
+            </button>
+          </div>
+        </div>
+        <div class="sheet-wrap">
+          <div class="corridor">
+            <pre class="sheet sheet-empty" id="transcript-output" dir="auto" tabindex="0">Waiting for the transcript.</pre>
+          </div>
+        </div>
+      </section>
+      <section class="decision" id="decision">
+        <div class="band ask-band">
+          <div class="corridor">
+            <div class="band-message">
+              <span class="tile"><svg class="pict"><use href="#i-new"></use></svg></span>
+              <div class="band-text">
+                <h1 class="ask">Which lecture?</h1>
+              </div>
+            </div>
+            <div class="band-figure">
+              <span>The route</span>
+              <strong>6 stops</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="corridor decision-body">
+          <div>
+            <p class="lede">
+              Paste a YouTube link. LectureScribe pulls the audio, runs it through Whisper,
+              and hands back text you can search and quote.
+            </p>
+
+            <form id="job-form" novalidate>
+              <div class="field">
+                <label class="field-label" for="youtube-url">Lecture URL</label>
                 <input
                   id="youtube-url"
                   name="youtube_url"
                   type="url"
+                  inputmode="url"
                   placeholder="https://www.youtube.com/watch?v=..."
                   autocomplete="off"
+                  spellcheck="false"
                   required
                 >
-                <button id="submit-button" type="submit">Start</button>
               </div>
 
-              <fieldset class="mode-group">
-                <legend>Output mode</legend>
-                <label class="mode-option">
-                  <input type="radio" name="mode" value="fast" checked>
-                  <span>
-                    <strong>Fast output</strong>
-                    <small>Tries cloud cleanup first, then shows Whisper if unavailable.</small>
-                  </span>
-                </label>
-                <label class="mode-option">
-                  <input type="radio" name="mode" value="formatted">
-                  <span>
-                    <strong>Better formatting</strong>
-                    <small>Uses cloud cleanup first, with Ollama fallback.</small>
-                  </span>
-                </label>
+              <fieldset class="modes">
+                <legend class="legend">Output</legend>
+                <div class="mode-list">
+                  <label class="mode">
+                    <input type="radio" name="mode" value="fast" checked>
+                    <span>
+                      <span class="mode-name">Fast output</span>
+                      <span class="mode-note">Whisper's text, tidied by the cloud cleaner when it answers. Falls back to the raw transcript rather than waiting.</span>
+                    </span>
+                  </label>
+                  <label class="mode">
+                    <input type="radio" name="mode" value="formatted">
+                    <span>
+                      <span class="mode-name">Better formatting</span>
+                      <span class="mode-note">Cloud cleaner first, local Ollama if it is down. Slower, but punctuation and paragraphs hold up.</span>
+                    </span>
+                  </label>
+                </div>
               </fieldset>
+
+              <div class="go-cell">
+                <button id="submit-button" class="go" type="submit">
+                  <span class="tile"><svg class="pict"><use href="#i-arrow-right"></use></svg></span>
+                  Start
+                </button>
+                <p class="hint is-hidden" id="queue-note">
+                  One lecture at a time. This unlocks when the current one lands.
+                </p>
+              </div>
             </form>
-          </section>
-
-          <section id="status-panel" class="panel status-panel is-hidden" aria-live="polite">
-            <div class="section-title">
-              <div>
-                <span class="section-kicker">Live progress</span>
-                <h2>Job Status</h2>
-                <p id="step-label" class="subtle">Preparing job...</p>
-              </div>
-              <span id="job-status" class="status-badge queued">Queued</span>
-            </div>
-
-            <div class="progress-track" aria-label="Job progress">
-              <div id="progress-fill" class="progress-fill"></div>
-            </div>
-
-            <div class="status-metrics">
-              <div>
-                <span>Step</span>
-                <strong id="step-count">-</strong>
-              </div>
-              <div>
-                <span>Estimate</span>
-                <strong id="eta">Calculating...</strong>
-              </div>
-              <div>
-                <span>Elapsed</span>
-                <strong id="elapsed">0s</strong>
-              </div>
-              <div>
-                <span>Cache</span>
-                <strong id="job-cache">-</strong>
-              </div>
-            </div>
-
-            <dl class="job-details">
-              <div>
-                <dt>Job ID</dt>
-                <dd id="job-id">-</dd>
-              </div>
-              <div>
-                <dt>Mode</dt>
-                <dd id="job-mode">-</dd>
-              </div>
-              <div id="chunk-row" class="is-hidden">
-                <dt>Cleaner</dt>
-                <dd id="chunk-status">-</dd>
-              </div>
-            </dl>
-
-            <p id="job-message" class="message">Waiting for the job to start.</p>
-            <p id="waiting-note" class="waiting-note">Keep this page open while your transcript is being prepared.</p>
-          </section>
-        </section>
-
-        <section id="result-panel" class="panel transcript-panel is-hidden">
-          <div class="section-title">
-            <div>
-              <span class="section-kicker">Output</span>
-              <h2>Transcript</h2>
-              <p id="result-summary" class="subtle">Result is ready.</p>
-            </div>
-            <button id="copy-transcript" class="secondary" type="button" disabled>Copy</button>
           </div>
-          <pre id="transcript-output">Waiting for transcript...</pre>
-        </section>
+
+          <aside class="rail-invitation" id="route-preview" aria-label="What happens after you start">
+            <p class="rail-head">Every stop</p>
+            <ol class="rail">
+              <li class="stop" data-state="ahead">
+                <span class="stop-tile"><svg class="pict"><use href="#i-queue"></use></svg></span>
+                <span class="stop-body"><span class="stop-name">In queue</span><span class="stop-note">one job at a time</span></span>
+              </li>
+              <li class="stop" data-state="ahead">
+                <span class="stop-tile"><svg class="pict"><use href="#i-archive"></use></svg></span>
+                <span class="stop-body"><span class="stop-name">Checking archive</span><span class="stop-note">seconds</span></span>
+              </li>
+              <li class="stop" data-state="ahead">
+                <span class="stop-tile"><svg class="pict"><use href="#i-download"></use></svg></span>
+                <span class="stop-body"><span class="stop-name">Downloading audio</span><span class="stop-note">1&ndash;3 min</span></span>
+              </li>
+              <li class="stop" data-state="ahead">
+                <span class="stop-tile"><svg class="pict"><use href="#i-transcribe"></use></svg></span>
+                <span class="stop-body"><span class="stop-name">Transcribing</span><span class="stop-note">the long one</span></span>
+              </li>
+              <li class="stop" data-state="ahead">
+                <span class="stop-tile"><svg class="pict"><use href="#i-clean"></use></svg></span>
+                <span class="stop-body"><span class="stop-name">Cleaning text</span><span class="stop-note">2&ndash;8 min</span></span>
+              </li>
+              <li class="stop" data-state="ahead">
+                <span class="stop-tile"><svg class="pict"><use href="#i-save"></use></svg></span>
+                <span class="stop-body"><span class="stop-name">Saving</span><span class="stop-note">seconds</span></span>
+              </li>
+            </ol>
+            <p class="rail-foot">
+              A lecture already in the archive skips the download and the transcription
+              entirely &mdash; those stops drop off the route and the text comes back in seconds.
+            </p>
+          </aside>
+        </div>
       </section>
+
     </main>
 
-    <script src="/front/app.js"></script>
+    <script src="/front/app.js?v=concourse-1"></script>
   </body>
 </html>

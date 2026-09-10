@@ -1,25 +1,42 @@
+/* ==========================================================================
+   LectureScribe — Concourse
+   A dark terminal ground; signage yellow reserved for wayfinding only.
+   ========================================================================== */
+
 :root {
-  color-scheme: light;
-  --bg: #eef3f2;
-  --surface: #ffffff;
-  --surface-soft: #f8faf9;
-  --ink: #172026;
-  --muted: #62717a;
-  --line: #d9e2e0;
-  --line-strong: #bdcbc8;
-  --accent: #14746f;
-  --accent-dark: #0c5f5a;
-  --accent-soft: #e7f3f1;
-  --amber: #9a6a10;
-  --amber-soft: #fff6dd;
-  --danger: #a13636;
-  --danger-soft: #fae9e7;
-  --ok: #1f6d3a;
-  --ok-soft: #e6f4ea;
-  --info: #315f8f;
-  --info-soft: #e9f0f8;
-  --shadow-sm: 0 6px 18px rgba(23, 32, 38, 0.06);
-  --shadow-md: 0 18px 44px rgba(23, 32, 38, 0.1);
+  color-scheme: dark;
+
+  /* Ground */
+  --concourse: #101215;
+  --panel: #16191d;
+  --panel-2: #1c2026;
+  --inset: #0b0b0b;
+  --rule: #262b31;
+  --rule-strong: #3a4149;
+
+  /* Wayfinding — never decorative */
+  --sign: #ffcc00;
+  --sign-dim: #4a3f0f;
+  --sign-ink: #0b0b0b;
+
+  /* Ink */
+  --ink: #f2f3f5;
+  --ink-2: #a8b0b8;
+  --ink-3: #838d96;
+
+  /* States. The band colours are signage-deep and carry white type; the
+     "-lit" pair is the same state read against the dark concourse ground. */
+  --arrival: #0f7a43;
+  --arrival-lit: #35c07a;
+  --closed: #c0261f;
+  --closed-lit: #ff6a5e;
+
+  /* The one sheet */
+  --sheet: #ffffff;
+  --sheet-ink: #14161a;
+
+  --band-h: 56px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * {
@@ -28,174 +45,688 @@
 
 html {
   min-width: 320px;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: var(--concourse);
   color: var(--ink);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-
-button,
-input,
-select {
-  font: inherit;
-}
-
-button,
-a,
-label {
-  -webkit-tap-highlight-color: transparent;
-}
-
-.shell {
-  min-height: 100vh;
-  padding: 28px;
-}
-
-.workspace {
-  width: min(1120px, 100%);
-  margin: 0 auto;
-}
-
-.topbar {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 20px;
-  padding: 4px 2px;
-}
-
-.brand-block {
-  min-width: 0;
-}
-
-.brand-kicker,
-.section-kicker {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  color: var(--accent-dark);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: "Fira Sans", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1,
 h2,
-p {
+h3,
+p,
+dl,
+dd,
+figure {
   margin: 0;
 }
 
-h1 {
-  margin-top: 4px;
-  font-size: 38px;
-  line-height: 1.05;
-  letter-spacing: 0;
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
 }
 
-h2 {
-  font-size: 19px;
-  letter-spacing: 0;
+/* --- Browser surfaces: the parts we did not draw still carry the design --- */
+
+::selection {
+  background: var(--sign);
+  color: var(--sign-ink);
 }
 
-.topbar p,
-.subtle {
-  margin-top: 7px;
-  color: var(--muted);
-  line-height: 1.45;
+:focus-visible {
+  outline: 3px solid var(--sign);
+  outline-offset: 2px;
 }
 
-.nav-links {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
+input,
+textarea {
+  caret-color: var(--sign);
 }
 
-.nav-links a,
-button {
-  border: 0;
-  border-radius: 8px;
-  cursor: pointer;
+::placeholder {
+  color: var(--ink-3);
+  opacity: 1;
+}
+
+* {
+  scrollbar-color: var(--rule-strong) transparent;
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--rule-strong);
+  border: 3px solid var(--concourse);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #4d565f;
+}
+
+a {
+  color: var(--sign);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+a.go,
+a.action {
   text-decoration: none;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 20;
+  background: var(--sign);
+  color: var(--sign-ink);
+  padding: 12px 18px;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
   white-space: nowrap;
 }
 
-.nav-links a,
-.secondary {
-  min-height: 40px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  color: var(--ink);
+.is-hidden {
+  display: none !important;
+}
+
+.corridor {
+  width: min(1240px, 100%);
+  margin-inline: auto;
+  padding-inline: 28px;
+}
+
+/* ==========================================================================
+   Pictograms — solid silhouettes, white on black inset tiles
+   ========================================================================== */
+
+.pict {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.tile {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 9px 13px;
-  box-shadow: var(--shadow-sm);
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  padding: 6px;
+  border-radius: 2px;
+  background: var(--inset);
+  color: #ffffff;
 }
 
-.nav-links a:hover,
-.secondary:hover {
-  border-color: var(--line-strong);
-  background: var(--surface-soft);
+/* ==========================================================================
+   The hung sign band
+   ========================================================================== */
+
+.signband {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--inset);
+  border-bottom: 1px solid var(--rule);
 }
 
-.nav-links a.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: white;
+.signband .corridor {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: var(--band-h);
 }
 
-.panel {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  box-shadow: var(--shadow-md);
+.mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
 }
 
-.app-grid {
-  display: grid;
-  grid-template-columns: 1fr;
+.mark .tile {
+  width: 28px;
+  height: 28px;
+  padding: 3px;
+  background: #ffffff;
+  color: var(--inset);
+}
+
+.destinations {
+  display: flex;
+  align-items: stretch;
+}
+
+.dest {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 16px;
+  border-bottom: 3px solid transparent;
+  color: var(--ink-2);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.dest svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+}
+
+.dest:hover {
+  color: var(--ink);
+  background: #141414;
+}
+
+/* The followed destination stays highlighted, band to band. */
+.dest[aria-current="page"] {
+  color: var(--sign);
+  border-bottom-color: var(--sign);
+}
+
+/* ==========================================================================
+   Bands — full bleed, one message per line
+   ========================================================================== */
+
+.band {
+  padding: 22px max(28px, calc((100% - 1240px) / 2 + 28px));
+  border-bottom: 1px solid var(--rule);
+}
+
+.band .corridor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  width: 100%;
+  padding-inline: 0;
+}
+
+.band-message {
+  display: flex;
+  align-items: center;
   gap: 16px;
+  min-width: 0;
 }
 
-.app-grid:has(.status-panel:not(.is-hidden)) {
-  grid-template-columns: minmax(0, 0.95fr) minmax(380px, 1.05fr);
-  align-items: start;
+.band-text {
+  min-width: 0;
 }
 
-.start-panel,
-.status-panel,
-.transcript-panel,
-.jobs-page-panel {
-  padding: 22px;
-  margin-bottom: 16px;
+.band-status {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-.section-title {
+.band-headline {
+  margin-top: 1px;
+  font-size: clamp(21px, 2.4vw, 27px);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+}
+
+.band-figure {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.band-figure span {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.band-figure strong {
+  display: block;
+  margin-top: 2px;
+  font-size: clamp(30px, 4.4vw, 52px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+
+/* Wayfinding band: running work. */
+.band-wayfinding {
+  background: var(--sign);
+  color: var(--sign-ink);
+  border-bottom-color: #d9ad00;
+}
+
+.band-wayfinding .tile {
+  background: var(--inset);
+  color: #ffffff;
+}
+
+.band-wayfinding .band-status,
+.band-wayfinding .band-figure span {
+  color: var(--sign-dim);
+}
+
+/* Arrival band: the job landed. */
+.band-arrival {
+  background: var(--arrival);
+  color: #ffffff;
+  border-bottom-color: #0a5c31;
+}
+
+.band-arrival .tile {
+  background: var(--inset);
+  color: #ffffff;
+}
+
+.band-arrival .band-status,
+.band-arrival .band-figure span {
+  color: #d9f2e4;
+}
+
+/* Closed route: the job failed. */
+.band-closed {
+  background: var(--closed);
+  color: #ffffff;
+  border-bottom-color: #8f1c17;
+}
+
+.band-closed .tile {
+  background: var(--inset);
+  color: #ffffff;
+}
+
+.band-closed .band-status,
+.band-closed .band-figure span {
+  color: #fce3e1;
+}
+
+/* The question is itself a sign hung over the decision point. */
+.ask-band {
+  background: var(--sign);
+  color: var(--sign-ink);
+  border-bottom-color: #d9ad00;
+}
+
+.ask-band .tile {
+  background: var(--inset);
+  color: #ffffff;
+}
+
+.ask-band .band-figure span {
+  color: var(--sign-dim);
+}
+
+.band-tail {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+/* Quiet band: queued, or a message with no wayfinding claim. */
+.band-quiet {
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.band-quiet .band-status,
+.band-quiet .band-figure span {
+  color: var(--ink-2);
+}
+
+/* ==========================================================================
+   The progress rule — a hairline under the band, not a pill
+   ========================================================================== */
+
+.progress-rule {
+  position: relative;
+  height: 6px;
+  background: var(--inset);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--sign);
+  transform: scaleX(var(--progress, 0));
+  transform-origin: left center;
+  transition: transform 320ms var(--ease-out);
+}
+
+.progress-rule[data-status="completed"] .progress-fill {
+  background: var(--arrival-lit);
+}
+
+.progress-rule[data-status="failed"] .progress-fill {
+  background: var(--closed-lit);
+}
+
+/* ==========================================================================
+   The rail — a chain of decision points. It never wraps; it scales.
+   ========================================================================== */
+
+.rail-wrap {
+  border-bottom: 1px solid var(--rule);
+}
+
+.facts-wrap {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.filters {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stop {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 16px;
+  gap: 11px;
+  min-width: 0;
+  padding: 14px 16px;
+  border-left: 1px solid var(--rule);
 }
 
-.field-label {
+.stop:first-child {
+  border-left: 0;
+  padding-left: 0;
+}
+
+.rail > .stop:last-child {
+  padding-right: 0;
+}
+
+.stop-tile {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+  border-radius: 2px;
+  background: var(--inset);
+  color: #6b747c;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 180ms var(--ease-out), color 180ms var(--ease-out);
+}
+
+.stop-body {
+  min-width: 0;
+}
+
+.stop-name {
   display: block;
-  margin-bottom: 8px;
-  color: var(--muted);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.url-row {
+.stop-note {
+  display: block;
+  margin-top: 2px;
+  font-family: "Fira Mono", ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Passed. Shape and label carry the state, never hue alone. */
+.stop[data-state="done"] .stop-tile {
+  background: #1b2d23;
+  color: var(--arrival-lit);
+}
+
+.stop[data-state="done"] .stop-name {
+  color: var(--ink-2);
+}
+
+/* You are here. */
+.stop[data-state="current"] {
+  background: var(--panel-2);
+}
+
+.stop[data-state="current"] .stop-tile {
+  background: var(--sign);
+  color: var(--sign-ink);
+}
+
+.stop[data-state="current"] .stop-name {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.stop[data-state="current"] .stop-note {
+  color: var(--sign);
+}
+
+/* A closed route drops off the panel — struck through, never silently gone. */
+.stop[data-state="dropped"] .stop-name {
+  color: var(--ink-3);
+  text-decoration: line-through;
+  text-decoration-color: var(--ink-3);
+}
+
+.stop[data-state="dropped"] .stop-tile {
+  opacity: 0.4;
+}
+
+.stop[data-state="failed"] .stop-tile {
+  background: #331714;
+  color: var(--closed-lit);
+}
+
+.stop[data-state="failed"] .stop-name {
+  color: var(--ink);
+}
+
+/* The empty rail is an invitation, not an absence. */
+.rail-invitation {
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.rail-invitation .rail {
+  grid-auto-flow: row;
+  grid-auto-columns: auto;
+}
+
+.rail-invitation .stop {
+  border-left: 0;
+  padding-left: 0;
+  padding-right: 16px;
+  border-top: 1px solid var(--rule);
+}
+
+.rail-invitation .stop:first-child {
+  border-top: 0;
+}
+
+.rail-head {
+  padding: 13px 16px 13px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.rail-foot {
+  padding: 13px 16px 13px 0;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* ==========================================================================
+   The decision point — one question, one field, one action
+   ========================================================================== */
+
+.decision-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+  gap: 56px;
+  align-items: start;
+  padding-block: clamp(36px, 4.4vw, 56px) clamp(48px, 7vw, 88px);
+}
+
+.decision.is-secondary .ask-band {
+  background: var(--panel);
+  color: var(--ink);
+  border-bottom-color: var(--rule);
+  padding-block: 16px;
+}
+
+.decision.is-secondary .ask-band .tile,
+.decision.is-secondary .ask-band .band-figure {
+  display: none;
+}
+
+.decision.is-secondary .decision-body {
+  grid-template-columns: minmax(0, 1fr);
+  padding-block: 28px 96px;
+}
+
+.decision.is-secondary .ask {
+  font-size: clamp(21px, 2.4vw, 26px);
+  letter-spacing: -0.02em;
+}
+
+.decision.is-secondary .lede {
+  display: none;
+}
+
+/* Demoted, the form is an entry strip across the corridor, not a half-width
+   column with bare ground beside it. */
+.decision.is-secondary form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 20px;
+}
+
+.decision.is-secondary .field,
+.decision.is-secondary .modes {
+  margin: 0;
+}
+
+.decision.is-secondary .mode {
+  align-items: center;
+  min-height: 56px;
+  padding: 11px 14px;
+}
+
+.decision.is-secondary .mode-note {
+  display: none;
+}
+
+.decision.is-secondary .mode-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.decision.is-secondary .mode + .mode {
+  border-top: 0;
+  border-left: 1px solid var(--rule);
+}
+
+.decision.is-secondary .go {
+  margin-top: 0;
+  justify-self: start;
+}
+
+.decision.is-secondary .go-cell {
+  align-self: end;
+}
+
+.ask {
+  font-size: clamp(32px, 4.6vw, 52px);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.lede {
+  max-width: 52ch;
+  color: var(--ink-2);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.field {
+  margin-top: 34px;
+}
+
+.field-label,
+.legend {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 input[type="url"],
@@ -203,412 +734,794 @@ input[type="search"],
 select {
   width: 100%;
   min-width: 0;
-  min-height: 48px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  min-height: 56px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  background: var(--inset);
   color: var(--ink);
-  background: var(--surface-soft);
-  padding: 12px 14px;
+  padding: 14px 16px;
+  font-size: 17px;
+  transition: border-color 140ms var(--ease-out);
 }
 
 input[type="url"]:hover,
 input[type="search"]:hover,
 select:hover {
-  border-color: var(--line-strong);
+  border-color: #545e68;
 }
 
-input[type="url"]:focus,
-input[type="search"]:focus,
-select:focus {
-  border-color: var(--accent);
-  background: white;
-  outline: 3px solid rgba(20, 116, 111, 0.16);
+input[type="url"]:focus-visible,
+input[type="search"]:focus-visible,
+select:focus-visible {
+  border-color: var(--sign);
+  outline-offset: 0;
 }
 
-#submit-button {
-  min-width: 124px;
-  min-height: 48px;
-  background: var(--accent);
-  color: white;
-  font-weight: 800;
-  padding: 0 20px;
-  box-shadow: 0 10px 22px rgba(20, 116, 111, 0.22);
+select {
+  appearance: none;
+  padding-right: 44px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-2) 50%),
+    linear-gradient(135deg, var(--ink-2) 50%, transparent 50%);
+  background-position: calc(100% - 22px) 25px, calc(100% - 16px) 25px;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
 }
 
-#submit-button:hover {
-  background: var(--accent-dark);
-}
-
-#submit-button:disabled,
-.secondary:disabled,
-.job-actions button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.mode-group {
-  border: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin: 18px 0 0;
+.modes {
+  margin: 28px 0 0;
   padding: 0;
+  border: 0;
 }
 
-.mode-group legend {
-  grid-column: 1 / -1;
-  margin-bottom: 8px;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 700;
+.mode-list {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  overflow: hidden;
 }
 
-.mode-option {
-  position: relative;
+.mode {
   display: flex;
-  gap: 11px;
-  min-width: 0;
-  min-height: 92px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface-soft);
-  padding: 14px;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 16px;
+  border-top: 1px solid var(--rule);
+  background: var(--panel);
   cursor: pointer;
 }
 
-.mode-option:hover {
-  border-color: var(--line-strong);
-  background: white;
+.mode:first-child {
+  border-top: 0;
 }
 
-.mode-option:has(input:checked) {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px rgba(20, 116, 111, 0.18);
+.mode:hover {
+  background: var(--panel-2);
 }
 
-.mode-option input {
+.mode input {
   flex: 0 0 auto;
-  margin-top: 4px;
-  accent-color: var(--accent);
+  width: 19px;
+  height: 19px;
+  margin: 2px 0 0;
+  accent-color: var(--sign);
 }
 
-.mode-option span {
-  display: grid;
-  gap: 5px;
-  min-width: 0;
+.mode-name {
+  display: block;
+  font-weight: 600;
 }
 
-.mode-option small {
-  color: var(--muted);
-  line-height: 1.38;
+.mode-note {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.4;
 }
 
-.status-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  border-top: 4px solid var(--accent);
+.mode:has(input:checked) {
+  background: var(--panel-2);
+  outline: 2px solid var(--sign);
+  outline-offset: -2px;
 }
 
-.is-hidden {
-  display: none !important;
+.mode:has(input:checked) .mode-note {
+  color: #c3cad1;
 }
 
-.status-badge {
-  min-height: 32px;
-  border-radius: 999px;
+/* --- Actions ------------------------------------------------------------ */
+
+button {
+  border: 0;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.go {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 6px 11px;
-  background: #e8eef0;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 800;
-  text-transform: capitalize;
+  gap: 14px;
+  min-height: 56px;
+  margin-top: 28px;
+  padding: 0 24px 0 8px;
+  background: var(--sign);
+  color: var(--sign-ink);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
-.status-badge.running,
-.status-badge.queued {
-  background: var(--amber-soft);
-  color: var(--amber);
+.go .tile {
+  width: 40px;
+  height: 40px;
+  padding: 9px;
 }
 
-.status-badge.completed {
-  background: var(--ok-soft);
-  color: var(--ok);
+.go:hover {
+  background: #ffd633;
 }
 
-.status-badge.failed {
-  background: var(--danger-soft);
-  color: var(--danger);
+.go:active {
+  background: #e6b800;
 }
 
-.progress-track {
-  width: 100%;
-  height: 14px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #e2ebe8;
+/* The action and the line that explains it stay together at every width. */
+.go-cell {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: 9px;
 }
 
-.progress-fill {
-  width: 0%;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent), var(--info));
-  transition: width 300ms ease;
+.go-cell #queue-note {
+  max-width: 26ch;
+  padding-bottom: 0;
 }
 
-.status-metrics {
+/* In the entry strip the note hangs below the action rather than growing the
+   column, so Start keeps the field baseline and the tracks never reflow. */
+@media (min-width: 761px) {
+  .decision.is-secondary .go-cell #queue-note {
+    position: absolute;
+    top: calc(100% + 9px);
+    right: 0;
+    left: auto;
+    width: 26ch;
+    max-width: none;
+    text-align: right;
+  }
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 0 15px;
+  border: 1px solid var(--rule-strong);
+  background: transparent;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.action svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.action:hover {
+  border-color: var(--ink-2);
+  background: var(--panel-2);
+}
+
+.action-on-sign {
+  border-color: rgba(11, 11, 11, 0.35);
+  color: var(--sign-ink);
+}
+
+.action-on-sign:hover {
+  border-color: var(--sign-ink);
+  background: rgba(11, 11, 11, 0.09);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+button:disabled:hover {
+  background: inherit;
+}
+
+.go:disabled,
+.go:disabled:hover {
+  opacity: 1;
+  background: #232a31;
+  color: var(--ink-2);
+  box-shadow: none;
+}
+
+.go:disabled .tile {
+  background: var(--inset);
+  color: var(--ink-3);
+}
+
+/* ==========================================================================
+   Job facts — every figure carries its unit
+   ========================================================================== */
+
+.facts {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  margin-inline: -16px;
 }
 
-.status-metrics div {
+.facts > div {
   min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface-soft);
-  padding: 12px;
+  padding: 8px 16px;
+  border-left: 1px solid var(--rule);
 }
 
-.status-metrics span,
-dt {
-  display: block;
-  color: var(--muted);
+.facts > div:first-child {
+  border-left: 0;
+}
+
+#job-id {
+  font-family: "Fira Mono", ui-monospace, Consolas, monospace;
+  color: var(--ink-2);
+}
+
+.facts dt {
+  color: var(--ink-2);
   font-size: 12px;
-  font-weight: 750;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
-.status-metrics strong,
-dd {
-  display: block;
-  min-width: 0;
-  margin: 5px 0 0;
+.facts dd {
+  margin: 6px 0 0;
+  font-family: "Fira Mono", ui-monospace, Consolas, monospace;
+  font-size: 15px;
   overflow-wrap: anywhere;
 }
 
-.job-details {
+.status-foot {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin: 0;
+  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+  gap: 56px;
+  align-items: start;
+  padding-block: 22px 34px;
 }
 
-.job-details div {
+.ident {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  border-top: 1px solid var(--rule);
+}
+
+.ident > div {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
   min-width: 0;
-  border-top: 1px solid var(--line);
-  padding-top: 10px;
 }
 
-.message {
-  color: var(--muted);
-  line-height: 1.45;
+.ident dt {
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-.waiting-note {
-  border-left: 4px solid var(--info);
-  background: var(--info-soft);
-  border-radius: 0 8px 8px 0;
-  color: #233847;
-  line-height: 1.45;
-  padding: 12px 14px;
+.ident dd {
+  margin: 5px 0 0;
+  font-family: "Fira Mono", ui-monospace, Consolas, monospace;
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
 }
 
-.transcript-panel {
-  border-top: 4px solid var(--ok);
+.ident a {
+  color: var(--ink);
+  text-decoration-color: var(--rule-strong);
 }
 
-#transcript-output {
-  min-height: 360px;
-  max-height: 58vh;
-  overflow: auto;
-  margin: 0;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fbfcfc;
-  padding: 18px;
-  color: #253137;
-  font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+.ident a:hover {
+  color: var(--sign);
+  text-decoration-color: var(--sign);
+}
+
+.note {
+  padding: 0 0 18px;
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1.5;
+  max-width: 68ch;
+}
+
+.note[data-tone="error"] {
+  color: var(--closed-lit);
+}
+
+.note:empty {
+  display: none;
+}
+
+.hint {
+  padding-bottom: 14px;
+  color: var(--ink-3);
   font-size: 14px;
-  line-height: 1.65;
+  line-height: 1.5;
+  max-width: 68ch;
+}
+
+.note + .hint {
+  padding-top: 2px;
+}
+
+/* ==========================================================================
+   The sheet — the one white surface in the terminal
+   ========================================================================== */
+
+.sheet-wrap .corridor {
+  padding-block: 28px 48px;
+}
+
+.sheet {
+  width: min(100%, 86ch);
+  margin: 0 auto;
+  padding: clamp(24px, 3.4vw, 44px);
+  background: var(--sheet);
+  color: var(--sheet-ink);
+  border-radius: 2px;
+  min-height: 320px;
+  max-height: 64vh;
+  overflow: auto;
+  font-family: "Fira Sans", "Noto Naskh Arabic", ui-sans-serif, system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.75;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  scrollbar-color: #b9bec4 transparent;
 }
 
-.filters {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 200px;
-  gap: 10px;
-  margin-bottom: 16px;
+.sheet::selection,
+.sheet *::selection {
+  background: var(--sign);
+  color: var(--sign-ink);
 }
 
-.jobs-list {
+.sheet::-webkit-scrollbar-thumb {
+  background: #b9bec4;
+  border: 3px solid var(--sheet);
+}
+
+.sheet:dir(rtl),
+.sheet[dir="rtl"] {
+  text-align: right;
+}
+
+.sheet-empty {
+  color: #6d747c;
+}
+
+/* ==========================================================================
+   History — the departures board
+   ========================================================================== */
+
+.filters .corridor {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px auto;
   gap: 12px;
-}
-
-.jobs-list.full {
-  max-height: none;
-}
-
-.job-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface-soft);
-  padding: 14px;
 }
 
-.job-card:hover {
-  border-color: var(--line-strong);
-  background: white;
+.filters .action {
+  min-height: 56px;
+  padding-inline: 18px;
 }
 
-.job-card.completed {
-  border-left: 5px solid var(--ok);
+.board {
+  border-bottom: 1px solid var(--rule);
 }
 
-.job-card.failed {
-  border-left: 5px solid var(--danger);
+.board-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 18px;
+  padding: 18px 0;
+  border-top: 1px solid var(--rule);
 }
 
-.job-card.running,
-.job-card.queued {
-  border-left: 5px solid var(--amber);
+.board-row > .tile {
+  margin-top: 1px;
 }
 
-.job-card-main {
+.board-row:first-child {
+  border-top: 0;
+}
+
+.board-row:hover {
+  background: var(--panel);
+  box-shadow: 28px 0 0 var(--panel), -28px 0 0 var(--panel);
+}
+
+.row-main {
   min-width: 0;
 }
 
-.job-card strong,
-.job-card small {
+.row-source {
   display: block;
-  min-width: 0;
+  font-size: 16px;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.job-card strong {
-  font-size: 15px;
-}
-
-.job-card small,
-.job-meta {
-  color: var(--muted);
-}
-
-.job-card small {
-  margin-top: 4px;
-  font-size: 12px;
-}
-
-.job-meta {
+.row-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-  font-size: 13px;
+  gap: 6px 18px;
+  margin-top: 6px;
+  color: var(--ink-2);
+  font-family: "Fira Mono", ui-monospace, Consolas, monospace;
+  font-size: 12.5px;
 }
 
-.job-meta span {
-  background: white;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 4px 8px;
+.row-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.job-error {
-  margin-top: 10px;
-  color: var(--danger);
+.row-state::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+}
+
+.board-row[data-status="completed"] .row-state {
+  color: var(--arrival-lit);
+}
+
+.board-row[data-status="failed"] .row-state {
+  color: var(--closed-lit);
+}
+
+.board-row[data-status="running"] .row-state,
+.board-row[data-status="queued"] .row-state {
+  color: var(--sign);
+}
+
+.board-row[data-status="running"] .row-state::before,
+.board-row[data-status="queued"] .row-state::before {
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.board-row[data-status="failed"] .row-state::before {
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+}
+
+.board-row[data-status="completed"] .tile {
+  color: var(--arrival-lit);
+}
+
+.board-row[data-status="failed"] .tile {
+  color: var(--closed-lit);
+}
+
+.board-row[data-status="running"] .tile,
+.board-row[data-status="queued"] .tile {
+  color: var(--sign);
+}
+
+/* Nothing disappears, it cancels. */
+.row-stamp {
+  display: inline-block;
+  margin-top: 9px;
+  padding: 3px 8px;
+  border: 1px solid var(--closed-lit);
+  color: var(--closed-lit);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.row-error {
+  margin-top: 8px;
+  max-width: 72ch;
+  color: var(--ink-2);
+  font-size: 14px;
   line-height: 1.45;
 }
 
-.job-actions {
-  display: flex;
+.row-actions {
+  display: grid;
+  grid-template-columns: 108px 136px;
   gap: 8px;
 }
 
-.job-actions button {
-  min-height: 40px;
-  background: white;
-  border: 1px solid var(--line);
-  color: var(--accent-dark);
-  padding: 9px 10px;
+.row-actions .action {
+  justify-content: center;
+  padding-inline: 8px;
 }
 
-.job-actions button:hover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+.board-empty {
+  padding: 64px 0 72px;
+  max-width: 52ch;
 }
 
-@media (max-width: 920px) {
-  .app-grid:has(.status-panel:not(.is-hidden)) {
-    grid-template-columns: 1fr;
+.board-empty h2 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.board-empty p {
+  margin-top: 12px;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+
+.board-empty .go {
+  margin-top: 26px;
+}
+
+.board-count {
+  padding: 16px 0 0;
+  color: var(--ink-3);
+  font-family: "Fira Mono", ui-monospace, Consolas, monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+}
+
+/* ==========================================================================
+   The one authored moment: the sign re-signs itself
+   ========================================================================== */
+
+@keyframes resign {
+  from {
+    opacity: 0;
+    transform: translateY(-0.42em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.resigning .band-headline,
+.resigning .band-status,
+.resigning .band-figure strong {
+  animation: resign 260ms var(--ease-out) both;
+}
+
+.resigning .band-figure strong {
+  animation-delay: 40ms;
+}
+
+/* ==========================================================================
+   Adaptation
+   ========================================================================== */
+
+@media (max-width: 1000px) {
+  .decision-body,
+  .status-foot {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+  }
+
+  .facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .facts > div:nth-child(3) {
+    border-left: 0;
+  }
+
+  .facts > div:nth-child(n + 3) {
+    border-top: 1px solid var(--rule);
+  }
+}
+
+@media (max-width: 620px) {
+  .signband .corridor {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding-inline: 0;
+  }
+
+  .mark {
+    padding: 13px 18px;
+  }
+
+  .destinations {
+    border-top: 1px solid var(--rule);
+  }
+
+  .decision .corridor {
+    min-height: 0;
+  }
+
+  .dest {
+    flex: 1;
+    justify-content: center;
+    min-height: 46px;
   }
 }
 
 @media (max-width: 760px) {
-  .shell {
-    padding: 16px;
+  .corridor {
+    padding-inline: 18px;
   }
 
-  .topbar,
-  .url-row,
-  .mode-group,
-  .status-metrics,
-  .job-details,
-  .filters,
-  .job-card {
-    grid-template-columns: 1fr;
+  .band {
+    padding: 20px 18px;
   }
 
-  .topbar {
-    display: grid;
+  .dest {
+    padding: 0 13px;
+    font-size: 14px;
   }
 
-  h1 {
-    font-size: 32px;
+  .band .corridor > .action,
+  .band .corridor > button {
+    align-self: flex-start;
   }
 
-  .nav-links {
-    justify-content: flex-start;
+  .row-id {
+    display: none;
   }
 
-  .nav-links a {
-    flex: 1 1 auto;
+  .band .corridor {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
   }
 
-  #submit-button {
-    min-height: 48px;
+  .band-figure {
+    text-align: left;
+    padding-left: 50px;
   }
 
-  .start-panel,
-  .status-panel,
-  .transcript-panel,
-  .jobs-page-panel {
-    padding: 16px;
+  /* The chain scales into two rows rather than shedding its stops. */
+  .rail {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .section-title {
-    display: grid;
+  .rail .stop {
+    padding: 12px 14px;
+    border-top: 1px solid var(--rule);
   }
 
-  .job-actions {
+  .rail .stop:nth-child(odd) {
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .rail .stop:nth-child(even) {
+    padding-right: 0;
+  }
+
+  .rail .stop:nth-child(-n + 2) {
+    border-top: 0;
+  }
+
+  .rail .stop-name {
+    white-space: normal;
+  }
+
+  .rail-invitation .rail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rail-invitation .stop {
+    padding: 14px 0;
+  }
+
+  .rail-invitation .stop-note {
+    display: block;
+  }
+
+  .status-foot,
+  .decision-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .decision.is-secondary form {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .decision.is-secondary .mode-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .decision.is-secondary .mode + .mode {
+    border-top: 1px solid var(--rule);
+    border-left: 0;
+  }
+
+  .band-tail {
     width: 100%;
+    justify-content: space-between;
   }
 
-  .job-actions button {
+  .filters .corridor {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .filters .corridor > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .filters .action {
+    justify-content: center;
+  }
+
+  .board-row {
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 8px 14px;
+  }
+
+  .row-actions {
+    grid-column: 1 / -1;
+    margin-top: 4px;
+  }
+
+  .row-actions .action {
     flex: 1;
+    justify-content: center;
+  }
+
+  .board-row:hover {
+    box-shadow: 18px 0 0 var(--panel), -18px 0 0 var(--panel);
+  }
+
+  .sheet {
+    max-height: none;
+    font-size: 16px;
+  }
+}
+
+/* Discrete state changes rather than continuous motion. */
+@media (max-width: 760px), (prefers-reduced-motion: reduce) {
+  .progress-fill {
+    transition: none;
+  }
+
+  .resigning .band-headline,
+  .resigning .band-status,
+  .resigning .band-figure strong {
+    animation: none;
+  }
+
+  .stop-tile {
+    transition: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --ink-2: #d4dade;
+    --ink-3: #b3bbc2;
+    --rule: #444c54;
   }
 }

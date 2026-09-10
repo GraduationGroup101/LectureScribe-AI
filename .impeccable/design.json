@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-10T00:00:00Z",
+  "title": "Design System: LectureScribe AI",
+  "extensions": {
+    "colorMeta": {
+      "concourse": { "role": "neutral", "displayName": "Concourse", "canonical": "#101215", "tonalRamp": ["#242629", "#414346", "#5e6063", "#7b7d80", "#989a9d", "#b5b7ba", "#d3d5d8", "#f0f2f5"] },
+      "panel": { "role": "neutral", "displayName": "Panel", "canonical": "#16191d", "tonalRamp": ["#23262a", "#404347", "#5d6064", "#7a7d81", "#979a9e", "#b4b7bb", "#d2d5d9", "#eff2f6"] },
+      "panel-2": { "role": "neutral", "displayName": "Panel Lift", "canonical": "#1c2026", "tonalRamp": ["#21252b", "#3e4248", "#5c6066", "#797d83", "#969aa0", "#b3b7bd", "#d0d4da", "#edf1f7"] },
+      "inset": { "role": "neutral", "displayName": "Inset Black", "canonical": "#0b0b0b", "tonalRamp": ["#262626", "#434343", "#616161", "#7e7e7e", "#9b9b9b", "#b8b8b8", "#d5d5d5", "#f2f2f2"] },
+      "rule": { "role": "neutral", "displayName": "Rule", "canonical": "#262b31", "tonalRamp": ["#21262c", "#3e4349", "#5b6066", "#787d83", "#959aa0", "#b2b7bd", "#d0d5db", "#edf2f8"] },
+      "rule-strong": { "role": "neutral", "displayName": "Rule Strong", "canonical": "#3a4149", "tonalRamp": ["#1f262e", "#3c434b", "#596068", "#767d85", "#939aa2", "#b0b7bf", "#ced5dd", "#ebf2fa"] },
+      "sign": { "role": "primary", "displayName": "Signage Yellow", "canonical": "#ffcc00", "tonalRamp": ["#4c3d00", "#876c00", "#c19a00", "#fbc900", "#ffd737", "#ffe371", "#ffeeab", "#fffae5"] },
+      "sign-dim": { "role": "primary", "displayName": "Sign Shade", "canonical": "#4a3f0f", "tonalRamp": ["#443909", "#615626", "#7e7343", "#9b9060", "#b8ad7d", "#d5ca9a", "#f3e8b8", "#fffae5"] },
+      "sign-ink": { "role": "primary", "displayName": "Sign Ink", "canonical": "#0b0b0b", "tonalRamp": ["#262626", "#434343", "#616161", "#7e7e7e", "#9b9b9b", "#b8b8b8", "#d5d5d5", "#f2f2f2"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#f2f3f5", "tonalRamp": ["#252628", "#424345", "#5f6062", "#7c7d7f", "#999a9c", "#b6b7b9", "#d4d5d7", "#f1f2f4"] },
+      "ink-2": { "role": "neutral", "displayName": "Ink Two", "canonical": "#a8b0b8", "tonalRamp": ["#1e262e", "#3b434b", "#596169", "#767e86", "#939ba3", "#b0b8c0", "#cdd5dd", "#eaf2fa"] },
+      "ink-3": { "role": "neutral", "displayName": "Ink Three", "canonical": "#838d96", "tonalRamp": ["#1d2730", "#3a444d", "#57616a", "#747e87", "#919ba4", "#aeb8c1", "#ccd6df", "#e9f3fc"] },
+      "arrival": { "role": "secondary", "displayName": "Arrival Green, deep", "canonical": "#0f7a43", "tonalRamp": ["#004c25", "#0e7942", "#2b965f", "#48b37c", "#65d099", "#82edb6", "#abffd4", "#e5fff2"] },
+      "arrival-lit": { "role": "secondary", "displayName": "Arrival Green, lit", "canonical": "#35c07a", "tonalRamp": ["#004c26", "#008743", "#1ba660", "#38c37d", "#55e09a", "#72fdb7", "#abffd5", "#e5fff2"] },
+      "closed": { "role": "secondary", "displayName": "Closed Red, deep", "canonical": "#c0261f", "tonalRamp": ["#4c0300", "#870600", "#b11710", "#ce342d", "#eb514a", "#ff7771", "#ffafab", "#ffe7e5"] },
+      "closed-lit": { "role": "secondary", "displayName": "Closed Red, lit", "canonical": "#ff6a5e", "tonalRamp": ["#4c0600", "#870a00", "#b11c10", "#ce392d", "#eb564a", "#ff7c71", "#ffb1ab", "#ffe7e5"] },
+      "sheet": { "role": "neutral", "displayName": "Sheet White", "canonical": "#ffffff", "tonalRamp": ["#262626", "#434343", "#616161", "#7e7e7e", "#9b9b9b", "#b8b8b8", "#d5d5d5", "#f2f2f2"] },
+      "sheet-ink": { "role": "neutral", "displayName": "Sheet Ink", "canonical": "#14161a", "tonalRamp": ["#232529", "#404246", "#5e6064", "#7b7d81", "#989a9e", "#b5b7bb", "#d2d4d8", "#eff1f5"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The question hung on the ask band. One per page; demotes to 26px once a job owns the page." },
+      "figure": { "displayName": "Figure", "purpose": "The tabular number on the right of a band - minutes remaining, stops on the route, lectures on the board. Never wraps." },
+      "headline": { "displayName": "Headline", "purpose": "The one message a band carries: the stage sentence, the result summary." },
+      "title": { "displayName": "Title", "purpose": "Empty-state and error headings inside the history board." },
+      "lede": { "displayName": "Lede", "purpose": "The single explanatory paragraph under the question, and input text. Max 52ch." },
+      "body": { "displayName": "Body", "purpose": "Default copy; supporting notes run 14-15px at max 68ch." },
+      "label": { "displayName": "Label", "purpose": "Uppercase board field name, bound to the figure or field value it sits with. Never above a heading." },
+      "mono": { "displayName": "Machine", "purpose": "Anything the server produced or measured: job IDs, stop counts, durations, timestamps, per-stop typical times." },
+      "sheet": { "displayName": "Sheet", "purpose": "Transcript text on the one white surface; Noto Naskh Arabic in the stack, dir=auto, 86ch measure." }
+    },
+    "shadows": [
+      { "name": "row-bleed", "value": "28px 0 0 var(--panel), -28px 0 0 var(--panel)", "purpose": "Not elevation. Extends a hovered history row's fill past the corridor padding to the corridor edge; zero blur, zero vertical offset, 18px at <=760px. The only permitted use of box-shadow in this system." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "The only easing in the system; used on every colour, border, and scale transition." },
+      { "name": "resign", "value": "resign 260ms cubic-bezier(0.16, 1, 0.3, 1) both", "purpose": "The one authored moment. Opacity 0 to 1 with a -0.42em rise, replayed on the band's status word, headline, and figure when the sign actually changes what it says. The figure is delayed 40ms so the number lands after the name." },
+      { "name": "progress", "value": "transform 320ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "The progress fill's scaleX. Switched off below 760px and under prefers-reduced-motion." },
+      { "name": "state", "value": "180ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Stop-tile background and colour change as the rail advances." },
+      { "name": "control", "value": "140ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Input border colour on hover and focus." }
+    ],
+    "breakpoints": [
+      { "name": "band-stack", "value": "620px" },
+      { "name": "compact", "value": "760px" },
+      { "name": "single-column", "value": "1000px" },
+      { "name": "corridor", "value": "1240px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action (the go)",
+      "kind": "button",
+      "refersTo": "go",
+      "description": "The one yellow action on a view: a black pictogram tile inside the left edge of a signage-yellow slab.",
+      "html": "<button class=\"ds-go\" type=\"button\"><span class=\"ds-go-tile\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M13.2 3.6 21.6 12l-8.4 8.4-2.1-2.1 4.8-4.8H2.4v-3h13.5l-4.8-4.8z\"/></svg></span>Start</button>",
+      "css": ".ds-go { display: inline-flex; align-items: center; gap: 14px; min-height: 56px; padding: 0 24px 0 8px; border: 0; border-radius: 2px; background: var(--sign, #ffcc00); color: var(--sign-ink, #0b0b0b); font-family: \"Fira Sans\", ui-sans-serif, system-ui, sans-serif; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; cursor: pointer; } .ds-go-tile { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 9px; border-radius: 2px; background: var(--inset, #0b0b0b); color: #fff; } .ds-go-tile svg { width: 100%; height: 100%; fill: currentColor; } .ds-go:hover { background: #ffd633; } .ds-go:active { background: #e6b800; } .ds-go:focus-visible { outline: 3px solid var(--sign, #ffcc00); outline-offset: 2px; } .ds-go:disabled { background: #232a31; color: var(--ink-2, #a8b0b8); cursor: not-allowed; } .ds-go:disabled .ds-go-tile { background: var(--inset, #0b0b0b); color: var(--ink-3, #838d96); }"
+    },
+    {
+      "name": "Secondary Action",
+      "kind": "button",
+      "refersTo": "action",
+      "description": "Hairline-bordered, transparent, 42px tall; carries a 16px pictogram before its label.",
+      "html": "<button class=\"ds-action\" type=\"button\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" d=\"M9 2h13v13h-2V4H11v1H9V2zM2 7h13v15H2zM4 9v11h9V9H4z\"/></svg>Copy text</button>",
+      "css": ".ds-action { display: inline-flex; align-items: center; gap: 9px; min-height: 42px; padding: 0 15px; border: 1px solid var(--rule-strong, #3a4149); border-radius: 2px; background: transparent; color: var(--ink, #f2f3f5); font-family: \"Fira Sans\", ui-sans-serif, system-ui, sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; } .ds-action svg { width: 16px; height: 16px; fill: currentColor; } .ds-action:hover { border-color: var(--ink-2, #a8b0b8); background: var(--panel-2, #1c2026); } .ds-action:focus-visible { outline: 3px solid var(--sign, #ffcc00); outline-offset: 2px; } .ds-action:disabled { opacity: 0.45; cursor: not-allowed; }"
+    },
+    {
+      "name": "Lecture URL Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "An inset-black panel with a hairline edge that turns signage yellow on focus; label above in board caps.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-field-label\" for=\"ds-url\">Lecture URL</label><input class=\"ds-input\" id=\"ds-url\" type=\"url\" placeholder=\"https://www.youtube.com/watch?v=...\"></div>",
+      "css": ".ds-field-label { display: block; margin-bottom: 9px; color: var(--ink-2, #a8b0b8); font-family: \"Fira Sans\", ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; } .ds-input { width: 100%; min-height: 56px; padding: 14px 16px; border: 1px solid var(--rule-strong, #3a4149); border-radius: 2px; background: var(--inset, #0b0b0b); color: var(--ink, #f2f3f5); font-family: \"Fira Sans\", ui-sans-serif, system-ui, sans-serif; font-size: 17px; caret-color: var(--sign, #ffcc00); transition: border-color 140ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-input::placeholder { color: var(--ink-3, #838d96); opacity: 1; } .ds-input:hover { border-color: #545e68; } .ds-input:focus-visible { border-color: var(--sign, #ffcc00); outline: 3px solid var(--sign, #ffcc00); outline-offset: 0; }"
+    },
+    {
+      "name": "Mode Panel",
+      "kind": "chip",
+      "refersTo": "mode-panel",
+      "description": "A radio choice rendered as a full-width panel; the checked one lifts a ground step and takes an inset signage-yellow outline.",
+      "html": "<div class=\"ds-mode-list\"><label class=\"ds-mode\"><input type=\"radio\" name=\"ds-mode\" checked><span><span class=\"ds-mode-name\">Fast output</span><span class=\"ds-mode-note\">Whisper's text, tidied by the cloud cleaner when it answers.</span></span></label><label class=\"ds-mode\"><input type=\"radio\" name=\"ds-mode\"><span><span class=\"ds-mode-name\">Better formatting</span><span class=\"ds-mode-note\">Cloud cleaner first, local Ollama if it is down.</span></span></label></div>",
+      "css": ".ds-mode-list { display: grid; gap: 0; border: 1px solid var(--rule-strong, #3a4149); border-radius: 2px; overflow: hidden; } .ds-mode { display: flex; align-items: flex-start; gap: 13px; padding: 16px; border-top: 1px solid var(--rule, #262b31); background: var(--panel, #16191d); color: var(--ink, #f2f3f5); font-family: \"Fira Sans\", ui-sans-serif, system-ui, sans-serif; font-size: 16px; cursor: pointer; } .ds-mode:first-child { border-top: 0; } .ds-mode:hover { background: var(--panel-2, #1c2026); } .ds-mode input { flex: 0 0 auto; width: 19px; height: 19px; margin: 2px 0 0; accent-color: var(--sign, #ffcc00); } .ds-mode-name { display: block; font-weight: 600; } .ds-mode-note { display: block; margin-top: 3px; color: var(--ink-2, #a8b0b8); font-size: 14px; line-height: 1.4; } .ds-mode:has(input:checked) { background: var(--panel-2, #1c2026); outline: 2px solid var(--sign, #ffcc00); outline-offset: -2px; } .ds-mode:has(input:checked) .ds-mode-note { color: #c3cad1; }"
+    },
+    {
+      "name": "Sign Band Destinations",
+      "kind": "nav",
+      "refersTo": "nav-destination",
+      "description": "The hung sign band: inset black, 56px, with the current destination lit yellow and underlined 3px.",
+      "html": "<header class=\"ds-signband\"><a class=\"ds-mark\" href=\"#\"><span class=\"ds-mark-tile\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M2 9h2v6H2zM5.5 6h2v12h-2zM9 10h2v4H9zM13 6h9v2h-9zM13 11h9v2h-9zM13 16h6v2h-6z\"/></svg></span>LectureScribe</a><nav class=\"ds-dests\"><a class=\"ds-dest\" href=\"#\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z\"/></svg>New transcript</a><a class=\"ds-dest\" href=\"#\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 5h3v3H3zM9 5h12v3H9zM3 10.5h3v3H3zM9 10.5h12v3H9zM3 16h3v3H3zM9 16h12v3H9z\"/></svg>History</a></nav></header>",
+      "css": ".ds-signband { display: flex; align-items: stretch; justify-content: space-between; gap: 20px; min-height: 56px; padding: 0 28px; background: var(--inset, #0b0b0b); border-bottom: 1px solid var(--rule, #262b31); font-family: \"Fira Sans\", ui-sans-serif, system-ui, sans-serif; } .ds-mark { display: inline-flex; align-items: center; gap: 11px; color: var(--ink, #f2f3f5); text-decoration: none; font-weight: 700; font-size: 17px; letter-spacing: -0.01em; } .ds-mark-tile { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 3px; border-radius: 2px; background: #fff; color: var(--inset, #0b0b0b); } .ds-mark-tile svg { width: 100%; height: 100%; fill: currentColor; } .ds-dests { display: flex; align-items: stretch; } .ds-dest { display: inline-flex; align-items: center; gap: 9px; padding: 0 16px; border-bottom: 3px solid transparent; color: var(--ink-2, #a8b0b8); font-size: 15px; font-weight: 500; text-decoration: none; } .ds-dest svg { width: 17px; height: 17px; fill: currentColor; } .ds-dest:hover { color: var(--ink, #f2f3f5); background: #141414; } .ds-dest[aria-current=\"page\"] { color: var(--sign, #ffcc00); border-bottom-color: var(--sign, #ffcc00); } .ds-dest:focus-visible { outline: 3px solid var(--sign, #ffcc00); outline-offset: -3px; }"
+    },
+    {
+      "name": "Wayfinding Band",
+      "kind": "custom",
+      "refersTo": "band-wayfinding",
+      "description": "The running sign: full-bleed yellow, one pictogram, one sentence, one tabular figure, with the progress trough hairline beneath it.",
+      "html": "<div class=\"ds-band ds-band-wayfinding\"><div class=\"ds-band-message\"><span class=\"ds-tile\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 10h2v4H3zM7 7h2v10H7zM11 4h2v16h-2zM15 7h2v10h-2zM19 10h2v4h-2z\"/></svg></span><p class=\"ds-band-headline\">Whisper is transcribing the lecture</p></div><div class=\"ds-band-figure\"><span>Remaining</span><strong>~ 11m 30s</strong></div></div><div class=\"ds-progress\"><div class=\"ds-progress-fill\"></div></div>",
+      "css": ".ds-band { display: flex; align-items: center; justify-content: space-between; gap: 28px; padding: 22px 28px; border-bottom: 1px solid var(--rule, #262b31); font-family: \"Fira Sans\", ui-sans-serif, system-ui, sans-serif; font-variant-numeric: tabular-nums; } .ds-band-wayfinding { background: var(--sign, #ffcc00); color: var(--sign-ink, #0b0b0b); border-bottom-color: #d9ad00; } .ds-band-message { display: flex; align-items: center; gap: 16px; min-width: 0; } .ds-tile { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 34px; height: 34px; padding: 6px; border-radius: 2px; background: var(--inset, #0b0b0b); color: #fff; } .ds-tile svg { width: 100%; height: 100%; fill: currentColor; } .ds-band-headline { margin: 0; font-size: clamp(21px, 2.4vw, 27px); font-weight: 600; line-height: 1.2; letter-spacing: -0.015em; } .ds-band-figure { flex: 0 0 auto; text-align: right; } .ds-band-figure span { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #4a3f0f; } .ds-band-figure strong { display: block; margin-top: 2px; font-size: clamp(30px, 4.4vw, 52px); font-weight: 700; line-height: 1; letter-spacing: -0.03em; white-space: nowrap; } .ds-progress { height: 6px; background: var(--inset, #0b0b0b); overflow: hidden; } .ds-progress-fill { height: 100%; background: var(--sign, #ffcc00); transform: scaleX(0.58); transform-origin: left center; transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1); }"
+    },
+    {
+      "name": "Rail Stop",
+      "kind": "custom",
+      "refersTo": "stop",
+      "description": "One decision point on the route. Five states - done, current, ahead, dropped, failed - each carrying a word as well as a colour.",
+      "html": "<ol class=\"ds-rail\"><li class=\"ds-stop\" data-state=\"done\"><span class=\"ds-stop-tile\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M11 3h2v9h4l-5 6-5-6h4V3zM4 19h16v2H4z\"/></svg></span><span><span class=\"ds-stop-name\">Downloading audio</span><span class=\"ds-stop-note\">done</span></span></li><li class=\"ds-stop\" data-state=\"current\"><span class=\"ds-stop-tile\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 10h2v4H3zM7 7h2v10H7zM11 4h2v16h-2zM15 7h2v10h-2zM19 10h2v4h-2z\"/></svg></span><span><span class=\"ds-stop-name\">Transcribing</span><span class=\"ds-stop-note\">now</span></span></li><li class=\"ds-stop\" data-state=\"ahead\"><span class=\"ds-stop-tile\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 4h1.6v16H3zM7 5h14v2.4H7zM7 10h14v2.4H7zM7 15h14v2.4H7z\"/></svg></span><span><span class=\"ds-stop-name\">Cleaning text</span><span class=\"ds-stop-note\">2-8 min</span></span></li></ol>",
+      "css": ".ds-rail { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); margin: 0; padding: 0; list-style: none; font-family: \"Fira Sans\", ui-sans-serif, system-ui, sans-serif; } .ds-stop { display: flex; align-items: flex-start; gap: 11px; min-width: 0; padding: 14px 16px; border-left: 1px solid var(--rule, #262b31); } .ds-stop:first-child { border-left: 0; padding-left: 0; } .ds-stop-tile { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 30px; height: 30px; padding: 5px; border-radius: 2px; background: var(--inset, #0b0b0b); color: #6b747c; transition: background 180ms cubic-bezier(0.16, 1, 0.3, 1), color 180ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-stop-tile svg { width: 100%; height: 100%; fill: currentColor; } .ds-stop-name { display: block; font-size: 14px; font-weight: 500; color: var(--ink-3, #838d96); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-stop-note { display: block; margin-top: 2px; font-family: \"Fira Mono\", ui-monospace, Consolas, monospace; font-size: 11px; letter-spacing: 0.02em; color: var(--ink-3, #838d96); } .ds-stop[data-state=\"done\"] .ds-stop-tile { background: #1b2d23; color: var(--arrival-lit, #35c07a); } .ds-stop[data-state=\"done\"] .ds-stop-name { color: var(--ink-2, #a8b0b8); } .ds-stop[data-state=\"current\"] { background: var(--panel-2, #1c2026); } .ds-stop[data-state=\"current\"] .ds-stop-tile { background: var(--sign, #ffcc00); color: var(--sign-ink, #0b0b0b); } .ds-stop[data-state=\"current\"] .ds-stop-name { color: var(--ink, #f2f3f5); font-weight: 600; } .ds-stop[data-state=\"current\"] .ds-stop-note { color: var(--sign, #ffcc00); } .ds-stop[data-state=\"dropped\"] .ds-stop-tile { opacity: 0.4; } .ds-stop[data-state=\"dropped\"] .ds-stop-name { text-decoration: line-through; } .ds-stop[data-state=\"failed\"] .ds-stop-tile { background: #331714; color: var(--closed-lit, #ff6a5e); } .ds-stop[data-state=\"failed\"] .ds-stop-name { color: var(--ink, #f2f3f5); }"
+    },
+    {
+      "name": "Board Row",
+      "kind": "card",
+      "refersTo": "board-row",
+      "description": "A departures-board line: state tile, source, monospace metadata, and a stamp when the route closed. Nothing disappears, it cancels.",
+      "html": "<article class=\"ds-row\" data-status=\"failed\"><span class=\"ds-tile\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M18.9 3 12 9.9 5.1 3 3 5.1 9.9 12 3 18.9 5.1 21 12 14.1 18.9 21 21 18.9 14.1 12 21 5.1z\"/></svg></span><div class=\"ds-row-main\"><span class=\"ds-row-source\">youtube.com/watch?v=j9MZEu4Apmk</span><div class=\"ds-row-meta\"><span class=\"ds-row-state\">Stopped</span><span>better formatting</span><span>archive miss</span><span>Sep 10, 2026, 14:12</span></div><span class=\"ds-row-stamp\">Cancelled</span></div><div class=\"ds-row-actions\"><button class=\"ds-action\" type=\"button\">Reuse link</button><button class=\"ds-action\" type=\"button\">Open details</button></div></article>",
+      "css": ".ds-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: start; gap: 18px; padding: 18px 0; border-top: 1px solid var(--rule, #262b31); font-family: \"Fira Sans\", ui-sans-serif, system-ui, sans-serif; font-variant-numeric: tabular-nums; color: var(--ink, #f2f3f5); } .ds-row:hover { background: var(--panel, #16191d); box-shadow: 28px 0 0 var(--panel, #16191d), -28px 0 0 var(--panel, #16191d); } .ds-row-source { display: block; font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-row-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 6px; color: var(--ink-2, #a8b0b8); font-family: \"Fira Mono\", ui-monospace, Consolas, monospace; font-size: 12.5px; } .ds-row-state { display: inline-flex; align-items: center; gap: 7px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; } .ds-row-state::before { content: \"\"; width: 8px; height: 8px; background: currentColor; } .ds-row[data-status=\"completed\"] .ds-row-state, .ds-row[data-status=\"completed\"] .ds-tile { color: var(--arrival-lit, #35c07a); } .ds-row[data-status=\"failed\"] .ds-row-state, .ds-row[data-status=\"failed\"] .ds-tile { color: var(--closed-lit, #ff6a5e); } .ds-row[data-status=\"failed\"] .ds-row-state::before { width: 7px; height: 7px; transform: rotate(45deg); } .ds-row[data-status=\"running\"] .ds-row-state, .ds-row[data-status=\"running\"] .ds-tile { color: var(--sign, #ffcc00); } .ds-row[data-status=\"running\"] .ds-row-state::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); } .ds-row-stamp { display: inline-block; margin-top: 9px; padding: 3px 8px; border: 1px solid var(--closed-lit, #ff6a5e); color: var(--closed-lit, #ff6a5e); font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; } .ds-row-actions { display: grid; grid-template-columns: 108px 136px; gap: 8px; } .ds-row-actions .ds-action { justify-content: center; padding-inline: 8px; }"
+    },
+    {
+      "name": "Transcript Sheet",
+      "kind": "custom",
+      "refersTo": "sheet",
+      "description": "The one white surface in the terminal. Handed over only when a job arrives; dir=auto so Arabic sets right-to-left inside the LTR page.",
+      "html": "<pre class=\"ds-sheet\" dir=\"auto\" tabindex=\"0\">في هذه المحاضرة نكمل الحديث عن أوامر المعالج.\n\nThe transcript is handed over as one white sheet.</pre>",
+      "css": ".ds-sheet { width: min(100%, 86ch); margin: 0 auto; padding: clamp(24px, 3.4vw, 44px); background: var(--sheet, #fff); color: var(--sheet-ink, #14161a); border-radius: 2px; min-height: 320px; max-height: 64vh; overflow: auto; font-family: \"Fira Sans\", \"Noto Naskh Arabic\", ui-sans-serif, system-ui, sans-serif; font-size: 17px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; scrollbar-color: #b9bec4 transparent; scrollbar-width: thin; } .ds-sheet::selection, .ds-sheet *::selection { background: var(--sign, #ffcc00); color: var(--sign-ink, #0b0b0b); } .ds-sheet::-webkit-scrollbar { width: 10px; } .ds-sheet::-webkit-scrollbar-track { background: transparent; } .ds-sheet::-webkit-scrollbar-thumb { background: #b9bec4; border: 3px solid var(--sheet, #fff); } .ds-sheet:focus-visible { outline: 3px solid var(--sign, #ffcc00); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Concourse",
+    "overview": "LectureScribe is a long wait with a machine at the end of it, and the world it lives in is an international airport terminal after dark. The ground is matte and unlit; the only thing that glows is the sign telling you where you are. A student pastes a link and leaves the tab, and when they glance back from across the desk, one lit band across the full width of the screen answers all three questions at once - which stage, how far along, how much longer - before they have read a sentence.\n\nEverything here is architecture rather than ornament. Structural regions are full-bleed horizontal bands that butt against each other and are separated by a single 1px rule; there are no cards, no shadows, no floating containers, no rounded panels. Depth comes from four ground values (near-black inset, concourse, panel, panel-lift) and hairlines, never from lift. Signage yellow is spent on exactly one job - wayfinding - and appears at most once per view: the current stage, the primary action, the progress fill, the current destination in the sign band, the focus edge. When yellow appears somewhere it is not directing you, the world has been broken.\n\nThe world is deliberately not the category default it replaced: a centred stack of white rounded cards on light gray, each with an eyebrow label, a pill badge, and a gradient progress bar. Pill badges, gradient bars, drop shadows, and eyebrow labels are the confirmed anti-reference. There is exactly one exception to the dark ground, and it is a reward rather than a surface type: when a job arrives, the concourse hands you one white sheet with the transcript on it.",
+    "keyCharacteristics": [
+      "Dark matte ground (#101215) with a single saturated yellow (#ffcc00) reserved absolutely for wayfinding",
+      "Full-bleed horizontal bands separated by 1px rules; no cards, no elevation, effectively no radius (2px maximum)",
+      "Authored solid-silhouette pictograms on black inset tiles, one construction across the whole set",
+      "Fira Sans in sentence case, Fira Mono for every machine value, Noto Naskh Arabic for Arabic transcript text, tabular numerals everywhere",
+      "Every state readable from shape and label as well as hue; every figure carries its unit",
+      "One white sheet, only as the arrival of a finished transcript"
+    ],
+    "rules": [
+      { "name": "The Wayfinding-Only Rule", "body": "Yellow directs; it never decorates. It marks where you are (current stop, current destination), where to go next (the one primary action), how far you have got (the progress fill), and where your keyboard is (focus, caret, selection). If a yellow element is not answering one of those, remove the yellow.", "section": "colors" },
+      { "name": "The One Sign Rule", "body": "At most one yellow band is lit per view. The question band and the running-stage band are the same slot: when a job starts, the ask band demotes to a quiet panel strip and hands its yellow to the stage band.", "section": "colors" },
+      { "name": "The Deep-and-Lit Rule", "body": "Every state colour exists twice: a deep value that is a band ground under white type, and a lit value that is a mark on the dark ground. Never use the deep value as a mark, or the lit value as a large ground.", "section": "colors" },
+      { "name": "The Never-Hue-Alone Rule", "body": "State is carried by shape and word as well as colour. Passed stops read \"done\", the current stop reads \"now\", dropped stops are struck through, running and queued rows take a triangular mark while failed rows take a rotated square, and a failed job takes a bordered CANCELLED stamp.", "section": "colors" },
+      { "name": "The Field-Label Rule", "body": "The 12px uppercase label exists only to name a figure or a field value directly beneath or above it: REMAINING over the countdown, TOOK and STOPPED AFTER over a final duration, THE ROUTE over \"6 stops\", ON THE BOARD over the job count, STOP / ELAPSED / ARCHIVE / MODE over their monospace readouts, LECTURE and JOB over the identifiers, LECTURE URL and OUTPUT over their controls, EVERY STOP over the list of stops it heads. It is a board field name, never an introduction. A small uppercase label above a heading is an eyebrow, and this world has none - the build removed all five it once carried. If a label is not naming the value it is bound to, delete it.", "section": "typography" },
+      { "name": "The One Message Rule", "body": "A band carries one sentence and at most one figure. Nothing is stacked inside a band; if a second message is needed, it needs its own band or it belongs in the supporting copy below.", "section": "typography" },
+      { "name": "The Machine Voice Rule", "body": "Anything the server produced or measured is set in Fira Mono: IDs, counts, durations, timestamps. Anything written for a person is Fira Sans in sentence case. The switch of face is how you tell a fact from a sentence.", "section": "typography" },
+      { "name": "The Butt-Joint Rule", "body": "Regions meet on a 1px rule with no gutter, no margin, and no corner. If two regions need separating, they need a rule, not space.", "section": "layout" },
+      { "name": "The Chain-Scales Rule", "body": "The route never sheds a stop to fit. It compresses its tracks, and only below 760px does it fold from one row of six into two rows of three. A stop that does not apply is struck through in place; it is never removed.", "section": "layout" },
+      { "name": "The No-Lift Rule", "body": "Nothing in this world casts a shadow. Depth is a change of ground value plus a hairline. If a surface needs to read as separate, darken or lighten its ground one step and rule it off; do not lift it.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do spend signage yellow (#ffcc00) only on wayfinding - the current stage, the one primary action, the progress fill, the current destination, the focus edge - and at most one lit yellow band per view.",
+      "Do compose in full-bleed horizontal bands separated by 1px --rule hairlines, with one message and at most one figure per band.",
+      "Do put every server-produced value - IDs, counts, durations, timestamps - in Fira Mono, and keep numerals tabular so live figures never shift their neighbours.",
+      "Do pair every state colour with a word and a shape: \"done\" / \"now\" / \"not needed\" / \"stopped here\", a triangle for running, a rotated square for failed, a strike-through for dropped.",
+      "Do give every figure its unit (4 of 6, ~ 11m 30s, 6 stops, 7m 10s).",
+      "Do draw new pictograms as solid silhouettes on a 24x24 viewBox in the existing inline sprite, filled with currentColor, and set them on a black inset tile with a 2px corner.",
+      "Do keep the transcript sheet the only white surface, with dir=\"auto\" and Noto Naskh Arabic in its stack so Arabic renders and aligns correctly inside the LTR page.",
+      "Do state a stop's typical duration before anything runs, so the empty rail reads as an invitation rather than an absence."
+    ],
+    "donts": [
+      "Don't use yellow decoratively - not for a heading, a hairline, an icon that is not marking the current position, a hover fill, or a second simultaneous band.",
+      "Don't introduce a card, a panel with a shadow, or any box-shadow used for elevation. The only permitted shadow is the history row's zero-blur horizontal fill bleed.",
+      "Don't exceed a 2px corner radius anywhere, and don't introduce a pill, capsule, or circular badge.",
+      "Don't put a small uppercase label above a heading. Labels name a figure or a field value; a label above a heading is an eyebrow and this world has none.",
+      "Don't use a gradient, a blur, a glow, a scrim, or a stripe. The progress fill is one flat colour on a flat trough.",
+      "Don't use an icon library, a stroke icon set, an icon font, or emoji. Every pictogram is authored into the sprite in the one construction.",
+      "Don't drop a stop from the route to make it fit, and don't remove a failed job from the board - it keeps its line and takes a CANCELLED stamp.",
+      "Don't add continuous motion. resign is the only authored animation, it plays only when the sign's message actually changes, and it is off below 760px and under reduced motion.",
+      "Don't carry state in hue alone, and don't put white or full sign-ink small labels on a yellow band - that label colour is --sign-dim (#4a3f0f)."
+    ]
+  }
+}
