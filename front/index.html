@@ -9,10 +9,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Fira+Mono:wght@400;500;700&family=Noto+Naskh+Arabic:wght@400;500;600&display=swap">
-    <link rel="stylesheet" href="/front/styles.css">
+    <link rel="stylesheet" href="/front/styles.css?v=result-5">
   </head>
   <body>
-    <a class="skip-link" href="#main">Skip to the form</a>
+    <a class="skip-link" href="#main">Skip to content</a>
 
     <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
       <defs>
@@ -70,6 +70,8 @@
           <div class="progress-fill" id="progress-fill"></div>
         </div>
 
+        <details id="processing-details" class="processing-details" open>
+          <summary class="corridor">Processing details</summary>
         <div class="rail-wrap">
           <div class="corridor">
             <ol class="rail" id="stage-rail"></ol>
@@ -80,7 +82,7 @@
           <div class="corridor">
             <dl class="facts">
               <div>
-                <dt>Stop</dt>
+                <dt>Step</dt>
                 <dd id="step-count">&mdash;</dd>
               </div>
               <div>
@@ -88,7 +90,7 @@
                 <dd id="elapsed">0s</dd>
               </div>
               <div>
-                <dt>Archive</dt>
+                <dt>Saved output</dt>
                 <dd id="job-cache">&mdash;</dd>
               </div>
               <div>
@@ -118,23 +120,32 @@
             </div>
           </dl>
         </div>
+        </details>
       </section>
 
       <section id="result-panel" class="is-hidden">
-        <div class="band band-quiet">
-          <div class="corridor">
-            <div class="band-message">
-              <span class="tile"><svg class="pict"><use href="#i-mark"></use></svg></span>
-              <div class="band-text">
-                <p class="band-headline" id="result-summary">Transcript ready</p>
-              </div>
+        <div class="corridor result-header">
+          <div class="result-heading">
+            <p class="result-state" id="result-state"><svg class="pict"><use href="#i-arrival"></use></svg>Completed</p>
+            <h1 id="result-title">Lecture transcript</h1>
+            <div class="result-meta">
+              <span id="result-summary">Formatted transcript</span>
+              <span id="result-duration"></span>
+              <a id="result-source" href="/app" rel="noreferrer noopener" target="_blank">Watch lecture</a>
             </div>
+          </div>
+          <div class="result-actions">
             <button id="copy-transcript" class="action" type="button" disabled>
               <svg><use href="#i-copy"></use></svg>
               <span class="action-label">Copy text</span>
             </button>
+            <button id="download-transcript" class="action" type="button" disabled>
+              <svg><use href="#i-download"></use></svg>Download
+            </button>
+            <a class="action" href="/app"><svg><use href="#i-new"></use></svg>New transcript</a>
           </div>
         </div>
+        <p class="corridor result-notice" id="result-notice" role="status"></p>
         <div class="sheet-wrap">
           <div class="corridor">
             <pre class="sheet sheet-empty" id="transcript-output" dir="auto" tabindex="0">Waiting for the transcript.</pre>
@@ -150,18 +161,13 @@
                 <h1 class="ask">Which lecture?</h1>
               </div>
             </div>
-            <div class="band-figure">
-              <span>The route</span>
-              <strong>6 stops</strong>
-            </div>
           </div>
         </div>
 
         <div class="corridor decision-body">
           <div>
             <p class="lede">
-              Paste a YouTube link. LectureScribe pulls the audio, runs it through Whisper,
-              and hands back text you can search and quote.
+              Paste your YouTube lecture link.
             </p>
 
             <form id="job-form" novalidate>
@@ -186,14 +192,14 @@
                     <input type="radio" name="mode" value="fast" checked>
                     <span>
                       <span class="mode-name">Fast output</span>
-                      <span class="mode-note">Whisper's own words, in the language they were spoken. Cleaned by the cloud model when it answers, otherwise handed over raw rather than making you wait.</span>
+                      <span class="mode-note">Formatted English when available; otherwise the original transcript.</span>
                     </span>
                   </label>
                   <label class="mode">
                     <input type="radio" name="mode" value="formatted">
                     <span>
                       <span class="mode-name">Better formatting</span>
-                      <span class="mode-note">Every sentence kept and nothing summarised, with punctuation, paragraphs and headings added. Falls back to local Ollama. Slower, and the text comes back translated into English.</span>
+                      <span class="mode-note">Formatted English with an additional processing option if the first is unavailable. May take longer.</span>
                     </span>
                   </label>
                 </div>
@@ -249,6 +255,6 @@
 
     </main>
 
-    <script src="/front/app.js?v=concourse-4"></script>
+    <script src="/front/app.js?v=result-5"></script>
   </body>
 </html>

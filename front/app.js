@@ -29,6 +29,12 @@ const decision = document.querySelector("#decision");
 const ask = document.querySelector(".ask");
 const queueNote = document.querySelector("#queue-note");
 const jobSourceEl = document.querySelector("#job-source");
+const processingDetails = document.querySelector("#processing-details");
+const resultTitle = document.querySelector("#result-title");
+const resultDuration = document.querySelector("#result-duration");
+const resultSource = document.querySelector("#result-source");
+const resultNotice = document.querySelector("#result-notice");
+const downloadButton = document.querySelector("#download-transcript");
 
 // The route, in the order the pipeline walks it. `note` is what the stop is
 // worth in wall-clock time before anything real is known about this job.
@@ -55,18 +61,18 @@ const STATUS_BANDS = {
 const STATUS_WORDS = {
   queued: "Queued",
   running: "Running",
-  completed: "Arrived",
-  failed: "Stopped",
+  completed: "Completed",
+  failed: "Failed",
 };
 
 const notesByStage = {
   queued: [
     "Another lecture is on the machine. Yours starts the moment it finishes.",
-    "Only one job runs at a time so the GPU and Ollama stay stable.",
+    "You can return to this job from History while you wait.",
   ],
   checking_cache: [
     "If this lecture has been through here before, the text comes straight back.",
-    "The archive is keyed on the video ID, so any link to the same lecture hits it.",
+    "A saved transcript can be returned without processing the lecture again.",
   ],
   downloading: [
     "Pulling the audio track before Whisper can hear it.",
@@ -80,7 +86,7 @@ const notesByStage = {
   formatting: [
     "The cleaner is punctuating and paragraphing the lecture, and translating it into English.",
     "The text is cleaned in chunks, which is why this stop has its own count.",
-    "Repeated phrases and false starts get dropped, but nothing the lecturer said is summarised away.",
+    "Your transcript is being organized for easier reading.",
   ],
   saving: [
     "Writing the transcript to the archive.",
@@ -99,6 +105,9 @@ let activeEstimateSeconds = 0;
 let noteIndex = 0;
 let cacheHit = false;
 let lastRailSignature = "";
+let activeJobFinishedAt = null;
+let currentJob = null;
+let transcriptText = "";
 
 function selectedMode() {
   const value = new FormData(form).get("mode");
@@ -145,6 +154,7 @@ function setStatus(status) {
   statusBand.className = `band ${STATUS_BANDS[value] || "band-quiet"}`;
   statusBand.dataset.status = value;
   progressRule.dataset.status = value;
+  statusPanel.dataset.status = value;
 }
 
 function setStageIcon(name) {
@@ -164,14 +174,45 @@ function setDecisionMode(secondary) {
   routePreview.classList.toggle("is-hidden", secondary);
 }
 
-function setSource(url) {
-  if (url) {
-    jobSourceEl.textContent = url.replace(/^https?:\/\/(www\.)?/, "");
-    jobSourceEl.href = url;
-  } else {
-    jobSourceEl.textContent = "-";
-    jobSourceEl.removeAttribute("href");
+function lectureTitle(job) {
+  const path = job?.result?.raw_transcript_path || job?.result?.cleaned_transcript_path;
+  if (path) {
+    const filename = path.split(/[\\/]/).pop();
+    const title = filename
+      .replace(/\.txt$/i, "")
+      .replace(/(?:_english)?_transcript(?:_cleanedv\d+)?$/i, "")
+      .replace(/^[A-Za-z0-9_-]{11}_/, "")
+      .replace(/_/g, " ").trim();
+    if (title) return title;
   }
+  return "Lecture transcript";
+}
+
+function lectureUrl(url) {
+  try {
+    const parsed = new URL(url);
+    if (!["https:", "http:"].includes(parsed.protocol)) return null;
+    const id = parsed.searchParams.get("v") || (
+      parsed.hostname === "youtu.be" ? parsed.pathname.slice(1) :
+        parsed.pathname.match(/^\/(?:shorts|embed|live)\/([^/]+)/)?.[1]
+    );
+    if (id && /^[A-Za-z0-9_-]{11}$/.test(id)) {
+      return `https://www.youtube.com/watch?v=${id}`;
+    }
+    return parsed.origin + parsed.pathname;
+  } catch {
+    return null;
+  }
+}
+
+function setSource(url, job = null) {
+  const link = lectureUrl(url);
+  jobSourceEl.textContent = job?.result ? lectureTitle(job) : "Watch lecture on YouTube";
+  for (const element of [jobSourceEl, resultSource]) {
+    if (link) element.href = link;
+    else element.removeAttribute("href");
+  }
+  resultSource.classList.toggle("is-hidden", !link);
 }
 
 function setSubmitDisabled(disabled) {
@@ -187,18 +228,18 @@ function describeCleanerFailure(raw) {
   }
   const text = String(raw).toLowerCase();
   if (text.includes("401") || text.includes("unauthorized") || text.includes("expired")) {
-    return "The cloud cleaner was skipped: its API key was rejected as expired or invalid.";
+    return "Formatting is temporarily unavailable. This is the original transcript.";
   }
   if (text.includes("429") || text.includes("rate limit") || text.includes("quota")) {
-    return "The cloud cleaner was skipped: its account is out of quota for now.";
+    return "Formatting is currently busy. This is the original transcript.";
   }
   if (text.includes("timeout") || text.includes("timed out")) {
-    return "The cloud cleaner was skipped: it did not answer in time.";
+    return "Formatting took too long. Your original transcript is still available.";
   }
   if (text.includes("connection") || text.includes("refused") || text.includes("ollama")) {
-    return "The cloud cleaner was skipped and the local Ollama fallback was not reachable.";
+    return "Formatting could not be reached. This is the original transcript.";
   }
-  return "The cloud cleaner was skipped, so this is Whisper's own text.";
+  return "Formatting was unavailable. This is the original transcript.";
 }
 
 function stageIndex(stage) {
@@ -213,6 +254,16 @@ function railStates(stage, status) {
   return STAGES.map((entry, index) => {
     if (cacheHit && SKIPPED_ON_CACHE_HIT.includes(entry.key)) {
       return { entry, state: "dropped", note: "not needed" };
+    }
+    if (entry.key === "formatting" && status === "completed") {
+      if (currentJob?.result?.used_cached_cleaned_transcript) {
+        return { entry, state: "dropped", note: "not needed" };
+      }
+      if (!currentJob?.result?.cleaned_transcript_path) {
+        return currentJob?.result?.cleaner_error
+          ? { entry, state: "failed", note: "unavailable" }
+          : { entry, state: "dropped", note: "not applied" };
+      }
     }
     if (status === "failed" && index === current) {
       return { entry, state: "failed", note: "stopped here" };
@@ -256,7 +307,7 @@ function renderRail(stage, status) {
 }
 
 function updateLiveClock() {
-  const elapsedSeconds = (Date.now() - activeJobStartedAt) / 1000;
+  const elapsedSeconds = ((activeJobFinishedAt || Date.now()) - activeJobStartedAt) / 1000;
   const stageElapsed = (Date.now() - activeStageStartedAt) / 1000;
   const remaining = Math.max(0, activeEstimateSeconds - stageElapsed);
   elapsedEl.textContent = formatDuration(elapsedSeconds);
@@ -336,19 +387,26 @@ async function submitJob(event) {
   activeStage = "queued";
   activeStageStartedAt = Date.now();
   activeJobStartedAt = Date.now();
+  activeJobFinishedAt = null;
+  currentJob = null;
+  transcriptText = "";
   activeEstimateSeconds = 30;
   noteIndex = 0;
   cacheHit = false;
   lastRailSignature = "";
 
   hide(resultPanel);
+  resultPanel.before(statusPanel);
+  processingDetails.open = true;
   setDecisionMode(true);
   show(statusPanel);
   transcriptOutput.textContent = "Waiting for the transcript.";
   transcriptOutput.classList.add("sheet-empty");
   copyButton.disabled = true;
+  downloadButton.disabled = true;
+  resultNotice.textContent = "";
   jobModeEl.textContent = mode.label;
-  jobCacheEl.textContent = "checking";
+  jobCacheEl.textContent = "Checking";
   jobIdEl.textContent = "-";
   setSource(youtubeUrl);
   stepLabel.textContent = "Submitting the job";
@@ -377,6 +435,9 @@ async function submitJob(event) {
     });
 
     activeJobId = created.job_id;
+    const location = new URL(window.location.href);
+    location.search = new URLSearchParams({ job_id: activeJobId }).toString();
+    window.history.replaceState(null, "", location);
     jobIdEl.textContent = activeJobId;
     startPolling();
   } catch (error) {
@@ -427,6 +488,7 @@ async function pollJob(jobId) {
 }
 
 function renderJob(job) {
+  currentJob = job;
   const stage = job.stage || job.status || "queued";
   const status = job.status || "queued";
   const stageChanged = stage !== activeStage;
@@ -437,9 +499,9 @@ function renderJob(job) {
     noteIndex = 0;
     rotateNote();
   }
-  if (job.started_at) {
-    activeJobStartedAt = job.started_at * 1000;
-  }
+  activeJobStartedAt = (job.started_at || job.submitted_at || Date.now() / 1000) * 1000;
+  activeJobFinishedAt = ["completed", "failed"].includes(status)
+    ? (job.finished_at || job.updated_at || Date.now() / 1000) * 1000 : null;
   if (job.stage_started_at) {
     activeStageStartedAt = job.stage_started_at * 1000;
   }
@@ -452,11 +514,13 @@ function renderJob(job) {
 
   setStatus(status);
   jobIdEl.textContent = job.job_id;
-  setSource(job.request?.youtube_url);
+  setSource(job.request?.youtube_url, job);
   jobModeEl.textContent = job.request?.clean === false ? "Fast output" : "Better formatting";
-  jobCacheEl.textContent = cacheHit ? "hit" : "miss";
+  jobCacheEl.textContent = cacheHit ? "Reused" : status === "queued" || stage === "checking_cache"
+    ? "Checking" : "New transcript";
   stepLabel.textContent = job.stage_label || "Working through the lecture";
-  stepCount.textContent = `${job.current_step ?? "-"} of ${job.total_steps ?? "-"}`;
+  const step = status === "completed" ? STAGES.length : stageIndex(stage === "cache_hit" ? "checking_cache" : stage) + 1;
+  stepCount.textContent = step > 0 ? `${step} of ${STAGES.length}` : "-";
   setProgress(job.progress_percent);
 
   const railStage = stage === "cache_hit" ? "checking_cache" : stage;
@@ -474,7 +538,8 @@ function renderJob(job) {
 
   if (job.chunk_total) {
     show(chunkRow);
-    chunkStatus.textContent = `Cleaning chunk ${job.chunk_index || 0} of ${job.chunk_total}.`;
+    const action = stage === "transcribing" ? "Transcribing" : "Formatting";
+    chunkStatus.textContent = `${action} part ${job.chunk_index || 0} of ${job.chunk_total}.`;
   } else {
     hide(chunkRow);
   }
@@ -487,22 +552,25 @@ function renderJob(job) {
     const cleanerNote = job.result?.cleaned_transcript_path
       ? ""
       : describeCleanerFailure(job.result?.cleaner_error);
-    const savedNote = cacheHit
-      ? "This lecture was already in the archive, so nothing had to be transcribed again."
-      : "The transcript is saved. Asking for this lecture again will be near-instant.";
+    const savedNote = cacheHit ? "A saved transcript was reused." : "Transcript saved.";
     setMessage(cleanerNote ? `${cleanerNote} ${savedNote}` : savedNote);
+    resultNotice.textContent = cleanerNote;
     setProgress(100);
     stepLabel.textContent = "Transcript ready";
     etaLabel.textContent = "Took";
-    etaEl.textContent = formatDuration((Date.now() - activeJobStartedAt) / 1000);
+    etaEl.textContent = formatDuration((activeJobFinishedAt - activeJobStartedAt) / 1000);
     hide(chunkRow);
-    waitingNote.textContent = "The text sits below. Copy it, or start another lecture.";
+    waitingNote.textContent = "";
+    if (statusPanel.previousElementSibling !== resultPanel) {
+      resultPanel.after(statusPanel);
+      processingDetails.open = false;
+    }
   } else if (status === "failed") {
-    stepLabel.textContent = "The route is closed";
+    stepLabel.textContent = "Could not complete the transcript";
     etaLabel.textContent = "Stopped after";
-    etaEl.textContent = formatDuration((Date.now() - activeJobStartedAt) / 1000);
+    etaEl.textContent = formatDuration((activeJobFinishedAt - activeJobStartedAt) / 1000);
     waitingNote.textContent =
-      "Nothing was saved for this lecture. Fixing the link and starting again is safe.";
+      "You can retry this lecture. Any available saved transcript will be reused.";
   }
 
   if (stageChanged || status === "completed" || status === "failed") {
@@ -517,24 +585,27 @@ async function loadTranscript(job) {
   const kind = hasCleanedTranscript ? "cleaned" : "raw";
   show(resultPanel);
 
-  if (hasCleanedTranscript) {
-    const provider = job.result?.cleaner_provider;
-    resultSummary.textContent = provider
-      ? `Transcript, cleaned and formatted by ${provider}`
-      : "Transcript, cleaned and formatted";
-  } else {
-    resultSummary.textContent = "Transcript, straight from Whisper and in the spoken language";
-  }
+  resultTitle.textContent = lectureTitle(job);
+  resultSummary.textContent = hasCleanedTranscript ? "Formatted transcript" : "Original transcript";
+  resultDuration.textContent = cacheHit ? "Saved transcript reused" :
+    `Processed in ${formatDuration((activeJobFinishedAt - activeJobStartedAt) / 1000)}`;
+  transcriptOutput.textContent = "Loading transcript...";
+  copyButton.disabled = true;
+  downloadButton.disabled = true;
 
   try {
     const text = await requestText(`/jobs/${job.job_id}/transcript?kind=${kind}`);
+    transcriptText = text;
     transcriptOutput.textContent = text || "The transcript came back empty.";
     transcriptOutput.classList.toggle("sheet-empty", !text);
     copyButton.disabled = !text;
+    downloadButton.disabled = !text;
   } catch (error) {
     transcriptOutput.textContent = `The transcript could not be read: ${error.message}`;
     transcriptOutput.classList.add("sheet-empty");
     copyButton.disabled = true;
+    downloadButton.disabled = true;
+    resultNotice.textContent = "Could not load the saved transcript. Reload the page to try again.";
   }
 }
 
@@ -557,6 +628,7 @@ async function loadJobFromQuery(jobId) {
     if (job.status === "completed") {
       await loadTranscript(job);
     } else if (job.status === "running" || job.status === "queued") {
+      setSubmitDisabled(true);
       startPolling();
     } else if (job.status === "failed") {
       setMessage(job.error || "The job stopped before it produced a transcript.", true);
@@ -591,15 +663,25 @@ function applyQueryParams() {
 
 copyButton.addEventListener("click", async () => {
   try {
-    await navigator.clipboard.writeText(transcriptOutput.textContent);
+    await navigator.clipboard.writeText(transcriptText);
     const label = copyButton.querySelector(".action-label");
     label.textContent = "Copied";
     setTimeout(() => {
       label.textContent = "Copy text";
     }, 2000);
   } catch {
-    setMessage("The browser refused clipboard access. Select the text and copy it manually.", true);
+    resultNotice.textContent = "Clipboard access is unavailable. Select the transcript to copy it.";
   }
+});
+
+downloadButton.addEventListener("click", () => {
+  if (!transcriptText) return;
+  const blobUrl = URL.createObjectURL(new Blob([transcriptText], { type: "text/plain;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = blobUrl;
+  link.download = `${lectureTitle(currentJob).replace(/[<>:"/\\|?*\x00-\x1F]/g, "_")}_transcript.txt`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
 });
 
 form.addEventListener("submit", submitJob);

@@ -220,7 +220,7 @@ a.action {
   text-decoration: none;
   font-weight: 700;
   font-size: 17px;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 .mark .tile {
@@ -298,16 +298,16 @@ a.action {
   display: block;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
 .band-headline {
   margin-top: 1px;
-  font-size: clamp(21px, 2.4vw, 27px);
+  font-size: 26px;
   font-weight: 600;
   line-height: 1.2;
-  letter-spacing: -0.015em;
+  letter-spacing: 0;
   overflow-wrap: anywhere;
 }
 
@@ -320,25 +320,25 @@ a.action {
   display: block;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
 .band-figure strong {
   display: block;
   margin-top: 2px;
-  font-size: clamp(30px, 4.4vw, 52px);
+  font-size: 28px;
   font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   white-space: nowrap;
 }
 
 /* Wayfinding band: running work. */
 .band-wayfinding {
-  background: var(--sign);
-  color: var(--sign-ink);
-  border-bottom-color: #d9ad00;
+  background: var(--panel);
+  color: var(--ink);
+  border-bottom-color: var(--rule);
 }
 
 .band-wayfinding .tile {
@@ -348,7 +348,7 @@ a.action {
 
 .band-wayfinding .band-status,
 .band-wayfinding .band-figure span {
-  color: var(--sign-dim);
+  color: var(--ink-2);
 }
 
 /* Arrival band: the job landed. */
@@ -523,7 +523,7 @@ a.action {
   margin-top: 2px;
   font-family: "Fira Mono", ui-monospace, Consolas, monospace;
   font-size: 11px;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   color: var(--ink-3);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -606,7 +606,7 @@ a.action {
   border-bottom: 1px solid var(--rule);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
   text-transform: uppercase;
   color: var(--ink-2);
 }
@@ -649,8 +649,8 @@ a.action {
 }
 
 .decision.is-secondary .ask {
-  font-size: clamp(21px, 2.4vw, 26px);
-  letter-spacing: -0.02em;
+  font-size: 24px;
+  letter-spacing: 0;
 }
 
 .decision.is-secondary .lede {
@@ -700,10 +700,10 @@ a.action {
 }
 
 .ask {
-  font-size: clamp(32px, 4.6vw, 52px);
+  font-size: 36px;
   font-weight: 700;
   line-height: 1.02;
-  letter-spacing: -0.035em;
+  letter-spacing: 0;
   text-wrap: balance;
 }
 
@@ -725,7 +725,7 @@ a.action {
   color: var(--ink-2);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -849,7 +849,7 @@ button {
   color: var(--sign-ink);
   font-size: 18px;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 .go .tile {
@@ -978,7 +978,7 @@ button:disabled:hover {
   color: var(--ink-2);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -1014,7 +1014,7 @@ button:disabled:hover {
   color: var(--ink-2);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -1067,21 +1067,107 @@ button:disabled:hover {
    The sheet — the one white surface in the terminal
    ========================================================================== */
 
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-block: 28px 12px;
+}
+
+.result-heading {
+  min-width: 0;
+}
+
+.result-heading h1 {
+  margin: 8px 0;
+  font-size: 28px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.result-state {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--arrival-lit);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.result-state svg {
+  width: 16px;
+  height: 16px;
+}
+
+.result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.result-actions .action {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.result-notice {
+  color: var(--ink-2);
+  padding-block: 8px;
+  font-size: 14px;
+}
+
+.result-notice:empty {
+  display: none;
+}
+
+.processing-details > summary {
+  padding-block: 16px;
+  cursor: pointer;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+
+#status-panel:not([data-status="completed"]) .processing-details > summary {
+  display: none;
+}
+
+#status-panel[data-status="completed"] {
+  border-block: 1px solid var(--rule);
+}
+
+#status-panel[data-status="completed"] > .band,
+#status-panel[data-status="completed"] > .progress-rule {
+  display: none;
+}
+
+#status-panel[data-status="completed"] .hint:empty {
+  display: none;
+}
+
 .sheet-wrap .corridor {
-  padding-block: 28px 48px;
+  padding-block: 12px 24px;
 }
 
 .sheet {
-  width: min(100%, 86ch);
+  width: 100%;
   margin: 0 auto;
-  padding: clamp(24px, 3.4vw, 44px);
+  padding: 32px;
   background: var(--sheet);
   color: var(--sheet-ink);
   border-radius: 2px;
   min-height: 320px;
-  max-height: 64vh;
-  overflow: auto;
-  font-family: "Fira Sans", "Noto Naskh Arabic", ui-sans-serif, system-ui, sans-serif;
+  overflow: visible;
+  font-family: "Fira Sans", ui-sans-serif, system-ui, "Noto Naskh Arabic", sans-serif;
   font-size: 17px;
   line-height: 1.75;
   white-space: pre-wrap;
@@ -1179,7 +1265,7 @@ button:disabled:hover {
   align-items: center;
   gap: 7px;
   font-weight: 500;
-  letter-spacing: 0.06em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -1236,7 +1322,7 @@ button:disabled:hover {
   color: var(--closed-lit);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -1267,7 +1353,7 @@ button:disabled:hover {
 .board-empty h2 {
   font-size: 26px;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 .board-empty p {
@@ -1285,7 +1371,7 @@ button:disabled:hover {
   color: var(--ink-3);
   font-family: "Fira Mono", ui-monospace, Consolas, monospace;
   font-size: 12.5px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
 }
 
 /* ==========================================================================
@@ -1318,6 +1404,11 @@ button:disabled:hover {
    ========================================================================== */
 
 @media (max-width: 1000px) {
+  .result-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .decision-body,
   .status-foot {
     grid-template-columns: minmax(0, 1fr);
@@ -1365,6 +1456,29 @@ button:disabled:hover {
 }
 
 @media (max-width: 760px) {
+  .result-heading h1 {
+    font-size: 24px;
+  }
+
+  .result-header {
+    gap: 16px;
+    padding-block: 20px 12px;
+  }
+
+  .result-actions {
+    width: 100%;
+  }
+
+  .result-actions .action {
+    justify-content: center;
+    flex: 1 1 auto;
+    padding-inline: 10px;
+  }
+
+  .sheet {
+    padding: 20px;
+  }
+
   .corridor {
     padding-inline: 18px;
   }
