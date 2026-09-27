@@ -30,7 +30,7 @@ The system is designed as a real processing pipeline rather than a one-shot scri
 
 | Capability | Implementation |
 | --- | --- |
-| 🎙️ **Accurate transcription** | Faster-Whisper `large-v3` on CUDA with original-language handling |
+| 🎙️ **Accurate transcription** | OpenRouter Whisper `large-v3` by default, with local Faster-Whisper fallback |
 | ⚡ **Two processing modes** | Fast Output for speed, Better Formatting for higher-quality cleaned text |
 | 🤖 **Cloud + local AI** | OpenRouter for formatting with Ollama fallback in Better Formatting mode |
 | 📥 **YouTube ingestion** | URL validation + `yt-dlp` + FFmpeg audio conversion |
@@ -51,7 +51,7 @@ flowchart LR
     C -- Yes --> H[Return saved transcript]
     C -- No --> D[yt-dlp Download]
     D --> E[FFmpeg → MP3]
-    E --> F[Faster-Whisper Transcription]
+    E --> F[OpenRouter Whisper with local fallback]
     F --> G{Formatting mode}
     G -- Fast --> I[Try OpenRouter]
     G -- Better --> J[OpenRouter → Ollama fallback]
@@ -70,7 +70,7 @@ flowchart LR
 Best when the priority is getting text quickly.
 
 - Reuses cached output when available.
-- Runs Faster-Whisper for new lectures.
+- Transcribes new lectures with OpenRouter Whisper, falling back to local Faster-Whisper if unavailable.
 - Attempts OpenRouter formatting.
 - If cloud formatting is unavailable, returns the raw Whisper transcript immediately.
 
@@ -170,15 +170,51 @@ OutputForOllama/             # Cleaned transcripts
 ### Requirements
 
 - Python 3.10+
-- NVIDIA CUDA GPU for the current configuration
 - FFmpeg
-- Faster-Whisper `large-v3`
+- OpenRouter API key with transcription credits
+- Faster-Whisper `large-v3` for local fallback (CUDA or CPU)
 - Ollama for local fallback
-- OpenRouter API key for cloud formatting
+- OpenRouter API key for cloud formatting (the same key)
 
 ```bash
 pip install -r requirements.txt
 ```
+
+Set your key in the ignored `.env` file; `.env.example` lists the supported settings:
+
+```dotenv
+OPENROUTER_API_KEY=your-key
+WHISPER_BACKEND=openrouter
+OPENROUTER_TRANSCRIPTION_MODEL=openai/whisper-large-v3
+OPENROUTER_TRANSCRIPTION_TIMEOUT_SECONDS=120
+OPENROUTER_AUDIO_CHUNK_SECONDS=300
+WHISPER_LOCAL_FALLBACK=true
+```
+
+Both modes prefer cloud transcription and save original-language text in
+`OutputForWhisper/`. Long audio is converted into temporary mono five-minute MP3
+chunks, sent sequentially, and removed afterwards. A cloud failure (including missing
+credentials, insufficient credits, timeout, or an empty response) retries the original
+audio with local Faster-Whisper. Partial cloud transcripts are never saved as a result.
+Job metadata includes `transcription_provider` and `transcription_info`; a local
+fallback records its `cloud_error` there. Existing cache hits still skip transcription.
+
+For local fallback, `WHISPER_DEVICE=auto` selects CUDA when available, otherwise CPU;
+`WHISPER_COMPUTE_TYPE=auto` selects `int8_float16` on CUDA or `int8` on CPU. Use
+`WHISPER_MODEL_SIZE` or `WHISPER_MODEL_PATH` to override the local model.
+Set `WHISPER_BACKEND=local` to run only locally. Set `WHISPER_LOCAL_FALLBACK=false`
+on cloud servers too small to run a local model.
+
+Cloud transcription can run without importing the local Whisper/CUDA libraries.
+It still requires FFmpeg for audio download/conversion and chunking.
+
+This change does not deploy the app to Render. A Render deployment also needs FFmpeg
+and a JavaScript runtime for yt-dlp, server environment variables, and a start command
+such as `uvicorn api:app --host 0.0.0.0 --port $PORT`. Render Free spins down after
+15 idle minutes and loses local changes on restart; use a paid instance and persistent
+storage for always-on service and durable job/cache/output files. Local Whisper and
+Ollama fallbacks execute on the deployed server, not on your laptop, so they need
+sufficient resources there. See [Render Free limitations](https://render.com/docs/free).
 
 Start Ollama when using the local fallback:
 
@@ -203,6 +239,9 @@ http://127.0.0.1:8000
 ---
 
 ## API examples
+
+For the Oracle VM deployment kit, SSH upload command, persistent state layout,
+and Cloudflare domain setup, see [Oracle deployment](deploy/oracle/README.md).
 
 Create a job:
 

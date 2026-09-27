@@ -1,0 +1,2 @@
+deploy/oracle/*.sh text eol=lf
+deploy/oracle/*.service text eol=lf

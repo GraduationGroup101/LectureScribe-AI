@@ -1,0 +1,10 @@
+# Use the UUID and credential JSON of the existing lecturescribe tunnel.
+# Do not commit the credential JSON or Cloudflare account certificate.
+tunnel: YOUR_TUNNEL_UUID
+credentials-file: /etc/cloudflared/lecturescribe.json
+ingress:
+  - hostname: lecturescribe.app
+    service: http://127.0.0.1:8000
+  - hostname: www.lecturescribe.app
+    service: http://127.0.0.1:8000
+  - service: http_status:404

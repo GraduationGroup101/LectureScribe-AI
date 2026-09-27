@@ -524,7 +524,7 @@ def load_local_env(path: Path = Path(".env")) -> None:
     Returns:
         None.
     Workflow:
-        Reads non-comment `KEY=VALUE` lines and sets them in the process environment.
+        Reads non-comment `KEY=VALUE` lines, preserving existing server environment values.
     Connects to:
         Called by `openrouter_generate` before reading `OPENROUTER_API_KEY`.
     """
@@ -540,7 +540,7 @@ def load_local_env(path: Path = Path(".env")) -> None:
         key = key.strip()
         value = value.strip().strip('"').strip("'")
         if key:
-            os.environ[key] = value
+            os.environ.setdefault(key, value)
 
 
 def openrouter_generate(prompt: str) -> str:

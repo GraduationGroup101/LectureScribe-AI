@@ -4,33 +4,39 @@ from pathlib import Path
 import sys
 from threading import Lock
 from time import time
-from typing import Any, Callable
+from typing import Any, Callable, TYPE_CHECKING
 
 for stream in (sys.stdout, sys.stderr):
     if hasattr(stream, "reconfigure"):
         stream.reconfigure(encoding="utf-8", errors="replace")
 
-from faster_whisper import WhisperModel
-
-import url_to_mp3
 from clean_with_Llama import (
     CloudCleanerUnavailable,
     clean_transcript_file,
     clean_transcript_file_with_openrouter,
+    load_local_env,
 )
+from openrouter_transcription import CloudTranscriptionUnavailable, transcribe_with_openrouter
+
+if TYPE_CHECKING:
+    from faster_whisper import WhisperModel
+
+load_local_env()
+import url_to_mp3
 
 
-os.environ["PATH"] += os.pathsep + r"C:\Users\Mahmoud\Downloads\Compressed\ffmpeg-8.1-essentials_build\ffmpeg-8.1-essentials_build\bin"
-
-MODEL_SIZE = "large-v3"
-DEVICE = "cuda"
-COMPUTE_TYPE = "int8_float16"
-MODEL_PATH = r"C:\Users\Mahmoud\models\faster-whisper-large-v3"
+MODEL_SIZE = os.environ.get("WHISPER_MODEL_SIZE", "large-v3")
+DEVICE = os.environ.get("WHISPER_DEVICE", "auto")
+COMPUTE_TYPE = os.environ.get("WHISPER_COMPUTE_TYPE", "auto")
+_LOCAL_MODEL_PATH = Path(r"C:\Users\Mahmoud\models\faster-whisper-large-v3")
+MODEL_PATH = os.environ.get("WHISPER_MODEL_PATH") or (
+    str(_LOCAL_MODEL_PATH) if MODEL_SIZE == "large-v3" and _LOCAL_MODEL_PATH.is_dir() else MODEL_SIZE
+)
 DEFAULT_LANGUAGE = "ar"
 TRANSCRIPT_CACHE_FILE = Path("transcript_cache.json")
 TRANSCRIPT_PROMPT_VERSION = "original-language-v1"
 whisper_model_lock = Lock()
-whisper_models: dict[tuple[str, str, str], WhisperModel] = {}
+whisper_models: dict[tuple[str, str, str], "WhisperModel"] = {}
 LEGACY_FILENAME_CACHE_FIELDS = (
     "audio_path",
     "audio_filename",
@@ -527,7 +533,7 @@ def get_whisper_model(
     model_path: str = MODEL_PATH,
     device: str = DEVICE,
     compute_type: str = COMPUTE_TYPE,
-) -> WhisperModel:
+) -> "WhisperModel":
     """Load or reuse a Faster-Whisper model instance.
 
     Purpose:
@@ -545,6 +551,8 @@ def get_whisper_model(
         Called by `transcribe_audio`; accesses `whisper_models` under
         `whisper_model_lock`.
     """
+    from faster_whisper import WhisperModel
+
     key = (model_path, device, compute_type)
     with whisper_model_lock:
         model = whisper_models.get(key)
@@ -561,7 +569,7 @@ def get_whisper_model(
         return model
 
 
-def transcribe_audio(
+def transcribe_audio_local(
     audio_path: Path,
     *,
     model_path: str = MODEL_PATH,
@@ -594,15 +602,23 @@ def transcribe_audio(
         prompt, joins segments, writes UTF-8 text, and reports metadata.
     Connects to:
         Calls `get_whisper_model`, `build_initial_prompt`, and `emit_progress`; called by
-        `process_youtube_url`.
+        `transcribe_audio` when cloud transcription is unavailable or disabled.
     """
     if not audio_path.exists():
         raise FileNotFoundError(f"File not found: {audio_path.resolve()}")
+
+    if device == "auto":
+        import ctranslate2
+
+        device = "cuda" if ctranslate2.get_cuda_device_count() else "cpu"
+    if compute_type == "auto":
+        compute_type = "int8_float16" if device == "cuda" else "int8"
 
     whisper_estimate_seconds = estimate_whisper_seconds(video_duration_seconds)
     progress_details = {
         "video_duration_seconds": video_duration_seconds,
         "estimated_stage_seconds": whisper_estimate_seconds,
+        "transcription_provider": "local",
     }
 
     emit_progress(
@@ -651,6 +667,9 @@ def transcribe_audio(
     print("Language probability:", getattr(info, "language_probability", "N/A"))
 
     metadata = {
+        "provider": "local",
+        "model": model_size,
+        "device": device,
         "detected_language": info.language,
         "language_probability": getattr(info, "language_probability", None),
         "video_duration_seconds": video_duration_seconds,
@@ -662,6 +681,81 @@ def transcribe_audio(
         detail="Whisper transcription finished",
         **progress_details,
     )
+    return out, metadata
+
+
+def transcribe_audio(
+    audio_path: Path,
+    *,
+    model_path: str = MODEL_PATH,
+    model_size: str = MODEL_SIZE,
+    device: str = DEVICE,
+    compute_type: str = COMPUTE_TYPE,
+    language: str = DEFAULT_LANGUAGE,
+    video_duration_seconds: int | float | None = None,
+    progress_callback: ProgressCallback | None = None,
+) -> tuple[Path, dict[str, Any]]:
+    """Prefer OpenRouter Whisper, falling back to local Faster-Whisper on failure.
+
+    Args:
+        audio_path: Downloaded MP3 file to transcribe in its original language.
+        model_path, model_size, device, compute_type: Local fallback settings.
+        language: Input language code supplied to both transcription providers.
+        video_duration_seconds: Lecture duration for splitting and progress estimates.
+        progress_callback: Optional callback feeding API job status.
+    Returns:
+        Raw transcript path and metadata identifying the actual transcription provider.
+    Workflow:
+        Calls OpenRouter by default, saves only its complete output, or transcribes
+        the original audio locally if the cloud request fails. WHISPER_BACKEND=local
+        skips cloud requests; WHISPER_LOCAL_FALLBACK=false disables local fallback.
+    Connects to:
+        Called by process_youtube_url; uses transcribe_with_openrouter or
+        transcribe_audio_local and preserves the existing raw output filename.
+    """
+    if not audio_path.is_file():
+        raise FileNotFoundError(f"File not found: {audio_path.resolve()}")
+    backend = os.environ.get("WHISPER_BACKEND", "openrouter").strip().lower()
+    if backend not in {"openrouter", "local"}:
+        raise ValueError("WHISPER_BACKEND must be openrouter or local.")
+    cloud_error = None
+    if backend == "openrouter":
+        try:
+            text, metadata = transcribe_with_openrouter(
+                audio_path, language=language,
+                video_duration_seconds=video_duration_seconds,
+                progress_callback=progress_callback,
+            )
+        except CloudTranscriptionUnavailable as exc:
+            cloud_error = str(exc)
+            if os.environ.get("WHISPER_LOCAL_FALLBACK", "true").strip().lower() in {"false", "0", "no"}:
+                raise
+            print(f"OpenRouter transcription unavailable: {cloud_error}")
+            print("Falling back to local Faster-Whisper ...")
+            emit_progress(
+                progress_callback, "transcribing",
+                detail="Cloud transcription unavailable. Starting local Whisper",
+                transcription_provider="local",
+                transcription_error=cloud_error,
+                video_duration_seconds=video_duration_seconds,
+                estimated_stage_seconds=estimate_whisper_seconds(video_duration_seconds),
+            )
+        else:
+            output_dir = Path("OutputForWhisper")
+            output_dir.mkdir(exist_ok=True)
+            out = output_dir / f"{audio_path.stem}_transcript.txt"
+            out.write_text(text, encoding="utf-8")
+            print(f"OpenRouter transcript saved to: {out.resolve()}")
+            return out, metadata
+
+    out, metadata = transcribe_audio_local(
+        audio_path, model_path=model_path, model_size=model_size,
+        device=device, compute_type=compute_type, language=language,
+        video_duration_seconds=video_duration_seconds,
+        progress_callback=progress_callback,
+    )
+    if cloud_error:
+        metadata["cloud_error"] = cloud_error
     return out, metadata
 
 
@@ -715,6 +809,7 @@ def process_youtube_url(
         "used_cached_raw_transcript": False,
         "used_cached_cleaned_transcript": False,
         "transcription_info": None,
+        "transcription_provider": None,
         "video_duration_seconds": None,
         "whisper_estimate_seconds": None,
         "cleaner_provider": None,
@@ -820,6 +915,7 @@ def process_youtube_url(
         )
         result["raw_transcript_path"] = str(raw_path)
         result["transcription_info"] = transcription_info
+        result["transcription_provider"] = transcription_info.get("provider")
 
     cleaned, cleaner_provider, cleaner_error = clean_transcript_with_preferred_model(
         raw_path,

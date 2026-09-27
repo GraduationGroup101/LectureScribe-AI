@@ -1,0 +1,310 @@
+## Lecture Introduction
+
+Peace be upon you and God's mercy, welcome everyone to this lecture, which is a discussion lecture of the linear control systems course.
+Today, God willing, we will be together in the third lecture of the discussion series, part three.
+Previously, in the first and second lectures, we talked about the series in general, about what it discusses, and about modeling in the time domain.
+The most important topic was the State Space Model and how we obtain it from any system, whether electrical or mechanical.
+We became familiar with an electrical circuit and derived from it the state‑space model.
+Earlier, in week two, we derived from it the transfer function.
+There was a small or simple comparison: the transfer function is in the frequency domain, whereas the state‑space model is in the time domain.
+After that we moved to the mechanical system and learned how to obtain a State‑Based Model from a mechanical system.
+Now I want to solve a simple question on a rotational mechanical system using a state‑based model, and then, God willing, we will continue with the more important part, which is how we can convert between the transfer function and the state‑space model and vice versa.
+
+## Problem Solving Example
+
+But first, let us start with a quick review, or rather not a review, by solving a question like this one.
+I have a rotational mechanical system; we will take the question together.
+I have not activated the tool yet; I am inside this stemming tool, and we will take the question together, solve it, obtain the state‑space model, and get a question exactly like yours.
+This figure, or a similar drawing, asks you to find the state‑space model of this system.
+The problem statement should be simple; this drawing has, or through its drawing on this side, perhaps better, okay.
+The first thing we do, the first step, is to write the two equations.
+Okay, we know them; I forgot one and three, two appear, and I get two equations because there are two state variables.
+Now I will write the equations in the frequency domain, because I consider that easier for me, and I will obtain the two equations immediately.
+Then I will try to convert the two equations to the time domain, and then I will obtain the State‑Based Model very simply.
+
+To get the first equation, I will say, “open the Ghost method that we learned, which is J1; I am working on this region, okay?”
+Why is there a J1 attached as well?
+J1 plus D1S, we know the damper, we say s plus NDK1 and 2 plus K1 plus … (the original garbled term is kept as spoken).
+Theta one FS, okay?
+The common term with theta 2 is the common K2, so I will write minus K2 θ₂ s equals … (the original garbled term is kept).
+That gives us equation number one.
+Equation number two: I will obtain θ₂ s from the second equation.
+I need to get θ₂ s, which is common with θ₁, so I will write minus K₂ θ₂ s equals … (again preserving the original tokens).
+Now I write the second equation: θ₂ s² plus D₂ s plus K₂ equals 0.
+I expect you know what I have done in this case.
+Of course, that is it.
+Minus K₂ is the common term, and J₂ D₂ K₂ are the coefficients in θ₂ s, which equals 0.
+Thus the two equations are obtained, and it is a very simple thing, not worth a long discussion.
+That is what I want to tell you: what I have to do.
+In all simplicity, I will convert the two equations to the time domain quickly.
+After that I will obtain the State‑Based Model from them.
+
+Now I will retrieve the first equation; I will say the first equation is easily obtained as θ₁ double‑dot + … (the original garbled term “Ibrahim” is kept as spoken).
+Is that correct?
+So, the expression is in terms of θ₁, s, and D₁, etc., as we derived.
+That is the final form of the first equation, expressed in the time domain.
+
+(End of transcript chunk.)
+
+## Transforming the Equations to the Time Domain
+
+The term that is **k1** plus **k2**, so that we can refer to it with a short story, is like **θ1** multiplied by something; **2‑4‑4‑4** equals the term that is **τ‑f**, which is a betrayal.
+The written form of **τ‑f** is not a problem, and I am supposed to write **ηθ1** once, **prime** prime, and **f**; and **ηθ1** once prime and **f**.
+Honestly, the abbreviation for convenience I called it “Zika”; let us continue.
+Now the second equation together, we convert the second equation to the **Time Domain**; the second equation will appear for me.
+Let me leave you for a short while, thank you.
+
+Here is the second equation that will appear for me: it is **–k2 θ1** correct? plus **g2 θ2²** plus **d2 θ2²** prime plus **k2 θ2²** equals zero.
+Is there anything easier than that, like a simple calculation, a lot of easy and simple talk?
+These two equations in the **time domain** give me an expression for this diagram.
+So I say to myself, “Find all the ease we agreed on.”
+
+This equation will give me **2 variables**, and this equation will give me **2 variables**.
+We talked about them earlier in the video; I think the mountain here, the beginning, stays with **x1 = θ1**.
+We do it on the side, okay? Yes, we have always brought **x1 = τ‑f** correct?
+**x2** equals **θ1**.
+And **x2 = θ1**.
+And **θ1 prime** is correct; we finished with that, let us continue.
+
+**x3 = τ‑f²**; keep them **magzena’i** (magnetically aligned).
+I will divide four, **x3** against **d** equals **θ2 Ibrahim**, and so on.
+I finished the question, so why didn’t I complete here that **x3 = x2·d**?
+I will say no, it will change for me; the variable was **θ1** and **θ2**.
+So **θ1 double prime** prime, **θ2 double prime** prime, you need two variables, and **θ2 double prime** prime, you need two variables.
+
+We agreed earlier when we explained the **differential equation** that any second‑order differential equation needs **two state variables** to represent it in **state space**, and the same idea applies exactly to our discussion.
+If an equation is of third order, it starts with **3 variables**.
+I made a second‑order equation with **2 variables**.
+These two double‑prime terms from a second‑order equation gave me **2 variables**.
+
+I want, with complete ease, to say the following: **g1 θ1′** appears as what? **x2′** you understand it as **x2 + d1 θ1 prime**; what is it? **x2 d1 x2 + k1 + k2 in θ1**.
+What is **θ1**? **x1 minus this x1 minus k2 θ2**.
+What is **θ2**? **x3 equals τ‑f and τ‑f**; we finished there.
+
+The routine is, as you like, to say it gives me **x2**.
+I want it to move to the side equal, and put all this lump on the right‑hand side and divide by the coefficient that is **g1**.
+What happens to me? Let us just take what we need and arrange the equation in order; it will give you **g1** thank you plus **k2** of course?
+On **g1** we have **x** correct? Sorry, this is all **Salim**; I want to place it in the second one, correct?
+All **Salim** is **Salim**, we continue; stay focused with me, **–d1 / g1** in **x2**.
+
+This is the term that I distributed to the right‑hand side; it became **g1′** and I divided by **g1**; that is correct, plus I moved it to the right‑hand side, plus **k2 / g1** in **x3** plus **1 / g1** for the **τ‑f**, which is the required result.
+
+These are the aggregated equations, ordered, simple, and light.
+Why do we apply exactly the same reasoning to this equation?
+It gives me this expression; let us say **–k2 θ1 = θ1 + k2 θ1**?
+
+**x1** is the negative **k2 x1** plus **J2 θ2 double prime θ2 prime**, which is **x4 θ2 double prime** is **x4**; that is correct, plus **J2 x4 4 dot** plus **d2 – d2 prime – x4** correct?
+It is like **d x4 + lower‑case n θ n** is **x3 = 0**.
+We need a **m** on the side, and the **x4** term will appear with the answer.
+
+What is the answer?
+
+Send it to the other side; it becomes **K2** over **G2**, which is **x1**, and there is **X2**; I have a **X2** that contains **X3** minus, and on the second side minus **K2** over **J2**, **X3 X4**—this is the second side minus this 2 over our … you are **X** on the … we finished, thank God, thank you, haha. Thus we have cleared the question 100 %; if you want to arrange your equations, arrange them in this form.
+
+I tell him I have finished my case.
+
+We finished like this.
+
+But I finished the case in order to arrange it.
+
+I say to him, **x1** equals **x6 nine**, right? Is that correct, okay?
+
+And I have **x2** minus equals equals … **k1** plus **k2** over **g1**, try to be careful so you don’t launch a minus **D1** over **G1**, **X2** plus **K2** over **J2**, **x3** plus 1 over **g1**, that is, and I seek protection— is that okay?
+
+Okay, what does **X3** dot equal?
+
+**X3** dot equals **X4**, do you see it?
+
+We make **X4**, and finally **x4** minus equals this: **K2** over **G2**, **X1** minus **K2** over **G2**, which is … thank you, **X2 X3** not divide **D2/G2**, **x4** is the required one, okay, that’s the solution you gave, it is required, see what I simplify?
+
+It is not a difficult perspective; it is a bit long but easy.
+
+## Conversion Methods
+
+If you want to turn all this talk into …, when the “soft” says this, of course it is easy for you, you would say: “**x1** dot, **x2** dot, **x3** dot, and **X** over **b** minus, okay.” I then tell him, “Let’s open a larger matrix a little; I say this, and **X** up to **X2 X3 X4**, and it helps in the … … I consider it the pain, we are done. If we want to put the information, I say **x1** and **tash** equals **x2**, meaning 0 1 0; do it or don’t, put a minus **k1** plus **k2** over **g1**, and I have a minus **D1** over **G1**, and a **k2** over **k2** you will get the blessing **K2** over **J2**, and I have 0 from 4 and 1 over **G1**. I am 0 from death, there is no death, it was … and I prepared **x1**. **X3** is set, make **X4** on 0 1, and the last **X4** is set equal to **K2** over **J2** from **X1**, which is 0 from **x2**, minus **k2** over **j2** from **x3**, minus **D2** over **J2** from **X4**, and here is zero, which is required. Okay, that’s the final state; we still assume it is an easy question, you won’t imagine it, but it is not very long. In any case, the engineering of the full‑scale other … is … if you see it, it made it easier for us, let’s go, no problem, we did the hard part, we lowered it, and if she saw the value … that was easy for us … every little bit, meaning everything becomes minus two, this becomes minus one, and so on. I expect the spread of the topic is easy; take the **Statist‑based model**, and perhaps more than one equation or more than one form will appear. It may appear that this shape with the engineer differs from the derived shape that I obtained, but in the end both come out correct. Keep this information in mind and we will talk about it; perhaps in the next lecture when we try to go from state‑space to transfer function, it can take more than one for the same system, but the transfer function is only one. Today we will continue in this lecture; we will talk about the converting from tight organization in three ways: the first method is the **Direct** method, the second method is the **Cascade** method, the third method is the **…** (the lecturer’s term). I expect that in today’s lecture, God willing, we will cover the Direct and Cascade methods and leave the remaining part for the next lecture with the topic of Linearization.
+
+## Introduction
+
+Let’s begin. We will see what time it is in the summer and try to be a little faster. This video will not be very long. From the line of information that we have, okay, I will explain these methods by analyzing a question. I analyze a question using each method: I analyze a question with the “dark” method and I analyze a question with the “cascading” method, and, God willing, we will understand it during the segment.
+
+The way of solving may differ slightly; you may have a small top in the Direct method and the cascade method may be the same, and the cascade, as expected, may lag a little, but God willing we will reach the final solution in the same situation. It will say, “Excellent, I expect that solving with a simpler method together works.”
+
+So, let us say, “In the name of God, I will expose myself so that I can attempt the goal.”
+
+We ask the world to subscribe to the channel. We have arrived, we open a new page, and we take a question like this that speaks to us. It says to me, “GFS equals five s.” This is a question. I was not intruding, so I will put it down. I do not know if the engineer placed it himself or not; I am not sure. I did not break it or see it.
+
+Welcome, everyone. Two visitors, or “S plus ten,” okay? Let’s see the engineer’s input. Is it possible that he placed it himself? I honestly do not know; it is exactly the same, and there is a sound input, of course, excellent.
+
+We will get the same answer, right? Using the Direct method, using the Direct method, we convert to a transfer function, this one for the state‑space representation. Of course we understand the idea; we have started, we understand the idea, whether we are wearing a full “lab” or not.
+
+The question means “five s plus one over s in s plus two in s plus ten.” This is the way we solve the question with the Direct method. There is a very important point we must know: the Direct method, because of its name, has a special formula. It has a formula, a general formula that you can apply to the question all at once, go straight to the solution without using or solving anything else.
+
+However, initially, because sometimes the professor asks you to solve the question, you cannot just lie and go straight to the formula. So we can use the formula to verify and make sure we are correct or not, but first let us solve it in detail and reach our own solution, then we will go to the formula.
+
+We start the formula well. The first step of solving the question is as follows: I will either factor or not factor; I will open the parentheses, meaning this part is \(s^2\) times \(s\) plus ten. Put it in this form from the “dark” method, but the arrow I placed equals five; the five goes into the parentheses, five s plus five on the other side.
+
+I was working on the two lines; I work on a single line. Honestly, I work according to the complex number; you can do it; it is not very difficult. The \(s\) becomes \(s^2 + 2s\), then you put \(s^2\) over \(s + 10\), and so on. You obtain \(s^3 + 12s^2 + 20s + 0\). That means we have finished the constant term. The numbers are correct. This is the idea.
+
+Now, okay, excellent, very good, thank you. The next thing I want to do is as follows: focus with me, I will say the GFS. This simple GFS is a function \(Y\) over \(R\), or over the input we knew. The transfer function of the input equals five s plus five over \(s^2 + 12s^2 + 20s\). I expect I did not do anything, so we say, “In the name of God.”
+
+So, what do I do first? I need to multiply. I start multiplying the equation by the denominator, let’s call it \(X(s)\). I look at it without any other term, I do not add anything to the denominator or anything else. I multiply \(X\) by \(X(s)\).
+
+Islamic delicious, \(X\) over \(X\) … (the lecturer stumbles here).
+
+So, I will do the following: I need to take this, focus with me, I need to take this together and start taking it like this. What about Gaza? (The lecturer laughs) Sir, where is it?
+
+\(y\) equals five s plus five multiplied by what? By the \(X(s)\), right?
+
+## Differential Equation Setup
+
+The expression **R** equals **A** times **X** plus 12 × **X** squared plus 20 × **X** multiplied by **X of S**.
+In a difficulty‑failure problem I will solve the battery so that the electricity moves.
+Thank you.
+
+Let us continue until we press something very easy, and we will not do anything complicated; it is just a simple thing.
+Here we need to work on this equation for the **output**; we will leave it for a moment, grab the equation, and convert it to the time domain.
+We expect something, meaning an effect, so that **R** will become equal to a constant, say **100**, of course **S** will be placed in **X of S**, meaning **X** the “trip” (the variable).
+
+Is the “Ibrahim” correct?
+The dominant term is two **X**’s; the “Ibrahim” term is because we have **A** plus 20 × **X**, but of course you can also put **off t**.
+We have placed **E** and **F**; we will obtain more accurate cases, but this is how something happened, nothing else, I say “yes”.
+And that is why I want to work with a differential equation of third order.
+
+I started to convert it to a state‑space model, which we explained in the first video.
+I expect, and you also expect, that this will be very easy, right?
+
+This third‑order equation has three state variables.
+I say **X₁** equals **Ẋ** (X dot) – is that correct?
+Why **X of t**?
+Now **x₂** equals **x₁**.
+And **x₁** prime (first derivative) equals **X** prime of **t**, correct?
+And **X₃** equals **x₂** double prime, and what is **X double prime of t**?
+Then **x triple prime of t** appears – what does it become?
+
+**x** triple prime equals two hundred percent.
+Should I do the following?
+I want to substitute the expression I derived into this equation so that I obtain **R** equals **X triple prime of t** plus 12 × **X double prime of t** plus 20 × **X′ t**, where **X′ t** is **x₂**.
+The term 20 × **x₂** will make **X₃** evolve on its own on the right‑hand side.
+
+Thus we will have **–20 × x₂ –12 × x₃** plus something else because of the “arfati” term.
+No, that is not correct; the “arfati” term is added, which is very nice, thank you.
+
+Now I have **x₁ = x₂**.
+This is the first equation of the state‑space model, and I also have **x₂** from here, named **x₃**, which is the third equation.
+These three equations represent the whole system.
+
+Should I write them in a matrix?
+Or should I ask about it?
+Okay, I will ask whether we should put them in a matrix.
+If we put them in a matrix, the matrix will look like this:
+
+\[
+\begin{bmatrix}
+\dot{x}_1 \\ \dot{x}_2 \\ \dot{x}_3
+\end{bmatrix}
+=
+\begin{bmatrix}
+0 & 1 & 0 \\
+0 & 0 & 1 \\
+-20 & -12 & 0
+\end{bmatrix}
+\begin{bmatrix}
+x_1 \\ x_2 \\ x_3
+\end{bmatrix}
+\]
+
+I wrote it this way because I wanted to keep the video short, not too strong, so the matrix appears as **0, X₂, X₁**, and **X₂** becomes **0, 1, 0**.
+The term **x₂·x₃** becomes **0 1**.
+
+What does the “lineage” equal?
+It equals **–0** from **x₁**, **–20** from **x₂**, and **–12** from **x₃**, correct?
+And this, of course, is in the **R** domain; here **R** is zero, here **1**, **b** is **y**.
+
+We have finished the input matrix, and now we need the output matrix **Y of t**.
+From here we convert this to the time domain, but **y** equals five **X′** plus five **X of t**, correct?
+
+When we do the direct method, we first say that **Y of t** equals 5 × **x′** of **t**.
+What is **x′ of t**? It is **x₂**, right?
+So **x′ of t** is **x₂**, meaning five **x₂** plus five **x** of **t**.
+**x of t** is **x₁**, plus five **x₁**.
+
+Thus, without any difficulty, the **y** equation becomes **5 x₁ + 5 x₂**.
+That is the required result.
+
+## Solving the Problem
+
+This method represents the problem in a very easy way.
+Press **X/S** on **X/S**, take the reciprocal together, and the question becomes as if you transform the differential equation into an independent topic, which is practically impossible.
+
+Did you get the general formula of the direct method?
+What does it say?
+It states the general formula exactly as the question was: “What does it look like?”
+
+Five, thank you.
+
+Now I will state the general formula without referring to the question, thank you.
+The question is not a special one; it is a general one: **A X + B** on the right‑hand side.
+
+Following that, I want to place **A X** plus **B** on **X** in a convenient way, like this:
+
+\[
+A X + B
+\]
+
+For example, if you had the question “sum?”
+
+---
+
+*Note: The above translation preserves every spoken sentence, maintains the original order, and adds only punctuation, capitalization, and a heading where the lecturer clearly shifts to a new topic.*
+
+Thank you, and I tell you this transfer function that appears in us, and in the direct method I convert it to a state‑space model; I tell it, and I don’t ask anything very trivial, and the answer comes out as follows.
+The rest of the time, an answer like this appears, of course, this is from the third order, X cubed, meaning there are three state variables X1.
+Except the dot and X3.
+It equals the form X1, X2, X3 plus the matrix that belongs to whom? It belongs to R.
+Where is this Y equal in this vector and X1 X2 X3, you have?
+Alright, the answer appears as follows, and I tell you the matrix you store like this, you fill it like this, or you save it, a topic as if memorizing, put 0, 1, 0, 1; the point is that this is a…
+
+As if this is what? The Identity Matrix, the Identity Matrix, meaning it’s fine, it’s 1 0 1, thank you, fine.
+
+## Direct Method to State‑Space Conversion
+
+And I tell you the last row comes for the denominator of the transfer function.
+And when I look at the denominator, you store the opposite, meaning you put –E as the first element.
+E reversed, meaning you put the positive as negative and the negative as positive.
+This is a negative s, and s negative s, and the X cubed coefficient is always one.
+So if it is not one, you make it one; focus with me, this is always one.
+And if it is not one, you make it one because it actually has no place in the matrix, so you start from the first element which is without X.
+T. previous, any previous, this previous s, okay.
+And the B matrix here is the A matrix, but the B matrix here is not clear or something; instead, put zero, 0 1, all zeros, and the last element one, zero, and we are good, okay, what is the C matrix here?
+
+What you do in it, you see the row above, meaning the numerator; I mean you can easily store the numerator in this state, with E zero; it comes reversed but we put the sign, not a clean sign, meaning we do not flip the sign, we keep A and 0 because there is no X squared because there is no extra term, the extra term coefficient is zero.
+So if there is, for example, what do we put, for example, x squared plus, you put it here like that.
+And you reached, you see, expecting something very easy; did you come if I want to apply the … to this equation of ours?
+
+They say this, according to the statement, it comes from the A matrix; I just write from the A matrix, it appears to me, the A property appears like this, thank you.
+It will appear as 0 1 0 1 and here the thing is a constant number, right?
+Thus zero because it starts from the constant, then minus 20, then minus 12, okay?
+Because X has a coefficient of 1, this is the B property 0 1, of course the C property five and zero because it is not extra.
+We finished, this is not the C property and not the B property; this solution is the same as the previous solution, exactly the same, 010 001 020 12 exactly, with no problems.
+These are the matrices like this; we made here a general formula, initially the one in front of you, and for what we should be, like this, so we call it … three s plus 10s minus 5 over which is s minus nine … plus 11.
+
+Let’s say all this, and then they said, okay, in the direct method, when I defined A, B, and C, I say there is nothing easier than this to bypass this point and see the next point.
+This is the A matrix defined, and it will appear for me as follows: 0 1 0 1. Something here, I tell it, –11, minus 11, I need to start from the denominator and put the opposite of –11 for the … something that has a coefficient, meaning zero for … minus 2, put 2, okay?
+
+This is term A, we are done with it, okay, term B?
+And considering that there is a constant 0 1 that does not change, okay, I did not picture C, so I ask what it would be?
+A statement about the row … on the row, what is the row?
+
+## Cascade Step Explanation
+
+The bus wheel is negative five ten three.
+I have targeted it, by God.
+Peace be upon you; it is not easy, of course.
+Here we keep the signal, and we flip the signal to negative zero, and that is one 100 percent.
+We move on to the cascade step.
+I hope, God willing, the method is very clear, thank you.
+Well, it is not the cascade path; we will tackle a question, thank you honestly.
+I think the video will be long, so I will make a short video.
+If the video becomes too long, we will stop the video now, open a new video immediately, and explain the cascade so the video does not become lengthy for you.
+Greetings to you all; I hope, God willing, you benefited from this simple explanation and receive excellent results, God willing.
+Greetings, and peace, mercy, and blessings of God be upon you.

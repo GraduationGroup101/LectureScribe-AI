@@ -1,0 +1,34 @@
+[Unit]
+Description=LectureScribe API
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=lecturescribe
+Group=lecturescribe
+WorkingDirectory=/var/lib/lecturescribe
+EnvironmentFile=/etc/lecturescribe/app.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONUTF8=1
+Environment=HOME=/var/lib/lecturescribe
+Environment=HF_HOME=/var/cache/lecturescribe/huggingface
+Environment=DENO_DIR=/var/cache/lecturescribe/deno
+Environment=PATH=/opt/lecturescribe/.venv/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/opt/lecturescribe/.venv/bin/uvicorn api:app --app-dir /opt/lecturescribe --host 127.0.0.1 --port 8000 --workers 1
+Restart=always
+RestartSec=10
+TimeoutStopSec=3600
+UMask=0077
+StateDirectory=lecturescribe
+StateDirectoryMode=0750
+CacheDirectory=lecturescribe
+CacheDirectoryMode=0750
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/lecturescribe /var/cache/lecturescribe
+
+[Install]
+WantedBy=multi-user.target

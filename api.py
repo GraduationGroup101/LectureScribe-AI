@@ -26,7 +26,7 @@ from url_to_mp3 import validate_youtube_url
 
 app = FastAPI(
     title="LectureScribe-AI API",
-    description="Download lecture audio, transcribe it with faster-whisper, and optionally clean it with Groq or Ollama.",
+    description="Transcribe lectures with OpenRouter Whisper and local fallback, then format with OpenRouter or Ollama.",
     version="1.0.0",
     docs_url=None,
     redoc_url=None,
@@ -126,7 +126,7 @@ class TranscriptionRequest(BaseModel):
     )
     clean: bool = Field(
         default=True,
-        description="Use better formatting mode. Groq is tried first; Ollama is used as fallback only when this is true.",
+        description="Use better formatting mode. OpenRouter is tried first; Ollama is used as fallback only when this is true.",
     )
     skip_audio_cache: bool = Field(
         default=False,
@@ -329,6 +329,10 @@ def build_progress_update(stage: str, request_data: dict, details: dict | None =
     step = int(defaults["step"])
     total_steps = TOTAL_STEPS[clean]
 
+    if stage == "transcribing" and details.get("chunk_total"):
+        chunk_progress = max(0, min(1, float((details.get("chunk_index") or 1) - 1) / float(details["chunk_total"])))
+        progress = 35 + int(chunk_progress * 35)
+
     if stage == "formatting":
         chunk_index = details.get("chunk_index")
         chunk_total = details.get("chunk_total")
@@ -353,6 +357,9 @@ def build_progress_update(stage: str, request_data: dict, details: dict | None =
     }
     if details.get("video_duration_seconds") is not None:
         update["video_duration_seconds"] = details.get("video_duration_seconds")
+    for field in ("transcription_provider", "transcription_error"):
+        if field in details:
+            update[field] = details[field]
     if stage == "transcribing" and details.get("estimated_stage_seconds") is not None:
         update["whisper_estimate_seconds"] = details.get("estimated_stage_seconds")
     return update
