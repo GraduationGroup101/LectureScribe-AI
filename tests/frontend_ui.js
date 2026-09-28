@@ -30,7 +30,8 @@ async (page) => {
       overflow: document.documentElement.scrollWidth > window.innerWidth,
       textTop: document.querySelector("#transcript-output").getBoundingClientRect().top,
       detailsOpen: document.querySelector("#processing-details").open,
-      resultFirst: document.querySelector("#main").firstElementChild.id === "result-panel",
+      resultFirst: [...document.querySelector("#main").children]
+        .find(element => getComputedStyle(element).display !== "none")?.id === "result-panel",
       bandHidden: getComputedStyle(document.querySelector("#status-band")).display === "none",
     }));
     assert(!layout.overflow, `Horizontal overflow at ${width}px`);
@@ -107,7 +108,8 @@ async (page) => {
   await page.locator("#submit-button").click();
   await page.waitForFunction(() => document.querySelector("#status-panel").dataset.status === "running");
   assert(await page.locator("#submit-button").isDisabled(), "New job did not lock submit");
-  assert(await page.evaluate(() => document.querySelector("#main").firstElementChild.id === "status-panel"), "Starting again did not restore status-first layout");
+  assert(await page.evaluate(() => [...document.querySelector("#main").children]
+    .find(element => getComputedStyle(element).display !== "none")?.id === "status-panel"), "Starting again did not restore status-first layout");
   assert(page.url().includes("job_id=frontend-check"), "New job cannot be resumed on reload");
 
   job = { ...job, status: "failed", stage: "failed", finished_at: now,

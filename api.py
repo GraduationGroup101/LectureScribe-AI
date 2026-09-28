@@ -1,6 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
+import hmac
 import json
+import os
 from pathlib import Path
 import sys
 from threading import Lock
@@ -11,7 +13,7 @@ for stream in (sys.stdout, sys.stderr):
     if hasattr(stream, "reconfigure"):
         stream.reconfigure(encoding="utf-8", errors="replace")
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -33,6 +35,42 @@ app = FastAPI(
     openapi_url=None,
 )
 app.mount("/front", StaticFiles(directory="front"), name="front")
+
+
+def access_required() -> bool:
+    """Enable access checks when a code is configured or explicitly required."""
+    return bool(os.environ.get("APP_ACCESS_TOKEN", "").strip()) or os.environ.get(
+        "REQUIRE_ACCESS_TOKEN", "false"
+    ).strip().lower() in {"true", "1", "yes"}
+
+
+def require_access(authorization: str | None = Header(default=None)) -> None:
+    """Authorize job access with the configured bearer code."""
+    if not access_required():
+        return
+
+    expected = os.environ.get("APP_ACCESS_TOKEN", "").strip()
+    if len(expected) < 24:
+        raise HTTPException(status_code=503, detail="Access is not configured on this server.")
+
+    scheme, _, supplied = (authorization or "").partition(" ")
+    if scheme.lower() != "bearer" or not hmac.compare_digest(
+        supplied.strip().encode("utf-8"), expected.encode("utf-8")
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="A valid access code is required.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+@app.middleware("http")
+async def prevent_private_response_caching(request: Request, call_next):
+    """Keep job and authorization responses out of HTTP caches."""
+    response = await call_next(request)
+    if request.url.path.startswith(("/jobs", "/auth/")):
+        response.headers["Cache-Control"] = "no-store"
+    return response
 
 executor = ThreadPoolExecutor(max_workers=1)
 JOBS_FILE = Path("jobs.json")
@@ -640,10 +678,24 @@ def health() -> dict:
     Connects to:
         Independent of the transcription pipeline.
     """
+    if access_required() and len(os.environ.get("APP_ACCESS_TOKEN", "").strip()) < 24:
+        raise HTTPException(status_code=503, detail="Access is not configured on this server.")
     return {"status": "ok"}
 
 
-@app.post("/jobs", status_code=202)
+@app.get("/auth/config")
+def auth_config() -> dict:
+    """Tell the frontend whether it must request an access code."""
+    return {"required": access_required()}
+
+
+@app.get("/auth/check", dependencies=[Depends(require_access)])
+def auth_check() -> dict:
+    """Validate a browser's access code without starting a job."""
+    return {"status": "ok"}
+
+
+@app.post("/jobs", status_code=202, dependencies=[Depends(require_access)])
 def create_transcription_job(request: TranscriptionRequest) -> dict:
     """Accept a transcription request and queue it for background processing.
 
@@ -661,7 +713,7 @@ def create_transcription_job(request: TranscriptionRequest) -> dict:
     return submit_job(request.model_dump())
 
 
-@app.get("/jobs")
+@app.get("/jobs", dependencies=[Depends(require_access)])
 def list_jobs() -> dict:
     """Return snapshots of all persisted jobs.
 
@@ -680,7 +732,7 @@ def list_jobs() -> dict:
         return {"jobs": deepcopy(list(jobs.values()))}
 
 
-@app.get("/jobs/{job_id}")
+@app.get("/jobs/{job_id}", dependencies=[Depends(require_access)])
 def get_job(job_id: str) -> dict:
     """Return the current state of one transcription job.
 
@@ -700,7 +752,7 @@ def get_job(job_id: str) -> dict:
     return get_job_or_404(job_id)
 
 
-@app.get("/jobs/{job_id}/transcript")
+@app.get("/jobs/{job_id}/transcript", dependencies=[Depends(require_access)])
 def get_transcript(job_id: str, kind: str = "cleaned") -> PlainTextResponse:
     """Return the raw or cleaned transcript text for a completed job.
 

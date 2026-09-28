@@ -344,7 +344,12 @@ function resetTimers() {
 }
 
 async function requestJson(url, options) {
-  const response = await fetch(url, options);
+  const response = await fetch(url, {
+    ...options,
+    headers: { ...window.lectureScribeAccess.headers(), ...options?.headers },
+    cache: "no-store",
+  });
+  window.lectureScribeAccess.handleUnauthorized(response);
   let data = null;
   try {
     data = await response.json();
@@ -359,7 +364,11 @@ async function requestJson(url, options) {
 }
 
 async function requestText(url) {
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    headers: window.lectureScribeAccess.headers(),
+    cache: "no-store",
+  });
+  window.lectureScribeAccess.handleUnauthorized(response);
   if (!response.ok) {
     let detail = response.statusText;
     try {
@@ -685,4 +694,4 @@ downloadButton.addEventListener("click", () => {
 });
 
 form.addEventListener("submit", submitJob);
-applyQueryParams();
+window.lectureScribeAccess.ready.then(applyQueryParams);

@@ -162,6 +162,31 @@ a.action {
   display: none !important;
 }
 
+.access-pending main > :not(#access-panel) {
+  display: none !important;
+}
+
+.access-panel {
+  min-height: 55vh;
+  border-top: 1px solid var(--rule);
+  padding-block: 68px;
+}
+
+.access-panel h1 {
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+.access-panel p {
+  margin-top: 12px;
+  color: var(--ink-2);
+}
+
+.access-panel form {
+  max-width: 420px;
+  margin-top: 32px;
+}
+
 .corridor {
   width: min(1240px, 100%);
   margin-inline: auto;
@@ -731,6 +756,7 @@ a.action {
 
 input[type="url"],
 input[type="search"],
+input[type="password"],
 select {
   width: 100%;
   min-width: 0;
@@ -746,12 +772,14 @@ select {
 
 input[type="url"]:hover,
 input[type="search"]:hover,
+input[type="password"]:hover,
 select:hover {
   border-color: #545e68;
 }
 
 input[type="url"]:focus-visible,
 input[type="search"]:focus-visible,
+input[type="password"]:focus-visible,
 select:focus-visible {
   border-color: var(--sign);
   outline-offset: 0;

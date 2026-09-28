@@ -9,9 +9,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Fira+Mono:wght@400;500;700&family=Noto+Naskh+Arabic:wght@400;500;600&display=swap">
-    <link rel="stylesheet" href="/front/styles.css?v=result-5">
+    <link rel="stylesheet" href="/front/styles.css?v=access-1">
   </head>
-  <body>
+  <body class="access-pending">
     <a class="skip-link" href="#main">Skip to content</a>
 
     <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
@@ -49,6 +49,17 @@
     </header>
 
     <main id="main">
+      <section id="access-panel" class="access-panel" aria-labelledby="access-title">
+        <div class="corridor">
+          <h1 id="access-title">LectureScribe access</h1>
+          <p id="access-message" role="status">Checking access...</p>
+          <form id="access-form" class="is-hidden">
+            <label class="field-label" for="access-code">Access code</label>
+            <input id="access-code" type="password" autocomplete="off" required>
+            <button id="access-button" class="go" type="submit">Unlock</button>
+          </form>
+        </div>
+      </section>
       <section id="status-panel" class="is-hidden" aria-live="polite">
         <div class="band band-quiet" id="status-band">
           <div class="corridor">
@@ -255,6 +266,7 @@
 
     </main>
 
-    <script src="/front/app.js?v=result-5"></script>
+    <script src="/front/access.js?v=access-1"></script>
+    <script src="/front/app.js?v=access-1"></script>
   </body>
 </html>
