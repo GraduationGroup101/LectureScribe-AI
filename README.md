@@ -189,6 +189,7 @@ OPENROUTER_TRANSCRIPTION_MODEL=openai/whisper-large-v3
 OPENROUTER_TRANSCRIPTION_TIMEOUT_SECONDS=120
 OPENROUTER_AUDIO_CHUNK_SECONDS=300
 WHISPER_LOCAL_FALLBACK=true
+OLLAMA_LOCAL_FALLBACK=true
 ```
 
 Both modes prefer cloud transcription and save original-language text in
@@ -208,13 +209,23 @@ on cloud servers too small to run a local model.
 Cloud transcription can run without importing the local Whisper/CUDA libraries.
 It still requires FFmpeg for audio download/conversion and chunking.
 
-This change does not deploy the app to Render. A Render deployment also needs FFmpeg
-and a JavaScript runtime for yt-dlp, server environment variables, and a start command
-such as `uvicorn api:app --host 0.0.0.0 --port $PORT`. Render Free spins down after
-15 idle minutes and loses local changes on restart; use a paid instance and persistent
-storage for always-on service and durable job/cache/output files. Local Whisper and
-Ollama fallbacks execute on the deployed server, not on your laptop, so they need
-sufficient resources there. See [Render Free limitations](https://render.com/docs/free).
+### Render preview
+
+The root `Dockerfile` installs FFmpeg, Node.js, and the cloud-only dependencies in
+`requirements-render.txt`. Create a Docker web service from this repository on the
+`main` branch, using the Free plan and `/health` as the health check. Set
+`OPENROUTER_API_KEY` as a secret in Render; do not upload `.env`. The container
+disables local Faster-Whisper and Ollama fallbacks, so OpenRouter needs sufficient
+transcription and formatting credits. If cloud formatting fails, the raw transcript
+is returned; if cloud transcription fails, the job fails.
+
+Render Free spins down after 15 idle minutes. Its filesystem is ephemeral, so
+`jobs.json`, `transcript_cache.json`, and generated transcripts can disappear after
+a restart or redeploy. It is suitable for a short demonstration, not durable job
+history or guaranteed always-on access. Use external storage and an appropriate
+paid service before relying on it for long-running jobs. The public service can
+consume OpenRouter credits, and downloading YouTube videos from a datacenter IP
+may be blocked. See [Render Free limitations](https://render.com/docs/free).
 
 Start Ollama when using the local fallback:
 

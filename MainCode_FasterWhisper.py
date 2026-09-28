@@ -385,6 +385,9 @@ def clean_transcript_with_preferred_model(
     if not allow_ollama_fallback:
         return None, None, cloud_error
 
+    if os.environ.get("OLLAMA_LOCAL_FALLBACK", "true").strip().lower() in {"false", "0", "no"}:
+        return None, None, cloud_error
+
     emit_progress(progress_callback, "formatting", detail="OpenRouter unavailable. Formatting transcript with Ollama")
     print("Running Ollama cleaner ...")
     cleaned = clean_transcript_file(raw_path, progress_callback=progress_callback)

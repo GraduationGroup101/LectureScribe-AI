@@ -101,6 +101,18 @@ class TranscriptionTests(unittest.TestCase):
                         pipeline.transcribe_audio(self.audio, video_duration_seconds=5)
         local.assert_not_called()
 
+    def test_ollama_fallback_can_be_disabled_on_cloud_servers(self):
+        with patch.dict(os.environ, {"OLLAMA_LOCAL_FALLBACK": "false"}):
+            with patch.object(pipeline, "clean_transcript_file_with_openrouter", side_effect=RuntimeError("cloud unavailable")):
+                with patch.object(pipeline, "clean_transcript_file") as local:
+                    cleaned, provider, error = pipeline.clean_transcript_with_preferred_model(
+                        Path("raw.txt"), allow_ollama_fallback=True
+                    )
+        self.assertIsNone(cleaned)
+        self.assertIsNone(provider)
+        self.assertIn("cloud unavailable", error)
+        local.assert_not_called()
+
     def test_explicit_local_backend_skips_cloud(self):
         with patch.dict(os.environ, {"WHISPER_BACKEND": "local"}):
             with patch.object(pipeline, "transcribe_with_openrouter") as cloud:
