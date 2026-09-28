@@ -6,8 +6,7 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     WHISPER_BACKEND=openrouter \
     WHISPER_LOCAL_FALLBACK=false \
-    OLLAMA_LOCAL_FALLBACK=false \
-    REQUIRE_ACCESS_TOKEN=true
+    OLLAMA_LOCAL_FALLBACK=false
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates ffmpeg libstdc++6 \

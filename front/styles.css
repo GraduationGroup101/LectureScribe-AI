@@ -162,31 +162,6 @@ a.action {
   display: none !important;
 }
 
-.access-pending main > :not(#access-panel) {
-  display: none !important;
-}
-
-.access-panel {
-  min-height: 55vh;
-  border-top: 1px solid var(--rule);
-  padding-block: 68px;
-}
-
-.access-panel h1 {
-  font-size: 30px;
-  line-height: 1.2;
-}
-
-.access-panel p {
-  margin-top: 12px;
-  color: var(--ink-2);
-}
-
-.access-panel form {
-  max-width: 420px;
-  margin-top: 32px;
-}
-
 .corridor {
   width: min(1240px, 100%);
   margin-inline: auto;

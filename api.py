@@ -1,19 +1,21 @@
 from concurrent.futures import ThreadPoolExecutor
+from collections import deque
 from copy import deepcopy
-import hmac
 import json
+from ipaddress import ip_address
+from math import ceil
 import os
 from pathlib import Path
 import sys
 from threading import Lock
-from time import time
+from time import monotonic, time
 from uuid import uuid4
 
 for stream in (sys.stdout, sys.stderr):
     if hasattr(stream, "reconfigure"):
         stream.reconfigure(encoding="utf-8", errors="replace")
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -37,38 +39,11 @@ app = FastAPI(
 app.mount("/front", StaticFiles(directory="front"), name="front")
 
 
-def access_required() -> bool:
-    """Enable access checks when a code is configured or explicitly required."""
-    return bool(os.environ.get("APP_ACCESS_TOKEN", "").strip()) or os.environ.get(
-        "REQUIRE_ACCESS_TOKEN", "false"
-    ).strip().lower() in {"true", "1", "yes"}
-
-
-def require_access(authorization: str | None = Header(default=None)) -> None:
-    """Authorize job access with the configured bearer code."""
-    if not access_required():
-        return
-
-    expected = os.environ.get("APP_ACCESS_TOKEN", "").strip()
-    if len(expected) < 24:
-        raise HTTPException(status_code=503, detail="Access is not configured on this server.")
-
-    scheme, _, supplied = (authorization or "").partition(" ")
-    if scheme.lower() != "bearer" or not hmac.compare_digest(
-        supplied.strip().encode("utf-8"), expected.encode("utf-8")
-    ):
-        raise HTTPException(
-            status_code=401,
-            detail="A valid access code is required.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-
 @app.middleware("http")
-async def prevent_private_response_caching(request: Request, call_next):
-    """Keep job and authorization responses out of HTTP caches."""
+async def prevent_job_response_caching(request: Request, call_next):
+    """Keep job responses out of HTTP caches."""
     response = await call_next(request)
-    if request.url.path.startswith(("/jobs", "/auth/")):
+    if request.url.path.startswith("/jobs"):
         response.headers["Cache-Control"] = "no-store"
     return response
 
@@ -76,6 +51,59 @@ executor = ThreadPoolExecutor(max_workers=1)
 JOBS_FILE = Path("jobs.json")
 jobs: dict[str, dict] = {}
 jobs_lock = Lock()
+JOB_RATE_WINDOW_SECONDS = 3600
+JOB_RATE_PER_IP = 3
+JOB_RATE_GLOBAL = 12
+JOB_MAX_ACTIVE = 3
+job_submissions: deque[float] = deque()
+job_submissions_by_ip: dict[str, deque[float]] = {}
+
+
+def client_ip(request: Request) -> str:
+    """Use Render's Cloudflare client IP; ignore caller-supplied proxy headers locally."""
+    if os.environ.get("RENDER") == "true":
+        forwarded = request.headers.get("cf-connecting-ip", "")
+        try:
+            return str(ip_address(forwarded))
+        except ValueError:
+            pass
+    return request.client.host if request.client else "unknown"
+
+
+def check_job_admission_unlocked(ip: str, now: float) -> None:
+    """Reject excess submissions while the caller holds jobs_lock."""
+    cutoff = now - JOB_RATE_WINDOW_SECONDS
+    while job_submissions and job_submissions[0] <= cutoff:
+        job_submissions.popleft()
+    for address, timestamps in list(job_submissions_by_ip.items()):
+        while timestamps and timestamps[0] <= cutoff:
+            timestamps.popleft()
+        if not timestamps:
+            del job_submissions_by_ip[address]
+
+    if sum(job.get("status") in {"queued", "running"} for job in jobs.values()) >= JOB_MAX_ACTIVE:
+        raise HTTPException(
+            status_code=429,
+            detail="The job queue is full. Try again after a job finishes.",
+            headers={"Retry-After": "60"},
+        )
+
+    for timestamps, limit, message in (
+        (job_submissions, JOB_RATE_GLOBAL, "Server job limit reached. Try again later."),
+        (
+            job_submissions_by_ip.get(ip, ()),
+            JOB_RATE_PER_IP,
+            "Your job limit is reached. Try again later.",
+        ),
+    ):
+        if len(timestamps) >= limit:
+            retry_after = max(1, ceil(timestamps[0] + JOB_RATE_WINDOW_SECONDS - now))
+            raise HTTPException(
+                status_code=429,
+                detail=message,
+                headers={"Retry-After": str(retry_after)},
+            )
+
 TOTAL_STEPS = {
     True: 5,
     False: 4,
@@ -559,20 +587,21 @@ def run_transcription_job(job_id: str, request_data: dict) -> None:
     )
 
 
-def submit_job(request_data: dict) -> dict:
+def submit_job(request_data: dict, ip: str) -> dict:
     """Validate, persist, and queue a new transcription request.
 
     Purpose:
         Implement the shared job-submission logic behind the public POST route.
     Args:
         request_data: Validated request fields represented as a dictionary.
+        ip: Client address used for the per-IP admission limit.
     Returns:
         Job ID, initial status, and polling/transcript endpoint paths.
     Raises:
-        HTTPException: With status 400 when the YouTube URL is invalid.
+        HTTPException: With status 400 for an invalid URL or 429 when busy/limited.
     Workflow:
-        Validates the URL, creates a UUID and queued job record, saves it under lock,
-        and submits `run_transcription_job` to the single-worker executor.
+        Validates the URL, checks admission, creates and persists a queued job,
+        then submits `run_transcription_job` to the single-worker executor.
     Connects to:
         Calls URL validation, progress building, persistence, and background execution;
         called by `create_transcription_job`.
@@ -583,6 +612,8 @@ def submit_job(request_data: dict) -> dict:
 
     job_id = str(uuid4())
     with jobs_lock:
+        now = monotonic()
+        check_job_admission_unlocked(ip, now)
         jobs[job_id] = {
             "job_id": job_id,
             "status": "queued",
@@ -595,6 +626,8 @@ def submit_job(request_data: dict) -> dict:
             "result": None,
         }
         save_jobs_unlocked()
+        job_submissions.append(now)
+        job_submissions_by_ip.setdefault(ip, deque()).append(now)
 
     executor.submit(run_transcription_job, job_id, request_data)
 
@@ -678,31 +711,18 @@ def health() -> dict:
     Connects to:
         Independent of the transcription pipeline.
     """
-    if access_required() and len(os.environ.get("APP_ACCESS_TOKEN", "").strip()) < 24:
-        raise HTTPException(status_code=503, detail="Access is not configured on this server.")
     return {"status": "ok"}
 
 
-@app.get("/auth/config")
-def auth_config() -> dict:
-    """Tell the frontend whether it must request an access code."""
-    return {"required": access_required()}
-
-
-@app.get("/auth/check", dependencies=[Depends(require_access)])
-def auth_check() -> dict:
-    """Validate a browser's access code without starting a job."""
-    return {"status": "ok"}
-
-
-@app.post("/jobs", status_code=202, dependencies=[Depends(require_access)])
-def create_transcription_job(request: TranscriptionRequest) -> dict:
+@app.post("/jobs", status_code=202)
+def create_transcription_job(request: TranscriptionRequest, http_request: Request) -> dict:
     """Accept a transcription request and queue it for background processing.
 
     Purpose:
         Expose asynchronous job creation to the frontend and API clients.
     Args:
         request: FastAPI-validated `TranscriptionRequest` body.
+        http_request: Incoming request used to identify the client IP.
     Returns:
         Initial queued-job metadata and URLs.
     Workflow:
@@ -710,10 +730,10 @@ def create_transcription_job(request: TranscriptionRequest) -> dict:
     Connects to:
         Calls `submit_job`; polled later through `get_job`.
     """
-    return submit_job(request.model_dump())
+    return submit_job(request.model_dump(), client_ip(http_request))
 
 
-@app.get("/jobs", dependencies=[Depends(require_access)])
+@app.get("/jobs")
 def list_jobs() -> dict:
     """Return snapshots of all persisted jobs.
 
@@ -732,7 +752,7 @@ def list_jobs() -> dict:
         return {"jobs": deepcopy(list(jobs.values()))}
 
 
-@app.get("/jobs/{job_id}", dependencies=[Depends(require_access)])
+@app.get("/jobs/{job_id}")
 def get_job(job_id: str) -> dict:
     """Return the current state of one transcription job.
 
@@ -752,7 +772,7 @@ def get_job(job_id: str) -> dict:
     return get_job_or_404(job_id)
 
 
-@app.get("/jobs/{job_id}/transcript", dependencies=[Depends(require_access)])
+@app.get("/jobs/{job_id}/transcript")
 def get_transcript(job_id: str, kind: str = "cleaned") -> PlainTextResponse:
     """Return the raw or cleaned transcript text for a completed job.
 

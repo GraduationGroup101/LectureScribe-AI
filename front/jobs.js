@@ -24,10 +24,8 @@ let allJobs = [];
 async function requestJson(url, options) {
   const response = await fetch(url, {
     ...options,
-    headers: { ...window.lectureScribeAccess.headers(), ...options?.headers },
     cache: "no-store",
   });
-  window.lectureScribeAccess.handleUnauthorized(response);
   let data = null;
   try {
     data = await response.json();
@@ -214,4 +212,4 @@ async function loadJobs() {
 refreshJobsButton.addEventListener("click", loadJobs);
 jobSearch.addEventListener("input", renderJobs);
 statusFilter.addEventListener("change", renderJobs);
-window.lectureScribeAccess.ready.then(loadJobs);
+loadJobs();

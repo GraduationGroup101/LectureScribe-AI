@@ -190,8 +190,6 @@ OPENROUTER_TRANSCRIPTION_TIMEOUT_SECONDS=120
 OPENROUTER_AUDIO_CHUNK_SECONDS=300
 WHISPER_LOCAL_FALLBACK=true
 OLLAMA_LOCAL_FALLBACK=true
-APP_ACCESS_TOKEN=your-long-random-access-code
-REQUIRE_ACCESS_TOKEN=true
 ```
 
 Both modes prefer cloud transcription and save original-language text in
@@ -216,10 +214,12 @@ It still requires FFmpeg for audio download/conversion and chunking.
 The root `Dockerfile` installs FFmpeg, Node.js, and the cloud-only dependencies in
 `requirements-render.txt`. Create a Docker web service from this repository on the
 `main` branch, using the Free plan and `/health` as the health check. Set
-`OPENROUTER_API_KEY` and a random `APP_ACCESS_TOKEN` of at least 24 characters as secrets in Render;
-do not upload `.env`. The container requires the access code and returns an
-unhealthy response until it is configured. The browser asks for the code before
-submitting jobs or viewing history; API clients send `Authorization: Bearer CODE`.
+`OPENROUTER_API_KEY` as a secret in Render; do not upload `.env`.
+The public `POST /jobs` endpoint accepts at most 3 jobs per client IP and 12 jobs
+server-wide in a rolling hour, with at most 3 active or queued jobs. Excess
+requests receive HTTP 429 and a `Retry-After` header. Polling and transcript
+reads are not rate limited. These in-memory limits reset when the process restarts
+and assume the Dockerfile's single Uvicorn worker.
 The container disables local Faster-Whisper and Ollama fallbacks, so OpenRouter needs sufficient
 transcription and formatting credits. If cloud formatting fails, the raw transcript
 is returned; if cloud transcription fails, the job fails.
@@ -228,9 +228,11 @@ Render Free spins down after 15 idle minutes. Its filesystem is ephemeral, so
 `jobs.json`, `transcript_cache.json`, and generated transcripts can disappear after
 a restart or redeploy. It is suitable for a short demonstration, not durable job
 history or guaranteed always-on access. Use external storage and an appropriate
-paid service before relying on it for long-running jobs. Anyone who learns the
-shared access code can consume OpenRouter credits, and downloading YouTube videos from a datacenter IP
-may be blocked. See [Render Free limitations](https://render.com/docs/free).
+paid service before relying on it for long-running jobs. Public callers can
+still consume OpenRouter credits within the limits, and job
+history and transcripts are public to anyone with the service URL. Rate limiting
+is not access control or a guaranteed spending cap. Downloading YouTube videos
+from a datacenter IP may be blocked. See [Render Free limitations](https://render.com/docs/free).
 
 Start Ollama when using the local fallback:
 

@@ -346,10 +346,8 @@ function resetTimers() {
 async function requestJson(url, options) {
   const response = await fetch(url, {
     ...options,
-    headers: { ...window.lectureScribeAccess.headers(), ...options?.headers },
     cache: "no-store",
   });
-  window.lectureScribeAccess.handleUnauthorized(response);
   let data = null;
   try {
     data = await response.json();
@@ -358,17 +356,16 @@ async function requestJson(url, options) {
   }
   if (!response.ok) {
     const detail = data?.detail || response.statusText;
-    throw new Error(detail);
+    const error = new Error(detail);
+    error.status = response.status;
+    error.retryAfter = Number(response.headers.get("Retry-After"));
+    throw error;
   }
   return data;
 }
 
 async function requestText(url) {
-  const response = await fetch(url, {
-    headers: window.lectureScribeAccess.headers(),
-    cache: "no-store",
-  });
-  window.lectureScribeAccess.handleUnauthorized(response);
+  const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) {
     let detail = response.statusText;
     try {
@@ -455,7 +452,13 @@ async function submitJob(event) {
     stepLabel.textContent = "The job was not accepted";
     etaLabel.textContent = "Stopped after";
     etaEl.textContent = formatDuration((Date.now() - activeJobStartedAt) / 1000);
-    setMessage(`${error.message} Check the link and start again.`, true);
+    const retry = error.status === 429 && error.retryAfter > 0
+      ? ` Try again in about ${formatDuration(error.retryAfter)}.`
+      : "";
+    const message = error.status === 429
+      ? `${error.message}${retry}`
+      : `${error.message} Check the link and start again.`;
+    setMessage(message, true);
     setSubmitDisabled(false);
   }
 }
@@ -694,4 +697,4 @@ downloadButton.addEventListener("click", () => {
 });
 
 form.addEventListener("submit", submitJob);
-window.lectureScribeAccess.ready.then(applyQueryParams);
+applyQueryParams();
