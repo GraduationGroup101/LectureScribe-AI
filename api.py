@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from collections import deque
 from copy import deepcopy
+from hmac import compare_digest
 import json
 from ipaddress import ip_address
 from math import ceil
@@ -51,12 +52,35 @@ executor = ThreadPoolExecutor(max_workers=1)
 JOBS_FILE = Path("jobs.json")
 jobs: dict[str, dict] = {}
 jobs_lock = Lock()
+def _limit_from_env(name: str, default: int) -> int:
+    """Read a positive integer limit from the environment, keeping the default otherwise."""
+    value = os.environ.get(name, "").strip()
+    return int(value) if value.isdigit() and int(value) > 0 else default
+
+
 JOB_RATE_WINDOW_SECONDS = 3600
-JOB_RATE_PER_IP = 3
-JOB_RATE_GLOBAL = 12
-JOB_MAX_ACTIVE = 3
+JOB_RATE_PER_IP = _limit_from_env("JOB_RATE_PER_IP", 3)
+JOB_RATE_GLOBAL = _limit_from_env("JOB_RATE_GLOBAL", 12)
+JOB_MAX_ACTIVE = _limit_from_env("JOB_MAX_ACTIVE", 3)
+GATEWAY_KEY_HEADER = "X-Gateway-Key"
 job_submissions: deque[float] = deque()
 job_submissions_by_ip: dict[str, deque[float]] = {}
+
+
+def gateway_keys() -> set[str]:
+    """Shared secrets of trusted gateways, from the comma-separated GATEWAY_KEYS variable."""
+    return {key.strip() for key in os.environ.get("GATEWAY_KEYS", "").split(",") if key.strip()}
+
+
+def is_trusted_gateway(request: Request) -> bool:
+    """True when the request carries a configured gateway key.
+
+    A gateway such as EduFusion submits jobs for many students from one address,
+    so it is exempt from the per-IP limit only. The server-wide and queue limits
+    still apply to it.
+    """
+    presented = request.headers.get(GATEWAY_KEY_HEADER, "")
+    return bool(presented) and any(compare_digest(presented, key) for key in gateway_keys())
 
 
 def client_ip(request: Request) -> str:
@@ -70,7 +94,7 @@ def client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
-def check_job_admission_unlocked(ip: str, now: float) -> None:
+def check_job_admission_unlocked(ip: str, now: float, trusted_gateway: bool = False) -> None:
     """Reject excess submissions while the caller holds jobs_lock."""
     cutoff = now - JOB_RATE_WINDOW_SECONDS
     while job_submissions and job_submissions[0] <= cutoff:
@@ -88,14 +112,16 @@ def check_job_admission_unlocked(ip: str, now: float) -> None:
             headers={"Retry-After": "60"},
         )
 
-    for timestamps, limit, message in (
-        (job_submissions, JOB_RATE_GLOBAL, "Server job limit reached. Try again later."),
-        (
-            job_submissions_by_ip.get(ip, ()),
-            JOB_RATE_PER_IP,
-            "Your job limit is reached. Try again later.",
-        ),
-    ):
+    checks = [(job_submissions, JOB_RATE_GLOBAL, "Server job limit reached. Try again later.")]
+    if not trusted_gateway:
+        checks.append(
+            (
+                job_submissions_by_ip.get(ip, ()),
+                JOB_RATE_PER_IP,
+                "Your job limit is reached. Try again later.",
+            )
+        )
+    for timestamps, limit, message in checks:
         if len(timestamps) >= limit:
             retry_after = max(1, ceil(timestamps[0] + JOB_RATE_WINDOW_SECONDS - now))
             raise HTTPException(
@@ -587,7 +613,7 @@ def run_transcription_job(job_id: str, request_data: dict) -> None:
     )
 
 
-def submit_job(request_data: dict, ip: str) -> dict:
+def submit_job(request_data: dict, ip: str, trusted_gateway: bool = False) -> dict:
     """Validate, persist, and queue a new transcription request.
 
     Purpose:
@@ -595,6 +621,7 @@ def submit_job(request_data: dict, ip: str) -> dict:
     Args:
         request_data: Validated request fields represented as a dictionary.
         ip: Client address used for the per-IP admission limit.
+        trusted_gateway: Skip the per-IP limit for a gateway that presented a valid key.
     Returns:
         Job ID, initial status, and polling/transcript endpoint paths.
     Raises:
@@ -613,7 +640,7 @@ def submit_job(request_data: dict, ip: str) -> dict:
     job_id = str(uuid4())
     with jobs_lock:
         now = monotonic()
-        check_job_admission_unlocked(ip, now)
+        check_job_admission_unlocked(ip, now, trusted_gateway)
         jobs[job_id] = {
             "job_id": job_id,
             "status": "queued",
@@ -730,7 +757,7 @@ def create_transcription_job(request: TranscriptionRequest, http_request: Reques
     Connects to:
         Calls `submit_job`; polled later through `get_job`.
     """
-    return submit_job(request.model_dump(), client_ip(http_request))
+    return submit_job(request.model_dump(), client_ip(http_request), is_trusted_gateway(http_request))
 
 
 @app.get("/jobs")

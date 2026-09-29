@@ -12,3 +12,8 @@ services:
     envVars:
       - key: OPENROUTER_API_KEY
         sync: false
+      # Comma-separated secrets for gateways exempt from the per-IP job limit.
+      - key: GATEWAY_KEYS
+        sync: false
+      - key: JOB_RATE_GLOBAL
+        value: "60"

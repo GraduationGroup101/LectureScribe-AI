@@ -219,7 +219,15 @@ The public `POST /jobs` endpoint accepts at most 3 jobs per client IP and 12 job
 server-wide in a rolling hour, with at most 3 active or queued jobs. Excess
 requests receive HTTP 429 and a `Retry-After` header. Polling and transcript
 reads are not rate limited. These in-memory limits reset when the process restarts
-and assume the Dockerfile's single Uvicorn worker.
+and assume the Dockerfile's single Uvicorn worker. Override them with the
+`JOB_RATE_PER_IP`, `JOB_RATE_GLOBAL` and `JOB_MAX_ACTIVE` environment variables.
+
+A trusted gateway that submits jobs for many users from one address (for example
+the EduFusion backend) can be exempted from the per-IP limit only: set
+`GATEWAY_KEYS` to one or more comma-separated random secrets in Render and send
+one of them in the `X-Gateway-Key` header. The server-wide and queue limits still
+apply, so raise `JOB_RATE_GLOBAL` to match the expected gateway traffic and the
+OpenRouter budget. Requests without a valid key are ordinary public callers.
 The container disables local Faster-Whisper and Ollama fallbacks, so OpenRouter needs sufficient
 transcription and formatting credits. If cloud formatting fails, the raw transcript
 is returned; if cloud transcription fails, the job fails.
