@@ -232,6 +232,21 @@ The container disables local Faster-Whisper and Ollama fallbacks, so OpenRouter 
 transcription and formatting credits. If cloud formatting fails, the raw transcript
 is returned; if cloud transcription fails, the job fails.
 
+**YouTube blocks downloads from datacenter addresses** ("Sign in to confirm you're
+not a bot"), including Render. Give yt-dlp a way in through the environment:
+
+- `YTDLP_COOKIES_FILE`: path to a Netscape-format cookies export from a signed-in
+  (preferably throwaway) YouTube account. On Render, upload it as a **Secret File**
+  named `youtube-cookies.txt` and set the variable to `/etc/secrets/youtube-cookies.txt`.
+  See the yt-dlp wiki on exporting cookies; refresh the file when YouTube signs the
+  account out.
+- `YTDLP_PROXY`: a residential or trusted proxy URL (`http://user:pass@host:port`,
+  `socks5://host:port`).
+- `YTDLP_PLAYER_CLIENTS`: comma-separated player clients to try, e.g. `android,web_embedded`.
+
+Without one of these, cloud transcription of new videos fails with that error; cached
+transcripts are still served.
+
 Render Free spins down after 15 idle minutes. Its filesystem is ephemeral, so
 `jobs.json`, `transcript_cache.json`, and generated transcripts can disappear after
 a restart or redeploy. It is suitable for a short demonstration, not durable job

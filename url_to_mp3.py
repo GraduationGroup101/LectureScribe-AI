@@ -25,6 +25,42 @@ for _candidate in _FFMPEG_CANDIDATES:
 # runtime yt-dlp knows is offered here and it picks whichever is installed.
 JS_RUNTIMES = {"deno": {}, "node": {}, "bun": {}, "quickjs": {}}
 
+
+def youtube_access_opts(env: dict | None = None) -> dict:
+    """yt-dlp options that let a datacenter host reach YouTube.
+
+    Purpose:
+        YouTube answers cloud-provider addresses (Render, Oracle, ...) with
+        "Sign in to confirm you're not a bot". Operators can supply an exported
+        cookies file, a proxy, or alternative player clients through the
+        environment without changing code.
+    Args:
+        env: Mapping to read from; defaults to `os.environ`.
+    Returns:
+        Extra options merged into every `YoutubeDL` call. Empty when nothing is set.
+    Environment:
+        YTDLP_COOKIES_FILE: Netscape cookies file (for Render, a Secret File such
+            as /etc/secrets/youtube-cookies.txt). Ignored when the path is missing.
+        YTDLP_PROXY: Proxy URL such as http://user:pass@host:port or socks5://host:port.
+        YTDLP_PLAYER_CLIENTS: Comma-separated YouTube player clients, for example
+            "android,web_embedded", passed as extractor arguments.
+    """
+    values = os.environ if env is None else env
+    options: dict = {}
+    cookies = (values.get("YTDLP_COOKIES_FILE") or "").strip()
+    if cookies:
+        if Path(cookies).is_file():
+            options["cookiefile"] = cookies
+        else:
+            print(f"YTDLP_COOKIES_FILE is set but {cookies} does not exist; continuing without cookies.")
+    proxy = (values.get("YTDLP_PROXY") or "").strip()
+    if proxy:
+        options["proxy"] = proxy
+    clients = [client.strip() for client in (values.get("YTDLP_PLAYER_CLIENTS") or "").split(",") if client.strip()]
+    if clients:
+        options["extractor_args"] = {"youtube": {"player_client": clients}}
+    return options
+
 # --------------------------------------------------
 # 1) Check if URL is a YouTube link
 # --------------------------------------------------
@@ -251,11 +287,13 @@ def download_youtube_mp3(
     clean_url = force_single_video_url(youtube_url)
     print(f"Clean URL used:\n{clean_url}\n")
 
+    access_opts = youtube_access_opts()
     info_opts = {
         "quiet": True,
         "skip_download": True,
         "noplaylist": True,
         "js_runtimes": JS_RUNTIMES,
+        **access_opts,
     }
 
     with yt_dlp.YoutubeDL(info_opts) as ydl:
@@ -301,6 +339,7 @@ def download_youtube_mp3(
         "concurrent_fragment_downloads": 1,
         "no_warnings": False,
         "extract_flat": False,
+        **access_opts,
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
