@@ -17,3 +17,7 @@ services:
         sync: false
       - key: JOB_RATE_GLOBAL
         value: "60"
+      # YouTube blocks datacenter IPs; upload a cookies export as a Secret File
+      # named youtube-cookies.txt (or set YTDLP_PROXY) and keep this path.
+      - key: YTDLP_COOKIES_FILE
+        value: /etc/secrets/youtube-cookies.txt
