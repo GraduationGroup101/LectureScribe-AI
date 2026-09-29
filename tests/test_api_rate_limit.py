@@ -80,6 +80,37 @@ class RateLimitTests(TestCase):
             next(iter(api.jobs.values()))["status"] = "completed"
             self.assertEqual(self.submit("192.0.2.100").status_code, 202)
 
+    def test_trusted_gateway_skips_only_the_per_ip_limit(self):
+        with patch.dict(os.environ, {"RENDER": "true", "GATEWAY_KEYS": "edufusion-key, other-key"}), patch.object(
+            api, "JOB_MAX_ACTIVE", 100
+        ):
+            headers = {"CF-Connecting-IP": "192.0.2.50", "X-Gateway-Key": "edufusion-key"}
+            for _ in range(api.JOB_RATE_PER_IP + 2):
+                self.assertEqual(self.client.post("/jobs", json=BODY, headers=headers).status_code, 202)
+            # A wrong or missing key is an ordinary client from the same address.
+            for bad in ({"CF-Connecting-IP": "192.0.2.50", "X-Gateway-Key": "guess"}, {"CF-Connecting-IP": "192.0.2.50"}):
+                response = self.client.post("/jobs", json=BODY, headers=bad)
+                self.assertEqual(response.status_code, 429)
+                self.assertIn("Your job limit", response.json()["detail"])
+            remaining = api.JOB_RATE_GLOBAL - len(api.jobs)
+            for _ in range(remaining):
+                self.assertEqual(self.client.post("/jobs", json=BODY, headers=headers).status_code, 202)
+            response = self.client.post("/jobs", json=BODY, headers=headers)
+            self.assertEqual(response.status_code, 429)
+            self.assertIn("Server job limit", response.json()["detail"])
+
+    def test_gateway_key_is_ignored_when_none_is_configured(self):
+        with patch.dict(os.environ, {"GATEWAY_KEYS": ""}), patch.object(api, "JOB_MAX_ACTIVE", 100):
+            for _ in range(api.JOB_RATE_PER_IP):
+                self.assertEqual(self.client.post("/jobs", json=BODY, headers={"X-Gateway-Key": "anything"}).status_code, 202)
+            self.assertEqual(self.client.post("/jobs", json=BODY, headers={"X-Gateway-Key": "anything"}).status_code, 429)
+
+    def test_limits_are_configurable_from_the_environment(self):
+        with patch.dict(os.environ, {"JOB_RATE_GLOBAL": "40", "JOB_MAX_ACTIVE": "x", "JOB_RATE_PER_IP": "0"}):
+            self.assertEqual(api._limit_from_env("JOB_RATE_GLOBAL", 12), 40)
+            self.assertEqual(api._limit_from_env("JOB_MAX_ACTIVE", 3), 3)
+            self.assertEqual(api._limit_from_env("JOB_RATE_PER_IP", 3), 3)
+
     def test_window_expires_and_invalid_url_does_not_count(self):
         with patch.object(api, "JOB_MAX_ACTIVE", 100), patch.object(
             api, "monotonic", side_effect=[1000, 1000, 1000, 1001, 4600]
