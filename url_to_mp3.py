@@ -1,6 +1,9 @@
 import os
 import re
+import shutil
 import sys
+from contextlib import contextmanager
+from tempfile import TemporaryDirectory
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 from pathlib import Path
 import yt_dlp
@@ -60,6 +63,27 @@ def youtube_access_opts(env: dict | None = None) -> dict:
     if clients:
         options["extractor_args"] = {"youtube": {"player_client": clients}}
     return options
+
+
+@contextmanager
+def writable_youtube_access_opts(env: dict | None = None):
+    """Keep yt-dlp's cookie updates in a private, per-download temporary copy.
+
+    Render secret files are read-only, but YoutubeDL saves its cookie jar when
+    closing. Both metadata extraction and downloading share this writable copy;
+    it is removed on success, cache returns, and exceptions.
+    """
+    options = youtube_access_opts(env)
+    source = options.get("cookiefile")
+    if source is None:
+        yield options
+        return
+
+    with TemporaryDirectory(prefix="lecturescribe-ytdlp-") as directory:
+        cookies = Path(directory) / "cookies.txt"
+        shutil.copyfile(source, cookies)
+        cookies.chmod(0o600)
+        yield {**options, "cookiefile": str(cookies)}
 
 # --------------------------------------------------
 # 1) Check if URL is a YouTube link
@@ -287,7 +311,12 @@ def download_youtube_mp3(
     clean_url = force_single_video_url(youtube_url)
     print(f"Clean URL used:\n{clean_url}\n")
 
-    access_opts = youtube_access_opts()
+    with writable_youtube_access_opts() as access_opts:
+        return _download_youtube_mp3(clean_url, output_dir, skip_cache, return_metadata, access_opts)
+
+
+def _download_youtube_mp3(clean_url, output_dir, skip_cache, return_metadata, access_opts):
+    """Extract and download while the temporary cookie session remains open."""
     info_opts = {
         "quiet": True,
         "skip_download": True,

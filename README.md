@@ -238,6 +238,9 @@ not a bot"), including Render. Give yt-dlp a way in through the environment:
 - `YTDLP_COOKIES_FILE`: path to a Netscape-format cookies export from a signed-in
   (preferably throwaway) YouTube account. On Render, upload it as a **Secret File**
   named `youtube-cookies.txt` and set the variable to `/etc/secrets/youtube-cookies.txt`.
+  The downloader copies it into a private temporary directory because yt-dlp saves
+  cookie updates on exit. The same copy is used for metadata and audio extraction,
+  then deleted even if downloading fails; the uploaded secret is never modified.
   See the yt-dlp wiki on exporting cookies; refresh the file when YouTube signs the
   account out.
 - `YTDLP_PROXY`: a residential or trusted proxy URL (`http://user:pass@host:port`,
