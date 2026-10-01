@@ -215,22 +215,23 @@ The root `Dockerfile` installs FFmpeg, Node.js, and the cloud-only dependencies 
 `requirements-render.txt`. Create a Docker web service from this repository on the
 `main` branch, using the Free plan and `/health` as the health check. Set
 `OPENROUTER_API_KEY` as a secret in Render; do not upload `.env`.
-The public `POST /jobs` endpoint accepts at most 3 jobs per client IP and 12 jobs
-server-wide in a rolling hour, with at most 3 active or queued jobs. Excess
-requests receive HTTP 429 and a `Retry-After` header. Polling and transcript
-reads are not rate limited. These in-memory limits reset when the process restarts
-and assume the Dockerfile's single Uvicorn worker. Override them with the
-`JOB_RATE_PER_IP`, `JOB_RATE_GLOBAL` and `JOB_MAX_ACTIVE` environment variables.
+The public `POST /jobs` endpoint accepts at most 3 jobs per client IP an hour
+(`JOB_RATE_PER_IP`). Server-wide, 60 jobs an hour (`JOB_RATE_GLOBAL`) and 10
+active or queued jobs (`JOB_MAX_ACTIVE`) are accepted. Excess requests receive
+HTTP 429 and a `Retry-After` header. Polling and transcript reads are not rate
+limited. These in-memory limits reset when the process restarts and assume the
+Dockerfile's single Uvicorn worker.
 
-A trusted gateway that submits jobs for many users from one address (for example
-the EduFusion backend) can be exempted from the per-IP limit only: set
-`GATEWAY_KEYS` to one or more comma-separated random secrets in Render and send
-one of them in the `X-Gateway-Key` header. The server-wide and queue limits still
-apply, so raise `JOB_RATE_GLOBAL` to match the expected gateway traffic and the
-OpenRouter budget. Requests without a valid key are ordinary public callers.
-The container disables local Faster-Whisper and Ollama fallbacks, so OpenRouter needs sufficient
-transcription and formatting credits. If cloud formatting fails, the raw transcript
-is returned; if cloud transcription fails, the job fails.
+**Per-student limits for a gateway.** EduFusion submits for many students from
+one address, so it identifies itself with a shared secret and names the account:
+
+- Set `GATEWAY_KEYS` to one or more comma-separated random secrets in Render.
+- The gateway sends `X-Gateway-Key: <secret>` and `X-Gateway-User: <account>`
+  (letters, digits, `.`, `_`, `:`, `-`; up to 120 characters).
+- Each account then gets its own allowance of `JOB_RATE_PER_USER` jobs an hour
+  (default 6) instead of the address limit. The server-wide and queue limits
+  still apply. A gateway request without an account name shares one bucket of
+  the same size; the account header is ignored without a valid key.
 
 **YouTube blocks downloads from datacenter addresses** ("Sign in to confirm you're
 not a bot"), including Render. Give yt-dlp a way in through the environment:
