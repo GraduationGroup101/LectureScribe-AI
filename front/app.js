@@ -1,5 +1,6 @@
 const form = document.querySelector("#job-form");
 const urlInput = document.querySelector("#youtube-url");
+const languageInput = document.querySelector("#language");
 const submitButton = document.querySelector("#submit-button");
 const statusPanel = document.querySelector("#status-panel");
 const statusBand = document.querySelector("#status-band");
@@ -29,6 +30,7 @@ const decision = document.querySelector("#decision");
 const ask = document.querySelector(".ask");
 const queueNote = document.querySelector("#queue-note");
 const jobSourceEl = document.querySelector("#job-source");
+const jobLanguageEl = document.querySelector("#job-language");
 const processingDetails = document.querySelector("#processing-details");
 const resultTitle = document.querySelector("#result-title");
 const resultDuration = document.querySelector("#result-duration");
@@ -58,6 +60,16 @@ const STATUS_BANDS = {
   failed: "band-closed",
 };
 
+const LANGUAGE_NAMES = {
+  ar: "Arabic",
+  en: "English",
+};
+
+const POLL_INTERVAL_MS = 2500;
+const MAX_POLL_BACKOFF_MS = 30000;
+// One cold-start 502 must not end the job on screen; give up after this many in a row.
+const MAX_POLL_FAILURES = 5;
+
 const STATUS_WORDS = {
   queued: "Queued",
   running: "Running",
@@ -84,8 +96,8 @@ const notesByStage = {
     "The first run for a lecture is the slow one. The next request for it is not.",
   ],
   formatting: [
-    "The cleaner is punctuating and paragraphing the lecture, and translating it into English.",
-    "The text is cleaned in chunks, which is why this stop has its own count.",
+    "The lecture is being punctuated and split into paragraphs, in the language it was spoken.",
+    "Long lectures are formatted in parts, which is why this stop has its own count.",
     "Your transcript is being organized for easier reading.",
   ],
   saving: [
@@ -108,6 +120,7 @@ let lastRailSignature = "";
 let activeJobFinishedAt = null;
 let currentJob = null;
 let transcriptText = "";
+let pollFailures = 0;
 
 function selectedMode() {
   const value = new FormData(form).get("mode");
@@ -115,6 +128,24 @@ function selectedMode() {
     clean: value === "formatted",
     label: value === "formatted" ? "Better formatting" : "Fast output",
   };
+}
+
+function selectedLanguage() {
+  return languageInput.value || "auto";
+}
+
+function languageName(code) {
+  return LANGUAGE_NAMES[code] || String(code).toUpperCase();
+}
+
+function describeLanguage(job) {
+  const requested = job?.language || job?.request?.language;
+  const detected = job?.detected_language || job?.result?.detected_language;
+  if (!requested || requested === "auto") {
+    if (detected) return `${languageName(detected)} (detected)`;
+    return requested === "auto" ? "Detecting" : "\u2014";
+  }
+  return languageName(requested);
 }
 
 function show(element) {
@@ -175,15 +206,18 @@ function setDecisionMode(secondary) {
 }
 
 function lectureTitle(job) {
+  const title = job?.title || job?.result?.title;
+  if (title) return String(title);
+  // Older jobs only carry the title inside their transcript file name.
   const path = job?.result?.raw_transcript_path || job?.result?.cleaned_transcript_path;
-  if (path) {
-    const filename = path.split(/[\\/]/).pop();
-    const title = filename
+  const filename = path ? path.split(/[\\/]/).pop() : "";
+  if (/_transcript(?:_cleanedv\d+)?\.txt$/i.test(filename)) {
+    const legacy = filename
       .replace(/\.txt$/i, "")
       .replace(/(?:_english)?_transcript(?:_cleanedv\d+)?$/i, "")
       .replace(/^[A-Za-z0-9_-]{11}_/, "")
       .replace(/_/g, " ").trim();
-    if (title) return title;
+    if (legacy) return legacy;
   }
   return "Lecture transcript";
 }
@@ -207,7 +241,7 @@ function lectureUrl(url) {
 
 function setSource(url, job = null) {
   const link = lectureUrl(url);
-  jobSourceEl.textContent = job?.result ? lectureTitle(job) : "Watch lecture on YouTube";
+  jobSourceEl.textContent = job?.title || job?.result ? lectureTitle(job) : "Watch lecture on YouTube";
   for (const element of [jobSourceEl, resultSource]) {
     if (link) element.href = link;
     else element.removeAttribute("href");
@@ -221,25 +255,43 @@ function setSubmitDisabled(disabled) {
 }
 
 /* A cleaner that never ran is a fact the reader is owed, with the reason
-   named rather than buried in the job payload. */
-function describeCleanerFailure(raw) {
+   named rather than buried in the job payload. `outcome` says what is shown instead. */
+function describeCleanerFailure(raw, outcome = "This is the original transcript.") {
   if (!raw) {
     return "";
   }
   const text = String(raw).toLowerCase();
+  let reason = "Formatting was unavailable.";
   if (text.includes("401") || text.includes("unauthorized") || text.includes("expired")) {
-    return "Formatting is temporarily unavailable. This is the original transcript.";
+    reason = "Formatting is temporarily unavailable.";
+  } else if (text.includes("429") || text.includes("rate limit") || text.includes("quota")) {
+    reason = "Formatting is currently busy.";
+  } else if (text.includes("timeout") || text.includes("timed out")) {
+    reason = "Formatting took too long.";
+  } else if (text.includes("connection") || text.includes("refused") || text.includes("ollama")) {
+    reason = "Formatting could not be reached.";
   }
-  if (text.includes("429") || text.includes("rate limit") || text.includes("quota")) {
-    return "Formatting is currently busy. This is the original transcript.";
+  return `${reason} ${outcome}`;
+}
+
+/* "Better formatting" was asked for, but the service returned its automatic paragraph
+   layout (result mode "fast"): no model was usable, or the model stopped part-way. The
+   transcript file still exists, so its presence says nothing about formatting. */
+function formattingFellBack(job) {
+  return job?.request?.clean !== false
+    && (job?.result?.mode === "fast" || job?.result?.cleaner_provider === "formatter");
+}
+
+function formattingStoppedPartWay(job) {
+  return Boolean(job?.result?.cleaner_partial) && job?.result?.cleaner_provider !== "formatter";
+}
+
+function describeFormattingFallback(job) {
+  if (formattingStoppedPartWay(job)) {
+    return "AI formatting stopped part-way through, so the rest of the lecture was arranged into paragraphs automatically.";
   }
-  if (text.includes("timeout") || text.includes("timed out")) {
-    return "Formatting took too long. Your original transcript is still available.";
-  }
-  if (text.includes("connection") || text.includes("refused") || text.includes("ollama")) {
-    return "Formatting could not be reached. This is the original transcript.";
-  }
-  return "Formatting was unavailable. This is the original transcript.";
+  return describeCleanerFailure(job?.result?.cleaner_error, "The transcript was arranged into paragraphs automatically.")
+    || "AI formatting was unavailable, so the transcript was arranged into paragraphs automatically.";
 }
 
 function stageIndex(stage) {
@@ -259,6 +311,10 @@ function railStates(stage, status) {
       if (currentJob?.result?.used_cached_cleaned_transcript) {
         return { entry, state: "dropped", note: "not needed" };
       }
+      if (formattingFellBack(currentJob)) {
+        return { entry, state: "failed", note: formattingStoppedPartWay(currentJob) ? "partly done" : "unavailable" };
+      }
+      // Jobs from before every result carried a cleaned file.
       if (!currentJob?.result?.cleaned_transcript_path) {
         return currentJob?.result?.cleaner_error
           ? { entry, state: "failed", note: "unavailable" }
@@ -330,7 +386,7 @@ function rotateNote() {
 
 function resetTimers() {
   if (pollTimer) {
-    clearInterval(pollTimer);
+    clearTimeout(pollTimer);
   }
   if (clockTimer) {
     clearInterval(clockTimer);
@@ -355,8 +411,11 @@ async function requestJson(url, options) {
     data = null;
   }
   if (!response.ok) {
-    const detail = data?.detail || response.statusText;
-    const error = new Error(detail);
+    // Validation errors (422) carry a list of {msg} objects rather than a sentence.
+    const detail = Array.isArray(data?.detail)
+      ? data.detail.map((item) => item?.msg).filter(Boolean).join(" ")
+      : data?.detail;
+    const error = new Error(detail || response.statusText || `HTTP ${response.status}`);
     error.status = response.status;
     error.retryAfter = Number(response.headers.get("Retry-After"));
     throw error;
@@ -406,12 +465,12 @@ async function submitJob(event) {
   processingDetails.open = true;
   setDecisionMode(true);
   show(statusPanel);
-  transcriptOutput.textContent = "Waiting for the transcript.";
-  transcriptOutput.classList.add("sheet-empty");
+  setSheetMessage("Waiting for the transcript.");
   copyButton.disabled = true;
   downloadButton.disabled = true;
   resultNotice.textContent = "";
   jobModeEl.textContent = mode.label;
+  jobLanguageEl.textContent = selectedLanguage() === "auto" ? "Detecting" : languageName(selectedLanguage());
   jobCacheEl.textContent = "Checking";
   jobIdEl.textContent = "-";
   setSource(youtubeUrl);
@@ -436,7 +495,7 @@ async function submitJob(event) {
         clean: mode.clean,
         skip_audio_cache: false,
         use_cached_outputs: true,
-        language: "ar",
+        language: selectedLanguage(),
       }),
     });
 
@@ -464,38 +523,62 @@ async function submitJob(event) {
 }
 
 function startPolling() {
-  pollTimer = setInterval(() => pollJob(activeJobId), 2500);
+  pollFailures = 0;
   clockTimer = setInterval(updateLiveClock, 1000);
   noteTimer = setInterval(rotateNote, 6000);
   pollJob(activeJobId);
 }
 
+/* One poll at a time: the next one is scheduled only after this one settles,
+   and transient errors back off instead of ending the job on screen. */
+function schedulePoll(delay) {
+  clearTimeout(pollTimer);
+  pollTimer = setTimeout(() => pollJob(activeJobId), delay);
+}
+
 async function pollJob(jobId) {
-  if (!jobId) {
+  if (!jobId || jobId !== activeJobId) {
     return;
   }
 
   try {
     const job = await requestJson(`/jobs/${jobId}`);
+    if (jobId !== activeJobId) return;
+    pollFailures = 0;
     renderJob(job);
 
     if (job.status === "completed") {
       resetTimers();
       setSubmitDisabled(false);
       await loadTranscript(job);
+      return;
     }
 
     if (job.status === "failed") {
       resetTimers();
       setSubmitDisabled(false);
       setMessage(job.error || "The job stopped before it produced a transcript.", true);
+      return;
     }
+    schedulePoll(POLL_INTERVAL_MS);
   } catch (error) {
-    resetTimers();
-    setSubmitDisabled(false);
-    setStatus("failed");
-    setStageIcon("closed");
-    setMessage(`Lost contact with the server: ${error.message}`, true);
+    if (jobId !== activeJobId) return;
+    pollFailures += 1;
+    if (error.status === 404 || pollFailures >= MAX_POLL_FAILURES) {
+      resetTimers();
+      setSubmitDisabled(false);
+      setStatus("failed");
+      setStageIcon("closed");
+      setMessage(
+        error.status === 404
+          ? "The server no longer has this job, usually because it restarted. Start the lecture again; a saved transcript is reused when there is one."
+          : `Lost contact with the server: ${error.message}`,
+        true
+      );
+      return;
+    }
+    setMessage(`Reconnecting to the server (${error.message || "no response"}).`);
+    schedulePoll(Math.min(POLL_INTERVAL_MS * 2 ** pollFailures, MAX_POLL_BACKOFF_MS));
   }
 }
 
@@ -528,6 +611,7 @@ function renderJob(job) {
   jobIdEl.textContent = job.job_id;
   setSource(job.request?.youtube_url, job);
   jobModeEl.textContent = job.request?.clean === false ? "Fast output" : "Better formatting";
+  jobLanguageEl.textContent = describeLanguage(job);
   jobCacheEl.textContent = cacheHit ? "Reused" : status === "queued" || stage === "checking_cache"
     ? "Checking" : "New transcript";
   stepLabel.textContent = job.stage_label || "Working through the lecture";
@@ -557,13 +641,16 @@ function renderJob(job) {
   }
 
   if (status === "queued") {
-    setMessage("Waiting for the machine to free up.");
+    const ahead = Number(job.jobs_ahead || 0);
+    setMessage(ahead > 0
+      ? `${ahead} ${ahead === 1 ? "lecture is" : "lectures are"} ahead of yours.`
+      : "Waiting for the machine to free up.");
   } else if (status === "running") {
     setMessage("");
   } else if (status === "completed") {
-    const cleanerNote = job.result?.cleaned_transcript_path
-      ? ""
-      : describeCleanerFailure(job.result?.cleaner_error);
+    const cleanerNote = formattingFellBack(job)
+      ? describeFormattingFallback(job)
+      : job.result?.cleaned_transcript_path ? "" : describeCleanerFailure(job.result?.cleaner_error);
     const savedNote = cacheHit ? "A saved transcript was reused." : "Transcript saved.";
     setMessage(cleanerNote ? `${cleanerNote} ${savedNote}` : savedNote);
     resultNotice.textContent = cleanerNote;
@@ -592,29 +679,120 @@ function renderJob(job) {
   updateLiveClock();
 }
 
+/* The transcript is a small Markdown subset: # headings, blank-line paragraphs,
+   "- " bullets, "1. " items and **bold**. Each block takes its own direction
+   (dir="auto"), so Arabic paragraphs read right-to-left and English ones
+   left-to-right. Everything is built as DOM nodes; nothing is parsed as HTML. */
+const HEADING_LINE = /^(#{1,3})\s+(.+)$/;
+const BULLET_LINE = /^\s*[-*\u2022]\s+(.+)$/;
+const NUMBERED_LINE = /^\s*(\d+)[.)]\s+(.+)$/;
+
+function appendInline(element, text) {
+  text.split(/\*\*(.+?)\*\*/).forEach((part, index) => {
+    if (!part) return;
+    if (index % 2) {
+      const strong = document.createElement("strong");
+      strong.textContent = part;
+      element.append(strong);
+    } else {
+      element.append(document.createTextNode(part));
+    }
+  });
+}
+
+function textBlock(tag, text, ownDirection = true) {
+  const element = document.createElement(tag);
+  if (ownDirection) element.dir = "auto";
+  appendInline(element, text);
+  return element;
+}
+
+function renderBlock(block) {
+  const fragment = document.createDocumentFragment();
+  let paragraph = [];
+  let list = null;
+  const flushParagraph = () => {
+    if (paragraph.length) fragment.append(textBlock("p", paragraph.join("\n")));
+    paragraph = [];
+  };
+
+  for (const line of block.split("\n")) {
+    const heading = line.match(HEADING_LINE);
+    const bullet = line.match(BULLET_LINE);
+    const numbered = bullet ? null : line.match(NUMBERED_LINE);
+    if (heading) {
+      flushParagraph();
+      list = null;
+      fragment.append(textBlock(`h${heading[1].length + 1}`, heading[2]));
+    } else if (bullet || numbered) {
+      flushParagraph();
+      const tag = bullet ? "ul" : "ol";
+      if (!list || list.tagName.toLowerCase() !== tag) {
+        list = document.createElement(tag);
+        list.dir = "auto";
+        if (numbered) list.start = Number(numbered[1]);
+        fragment.append(list);
+      }
+      // Items follow the list's direction; a dir on each item would hide their
+      // text from the list's own dir="auto" detection and flip it to LTR.
+      list.append(textBlock("li", bullet ? bullet[1] : numbered[2], false));
+    } else {
+      list = null;
+      paragraph.push(line);
+    }
+  }
+  flushParagraph();
+  return fragment;
+}
+
+function renderTranscript(text, language) {
+  transcriptOutput.replaceChildren();
+  transcriptOutput.classList.remove("sheet-empty");
+  if (language) transcriptOutput.lang = language;
+  else transcriptOutput.removeAttribute("lang");
+  // Blank-line separators stay as text nodes, so the page text is the transcript itself.
+  for (const part of text.replace(/\r\n?/g, "\n").split(/(\n[ \t]*\n\s*)/)) {
+    if (!part) continue;
+    transcriptOutput.append(part.trim() ? renderBlock(part) : document.createTextNode(part));
+  }
+}
+
+function setSheetMessage(message) {
+  transcriptOutput.textContent = message;
+  transcriptOutput.removeAttribute("lang");
+  transcriptOutput.classList.add("sheet-empty");
+}
+
 async function loadTranscript(job) {
   const hasCleanedTranscript = Boolean(job.result?.cleaned_transcript_path);
   const kind = hasCleanedTranscript ? "cleaned" : "raw";
   show(resultPanel);
 
   resultTitle.textContent = lectureTitle(job);
-  resultSummary.textContent = hasCleanedTranscript ? "Formatted transcript" : "Original transcript";
+  // The cleaned file of a fallback is the automatic paragraph layout, so it is still the one shown.
+  resultSummary.textContent = formattingFellBack(job)
+    ? formattingStoppedPartWay(job)
+      ? "Partly formatted (AI formatting stopped part-way)"
+      : "Automatic paragraphs (AI formatting unavailable)"
+    : hasCleanedTranscript ? "Formatted transcript" : "Original transcript";
   resultDuration.textContent = cacheHit ? "Saved transcript reused" :
     `Processed in ${formatDuration((activeJobFinishedAt - activeJobStartedAt) / 1000)}`;
-  transcriptOutput.textContent = "Loading transcript...";
+  setSheetMessage("Loading transcript...");
   copyButton.disabled = true;
   downloadButton.disabled = true;
 
   try {
     const text = await requestText(`/jobs/${job.job_id}/transcript?kind=${kind}`);
     transcriptText = text;
-    transcriptOutput.textContent = text || "The transcript came back empty.";
-    transcriptOutput.classList.toggle("sheet-empty", !text);
+    if (text) {
+      renderTranscript(text, job.detected_language || job.result?.detected_language);
+    } else {
+      setSheetMessage("The transcript came back empty.");
+    }
     copyButton.disabled = !text;
     downloadButton.disabled = !text;
   } catch (error) {
-    transcriptOutput.textContent = `The transcript could not be read: ${error.message}`;
-    transcriptOutput.classList.add("sheet-empty");
+    setSheetMessage(`The transcript could not be read: ${error.message}`);
     copyButton.disabled = true;
     downloadButton.disabled = true;
     resultNotice.textContent = "Could not load the saved transcript. Reload the page to try again.";
@@ -646,6 +824,17 @@ async function loadJobFromQuery(jobId) {
       setMessage(job.error || "The job stopped before it produced a transcript.", true);
     }
   } catch (error) {
+    if (error.status !== 404) {
+      // A waking or redeploying server answers 502/503 for a moment: keep trying.
+      activeJobId = jobId;
+      setSubmitDisabled(true);
+      setMessage(`Reconnecting to the server (${error.message || "no response"}).`);
+      clockTimer = setInterval(updateLiveClock, 1000);
+      noteTimer = setInterval(rotateNote, 6000);
+      pollFailures = 1;
+      schedulePoll(POLL_INTERVAL_MS * 2);
+      return;
+    }
     setStatus("failed");
     setStageIcon("closed");
     stepLabel.textContent = "That job could not be opened";
@@ -657,10 +846,14 @@ function applyQueryParams() {
   const params = new URLSearchParams(window.location.search);
   const url = params.get("url");
   const mode = params.get("mode");
+  const language = params.get("language");
   const jobId = params.get("job_id");
 
   if (url) {
     urlInput.value = url;
+  }
+  if (language && [...languageInput.options].some((option) => option.value === language)) {
+    languageInput.value = language;
   }
   if (mode) {
     const input = document.querySelector(`input[name="mode"][value="${mode}"]`);

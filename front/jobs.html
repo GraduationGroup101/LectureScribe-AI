@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark">
-    <meta name="description" content="Every lecture this server has processed, with its stage, mode, and result.">
+    <meta name="description" content="Lectures submitted on this site, with their stage, mode, language, and result.">
     <title>History — LectureScribe</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&family=Fira+Mono:wght@400;500;700&family=Noto+Naskh+Arabic:wght@400;500;600&display=swap">
-    <link rel="stylesheet" href="/front/styles.css?v=rate-1">
+    <link rel="stylesheet" href="/front/styles.css?v=lang-2">
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to the list</a>
@@ -49,7 +49,7 @@
           <div class="band-message">
             <span class="tile"><svg class="pict"><use href="#i-history"></use></svg></span>
             <div class="band-text">
-              <p class="band-headline">Every lecture this server has run</p>
+              <p class="band-headline">Lectures submitted on this site</p>
             </div>
           </div>
           <div class="band-figure">
@@ -62,8 +62,8 @@
       <div class="filters">
         <div class="corridor">
           <div>
-            <label class="sr-only" for="job-search">Search by lecture URL or job ID</label>
-            <input id="job-search" type="search" placeholder="Search by lecture URL or job ID">
+            <label class="sr-only" for="job-search">Search by title, lecture URL or job ID</label>
+            <input id="job-search" type="search" placeholder="Search by title, lecture URL or job ID">
           </div>
           <div>
             <label class="sr-only" for="status-filter">Filter by state</label>
@@ -88,6 +88,6 @@
       </div>
     </main>
 
-    <script src="/front/jobs.js?v=rate-1"></script>
+    <script src="/front/jobs.js?v=lang-2"></script>
   </body>
 </html>
