@@ -515,12 +515,17 @@ def get_job_or_404(job_id: str) -> dict:
 
 PIPELINE_ERROR_HINTS = (
     (
+        ("read-only file system",),
+        "The server could not write its download session files. "
+        "Check the writable temporary directory and retry.",
+    ),
+    (
         ("http error 403", "unable to download video data", "unable to extract", "nsig extraction failed"),
         "YouTube refused the download. This is almost always a stale extractor: "
         "run `pip install -U yt-dlp` and restart the server.",
     ),
     (
-        ("sign in to confirm", "confirm you're not a bot", "cookies"),
+        ("sign in to confirm", "confirm you're not a bot"),
         "YouTube asked this server to prove it is not a bot. Pass browser cookies to yt-dlp, "
         "or try again from a different network.",
     ),
@@ -607,12 +612,18 @@ def run_transcription_job(job_id: str, request_data: dict) -> None:
         )
     except Exception as exc:
         message = describe_pipeline_error(exc)
+        last_progress = get_job_or_404(job_id)
+        failed_progress = build_progress_update("failed", request_data, {"detail": message})
+        failed_progress.update(
+            progress_percent=last_progress.get("progress_percent", 0),
+            current_step=last_progress.get("current_step", 0),
+        )
         update_job(
             job_id,
             status="failed",
             error=message,
             finished_at=time(),
-            **build_progress_update("failed", request_data, {"detail": message}),
+            **failed_progress,
         )
         return
 
