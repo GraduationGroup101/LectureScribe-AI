@@ -245,7 +245,7 @@ def force_single_video_url(url: str) -> str:
     ))
 
 
-def sanitize_filename(name: str, max_length: int = 150) -> str:
+def sanitize_filename(name: str, max_length: int = 150, max_bytes: int = 120) -> str:
     """Convert a video title into a Windows-safe filename component.
 
     Purpose:
@@ -253,13 +253,16 @@ def sanitize_filename(name: str, max_length: int = 150) -> str:
     Args:
         name: Original video title or filename component.
         max_length: Maximum number of characters to retain.
+        max_bytes: Maximum UTF-8 bytes to retain; Arabic letters take two bytes and
+            emoji four, and Linux file names are limited to 255 bytes.
     Returns:
         A cleaned non-empty filename component.
     Workflow:
         Replaces forbidden characters, normalizes whitespace, trims trailing dots and
-        spaces, limits length, and falls back to `lecture`.
+        spaces, limits length by characters and bytes, and falls back to `lecture`.
     Connects to:
-        Called by `download_youtube_mp3` before output paths are created.
+        Available to callers that need a readable name; downloads are named by video
+        ID only.
     """
     name = name.strip()
     name = re.sub(r"[<>:\"/\\|?*\n\r\t]+", "_", name)
@@ -267,6 +270,8 @@ def sanitize_filename(name: str, max_length: int = 150) -> str:
     name = name.strip(" .")
     if len(name) > max_length:
         name = name[:max_length].rstrip(" .")
+    if len(name.encode("utf-8")) > max_bytes:
+        name = name.encode("utf-8")[:max_bytes].decode("utf-8", errors="ignore").rstrip(" .")
     return name or "lecture"
 
 
@@ -327,7 +332,6 @@ def _download_youtube_mp3(clean_url, output_dir, skip_cache, return_metadata, ac
 
     with yt_dlp.YoutubeDL(info_opts) as ydl:
         info = ydl.extract_info(clean_url, download=False)
-        title = sanitize_filename(info.get("title", "lecture"))
         video_id = info.get("id") or extract_youtube_video_id(clean_url)
         metadata = {
             "video_id": video_id,
@@ -337,7 +341,9 @@ def _download_youtube_mp3(clean_url, output_dir, skip_cache, return_metadata, ac
             "webpage_url": info.get("webpage_url") or clean_url,
         }
 
-    filename_base = f"{video_id}_{title}" if video_id else title
+    # Named by video ID only: long Arabic or emoji titles can exceed the 255-byte
+    # file-name limit. The title travels in `metadata` instead.
+    filename_base = video_id or sanitize_filename(info.get("title") or "lecture")
     expected_mp3 = output_dir / f"{filename_base}.mp3"
 
     if expected_mp3.exists() and not skip_cache:

@@ -1,8 +1,28 @@
+from functools import partial
 from pathlib import Path
 import os
-import requests
 import re
+import time
 from typing import Any, Callable
+
+import requests
+
+from transcript_format import (
+    ARABIC_SCRIPT_LANGUAGES,
+    CODE_SWITCHED_ARABIC_RATIO,
+    MIN_DETECTION_LETTERS,
+    arabic_letter_count,
+    arabic_ratio,
+    collapse_loops,
+    comparable_words,
+    detect_text_language,
+    format_transcript,
+    language_name,
+    letter_count,
+    normalize_language,
+    repair_mojibake,
+    split_sentences,
+)
 
 # =========================
 # SETTINGS
@@ -15,67 +35,163 @@ OPENROUTER_MODEL = "openai/gpt-oss-120b"
 # split text into chunks of roughly this many characters
 CHUNK_CHARS = 3500
 CLOUD_CHUNK_CHARS = 3000
+# Arabic needs about twice the tokens per character of English on Llama 3.1, so the
+# local model gets smaller Arabic chunks to keep the whole answer inside num_predict.
+OLLAMA_ARABIC_CHUNK_CHARS = 2000
 OPENROUTER_TIMEOUT_SECONDS = 300
 OPENROUTER_MAX_TOKENS = 8192
+# Reasoning tokens count against max_tokens on gpt-oss; copy-editing needs little.
+OPENROUTER_REASONING_EFFORT = "low"
+OLLAMA_NUM_PREDICT = 4096
+OLLAMA_NUM_CTX = 8192
 
-ARABIC_CHAR_RE = re.compile(r"[\u0600-\u06ff]")
+# HTTP retries for one generation call (seconds slept between attempts).
+CLEANER_RETRY_DELAYS = (2, 6)
+MAX_RETRY_AFTER_SECONDS = 30
+TRANSIENT_HTTP_STATUSES = frozenset({408, 409, 425, 429, 500, 502, 503, 504})
+# The provider is unusable for every chunk (bad key, no credit, unknown model).
+FATAL_HTTP_STATUSES = frozenset({401, 402, 403, 404})
+# After this many chunks in a row whose generation failed, stop calling the provider.
+MAX_CONSECUTIVE_CHUNK_FAILURES = 3
+
+ARABIC_CHAR_RE = re.compile(r"[؀-ۿ]")
+
+
+class CleanerUnavailable(RuntimeError):
+    """Signal that a cleaning provider cannot be used for this transcript at all.
+
+    Purpose:
+        Distinguish "this provider is down or misconfigured" (stop calling it) from a
+        single failed chunk (retry once, then format that chunk deterministically).
+    Workflow:
+        Raised for missing credentials, rejected authentication or payment, an unknown
+        model, an unreachable local server, or a provider that produced no usable chunk.
+    Connects to:
+        Raised by the generators and `clean_transcript_with_generator`; handled by the
+        preferred-model pipeline, which then tries the next provider or the formatter.
+    """
+
+
+class CloudCleanerUnavailable(CleanerUnavailable):
+    """The remote OpenRouter cleaner cannot be used for this transcript."""
+
+
+class ChunkCleaningError(RuntimeError):
+    """One generation call failed (timeout, server error, truncated or empty answer).
+
+    Args:
+        retryable: Whether asking again with a stricter prompt can help (truncated or
+            empty answers); exhausted network retries are not retried again.
+    """
+
+    def __init__(self, message: str, *, retryable: bool = True) -> None:
+        super().__init__(message)
+        self.retryable = retryable
+
 
 # =========================
-# PROMPT
+# PROMPTS
 # =========================
-SYSTEM_RULES = """You are a copy-editor for ASR lecture transcripts. You are NOT a summarizer and NOT a note-taker.
+def build_system_rules(language: str | None = None) -> str:
+    """Build the copy-editor system prompt for one lecture language.
+
+    Purpose:
+        Lock the cleaner to the language the lecture was spoken in. The cleaner must
+        never translate or transliterate; Arabic stays Arabic and English technical
+        terms said in English stay in Latin script.
+    Args:
+        language: Lecture language code ('ar', 'en', ...) or None when unknown.
+    Returns:
+        The system prompt sent with every chunk of that lecture.
+    Connects to:
+        Bound into `openrouter_generate` and `ollama_generate` by the file-level
+        cleaner entry points.
+    """
+    name = language_name(language)
+    if name:
+        language_rule = (
+            f"- The lecture's main language is {name}. Sentences spoken in {name} stay in {name}, "
+            f"and headings are written in {name}."
+        )
+    else:
+        language_rule = (
+            "- Write every sentence in the language and script it was spoken in, and write headings "
+            "in the lecture's main language."
+        )
+    return f"""You are a copy-editor for ASR lecture transcripts. You are NOT a translator, NOT a summarizer and NOT a note-taker.
 
 Your job is to return the SAME lecture, sentence for sentence, only readable.
+
+Language rules (most important):
+- Keep every sentence in the language it was spoken. Never translate, in either direction, and never transliterate.
+- Arabic speech stays Arabic, written in Arabic script, with dialect words kept as spoken.
+- Technical terms, code, names, and formulas the lecturer said in English stay in English, in Latin script, inline in the sentence.
+{language_rule}
 
 Absolute rules:
 - Reproduce the transcript in FULL. Every sentence in the input must survive into the output.
 - Never summarize, condense, compress, paraphrase into notes, or "tighten" the wording.
 - Never drop recaps, repetitions the lecturer makes on purpose, asides, examples, digressions, or sentences that merely restate an earlier point. The lecturer said them; they stay.
 - Never turn running speech into bullet points. Prose stays prose.
-- Your output must be AT LEAST as long as the input. If it is shorter, you have failed.
-- Output English only. Translate Arabic or mixed Arabic-English into English sentence by sentence, keeping the same number of sentences.
 
 The only edits you may make:
-- Punctuation, capitalization, and sentence boundaries.
-- Delete pure ASR noise: stutters, immediately repeated words or phrases, and filler ("uh", "yaani", "you know").
+- Punctuation and sentence boundaries (use the Arabic marks ، ؛ ؟ in Arabic sentences), and capitalization of Latin-script words.
+- Delete pure ASR noise: stutters, immediately repeated words or phrases, and filler sounds such as "آه", "إمم", "uh", "um" ("يعني" only where it is pure filler).
 - Repair broken encoding artifacts such as "â€™", "â€“", "â€œ".
-- Split the text into paragraphs at natural topic shifts.
-- Insert a short Markdown heading (##) where the lecturer clearly moves to a new topic. A heading is a signpost placed ABOVE the full prose, never a replacement for it.
-- Use a bullet list ONLY where the lecturer is literally enumerating items out loud, and keep the surrounding explanation as prose.
+- Split the text into paragraphs at natural topic shifts, separated by a blank line.
+- Insert a short "## " heading where the lecturer clearly moves to a new topic. A heading is a signpost placed ABOVE the full prose, never a replacement for it. Do not start your answer with a heading unless a new topic begins there.
+- Use "- " bullets or "1. " numbered items ONLY where the lecturer is literally enumerating items out loud, one item per line, and keep the surrounding explanation as prose.
 - Keep every number, symbol, equation, name, and technical term exactly as spoken.
 - Never guess what a garbled term "really" was. If the recognizer produced
   something odd like "GFS" or "EFAS", leave it exactly as it is. A reader can
   decode a mishearing; a confident wrong symbol silently corrupts the lecture.
 
-Do not add information, do not add commentary, do not mention these instructions.
-Return only the edited transcript.
+Output format: only these Markdown elements are allowed: "## " headings, paragraphs separated by blank lines, "- " bullets, "1. " numbered items, and **bold**. No tables, code blocks, horizontal rules, or other Markdown.
+
+Do not add information or commentary, do not mention these instructions, and do not add a preamble such as "Here is the transcript". Return only the edited transcript.
 """
 
 
-def make_user_prompt(text: str) -> str:
+# Language-neutral rules, kept for callers that use the module constant directly.
+SYSTEM_RULES = build_system_rules(None)
+
+
+def make_language_hint(language: str | None) -> str:
+    """Describe the lecture language at the top of each user prompt."""
+    name = language_name(language)
+    if name:
+        return (
+            f"Lecture language: {name} ({normalize_language(language)}). Keep the text in {name}; "
+            "words the lecturer said in another language stay exactly as spoken. Do not translate."
+        )
+    return "Lecture language: not specified. Keep every sentence in the language it is written in. Do not translate."
+
+
+def make_user_prompt(text: str, language: str | None = None) -> str:
     """Wrap one transcript chunk in the model's user prompt.
 
     Purpose:
         Give OpenRouter or Ollama a consistent instruction around each transcript chunk.
     Args:
         text: Transcript content to clean.
+        language: Lecture language code used as a hint, or None when unknown.
     Returns:
-        A complete user prompt containing the transcript.
-    Workflow:
-        Prefixes the provided text with a short cleaning instruction.
+        A complete user prompt containing the language hint and the transcript.
     Connects to:
         Called by `clean_transcript_with_generator` before invoking a model generator.
     """
     word_count = len(text.split())
-    return f"""Copy-edit this transcript chunk so it reads well. Do NOT take notes on it.
+    return f"""{make_language_hint(language)}
 
-This chunk contains about {word_count} words. Your output must contain at least
-that many words. Returning fewer means you summarized, which is a failure.
+Copy-edit this transcript chunk so it reads well. Do NOT take notes on it.
 
-Keep every sentence the lecturer said, in the same order, including recaps,
-restatements, examples, and asides. Keep prose as prose; do not convert
-explanation into bullet points. Only fix punctuation, capitalization, paragraph
-breaks, ASR stutters, filler words, and broken encoding such as "â€™" or "â€œ".
+This chunk contains about {word_count} words. Your output must contain about the
+same number of words. Returning far fewer means you summarized, which is a failure.
+
+Keep every sentence the lecturer said, in the same order and the same language,
+including recaps, restatements, examples, and asides. Keep prose as prose; do not
+convert explanation into bullet points. Only fix punctuation, paragraph breaks, ASR
+stutters, filler sounds, and broken encoding such as "â€™" or "â€œ".
 Add a "## " heading only where a clearly new topic begins, above the full text.
 Keep every number, equation, name, and technical term exactly as spoken. Do not
 guess at garbled terms: leave an odd token such as "GFS" or "EFAS" untouched
@@ -86,104 +202,185 @@ Transcript chunk:
 """
 
 
-def make_expansion_prompt(original: str, shortened: str) -> str:
-    """Ask the model to restore content it dropped while cleaning a chunk.
-
-    Purpose:
-        Recover from a summarizing pass without discarding the formatting already done.
-    Args:
-        original: The raw transcript chunk that was sent for cleaning.
-        shortened: The model output that came back too short.
-    Returns:
-        A prompt instructing the model to reinstate every missing sentence.
-    Workflow:
-        Shows the model both texts and demands a full-length replacement.
-    Connects to:
-        Called by `clean_transcript_with_generator` when the coverage guard trips.
-    """
-    return f"""Your previous output dropped part of the lecture. That is not allowed.
-
-Below are the ORIGINAL transcript chunk and your SHORTENED version. Rewrite the
-edited version so that every sentence from the original is present again, in the
-original order, with the same copy-editing (punctuation, paragraphs, headings).
-Do not summarize. Do not use bullet points for running explanation. The result
-must be at least as long as the original.
-
-ORIGINAL:
-{original}
-
-YOUR SHORTENED VERSION:
-{shortened}
-
-Return only the corrected full-length text.
-"""
+RETRY_CORRECTIONS = {
+    "translated": (
+        "Your previous answer changed the language of the lecture. That is not allowed. "
+        "Keep every sentence in the language and script it is written in below: Arabic stays "
+        "Arabic in Arabic script, English stays English. Never translate."
+    ),
+    "too_short": (
+        "Your previous answer dropped part of the lecture. That is not allowed. Every sentence "
+        "below must appear in your answer, in the original order."
+    ),
+    "too_long": (
+        "Your previous answer added text that is not in the lecture. Do not add explanations, "
+        "examples, or commentary; only copy-edit what is below."
+    ),
+    "failed": (
+        "Your previous answer was cut off or empty. Return the complete edited chunk and nothing else."
+    ),
+}
 
 
-# A faithful copy-edit runs slightly longer than its source once punctuation and
-# paragraphing land; anything under this has dropped what the lecturer said.
+def make_retry_prompt(text: str, language: str | None, reason: str | None) -> str:
+    """Build the stricter second-attempt prompt for a rejected chunk."""
+    correction = RETRY_CORRECTIONS.get(reason or "failed", RETRY_CORRECTIONS["failed"])
+    return f"{correction}\n\n{make_user_prompt(text, language)}"
+
+
+# =========================
+# GUARDS
+# =========================
+# A faithful copy-edit keeps roughly the source word count; under the lower bound the
+# model dropped speech, over the upper bound it invented text.
 MIN_COVERAGE_RATIO = 0.85
+MAX_COVERAGE_RATIO = 1.6
+MIN_COVERAGE_WORDS = 10
+# Output Arabic share below this fraction of the input share means it was translated.
+SCRIPT_KEEP_FACTOR = 0.6
+
+MARKDOWN_SCAFFOLD_RE = re.compile(r"(?m)^\s{0,3}(#{1,6}\s+|[-*+]\s+|\d+\.\s+|>\s+)|[*_`|]+")
+HEADING_LINE_RE = re.compile(r"^\s{0,3}#{1,6}\s")
+# Fillers the cleaner may delete; they do not count as source words, so a heavily
+# dialectal Arabic chunk is not rejected for losing them.
+FILLER_WORDS = frozenset({"آه", "اه", "أه", "إمم", "امم", "يعني", "يعنى", "um", "uh", "uhm", "umm", "erm", "hmm"})
+_WORD_EDGE_PUNCTUATION = "\"'.,;:!?()[]{}«»…،؛؟-"
+
+
+def count_source_words(text: str) -> int:
+    """Count source words, ignoring pure filler sounds the cleaner is allowed to delete."""
+    return sum(1 for word in text.split() if word.strip(_WORD_EDGE_PUNCTUATION).lower() not in FILLER_WORDS)
+
+
+def count_body_words(text: str) -> int:
+    """Count output words, excluding heading lines and Markdown markers."""
+    body = "\n".join(line for line in text.splitlines() if not HEADING_LINE_RE.match(line))
+    return len(MARKDOWN_SCAFFOLD_RE.sub(" ", body).split())
 
 
 def coverage_ratio(source: str, cleaned: str) -> float:
     """Report how much of a source chunk survived into the cleaned text.
 
     Purpose:
-        Detect a summarizing cleaner mechanically instead of trusting the prompt.
-    Args:
-        source: The transcript chunk that was sent to the model.
-        cleaned: The model's returned text.
+        Detect a summarizing (or inventing) cleaner mechanically instead of trusting
+        the prompt.
     Returns:
-        Cleaned word count divided by source word count; 1.0 when the source is empty.
+        Cleaned body words divided by source words; 1.0 when the source is empty.
     Workflow:
-        Strips Markdown scaffolding from the cleaned text so headings and bullet
-        markers cannot inflate the count, then compares plain word totals.
-    Connects to:
-        Called by `clean_transcript_with_generator` to gate each chunk.
+        Headings and Markdown markers do not count, so invented headings cannot hide
+        dropped speech; filler sounds do not count on the source side.
     """
-    source_words = len(source.split())
+    source_words = count_source_words(source)
     if not source_words:
         return 1.0
-    body = MARKDOWN_SCAFFOLD_RE.sub(" ", cleaned)
-    return len(body.split()) / source_words
+    return count_body_words(cleaned) / source_words
 
 
-MARKDOWN_SCAFFOLD_RE = re.compile(r"(?m)^\s{0,3}(#{1,6}\s+|[-*+]\s+|\d+\.\s+|>\s+)|[*_`|]+")
+def validate_chunk(source: str, output: str, language: str | None = None) -> str | None:
+    """Check one cleaned chunk and return why it is unusable, or None when it is fine.
+
+    Args:
+        source: The chunk sent to the model.
+        output: The model's cleaned chunk.
+        language: Lecture language code, when known.
+    Returns:
+        'failed' for an empty answer, 'translated' when the script changed (Arabic
+        source answered mostly in Latin script, or the reverse), 'too_short' or
+        'too_long' when the word count left the 0.85-1.6 coverage band.
+    Workflow:
+        The Arabic guard covers code-switched chunks too: an Arabic programming
+        lecture read out with code can have only 10-30% Arabic letters, and its
+        English rendering must still be rejected. For an Arabic-script lecture the
+        Arabic letters themselves must also survive.
+    """
+    if not output.strip():
+        return "failed"
+    if letter_count(source) >= MIN_DETECTION_LETTERS:
+        source_ratio = arabic_ratio(source)
+        output_ratio = arabic_ratio(output)
+        source_arabic = arabic_letter_count(source)
+        if source_arabic >= MIN_DETECTION_LETTERS:
+            if source_ratio >= CODE_SWITCHED_ARABIC_RATIO and output_ratio < SCRIPT_KEEP_FACTOR * source_ratio:
+                return "translated"
+            if (normalize_language(language) in ARABIC_SCRIPT_LANGUAGES
+                    and arabic_letter_count(output) < SCRIPT_KEEP_FACTOR * source_arabic):
+                return "translated"
+        if source_ratio < 0.15 and output_ratio >= source_ratio + 0.3:
+            return "translated"
+    if count_source_words(source) >= MIN_COVERAGE_WORDS:
+        ratio = coverage_ratio(source, output)
+        if ratio < MIN_COVERAGE_RATIO:
+            return "too_short"
+        if ratio > MAX_COVERAGE_RATIO:
+            return "too_long"
+    return None
+
+
+_CODE_FENCE_RE = re.compile(r"^```[^\n]*\n(.*?)\n?```\s*$", re.DOTALL)
+_PREAMBLE_RES = (
+    re.compile(
+        r"^\s*(?:\*\*)?(?:here(?:'s| is| are)|below is|below are)\b[^\n]{0,80}?"
+        r"\b(?:transcript|text|chunk|version)\b[^\n]{0,40}?:(?:\*\*)?(?:\s*\n|\s+|$)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"^\s*(?:\*\*)?(?:cleaned|edited|corrected|copy-edited|formatted|revised)\s+"
+        r"(?:transcript|text|chunk)(?:\*\*)?\s*:?\s*(?:\*\*)?\s*\n",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"^\s*(?:\*\*)?(?:إليك|اليك|إليكم|اليكم|فيما يلي|هذا هو|هذه هي)\b[^\n]{0,80}?"
+        # Whole words only: "النصيحة", "النصف" and "النصوص" are lecture words.
+        r"(?:النص|التفريغ|النسخة)(?![ء-ي])[^\n]{0,40}?:(?:\*\*)?(?:\s*\n|\s+|$)"
+    ),
+)
+
+
+def _spoken_in_source(preamble: str, source: str | None) -> bool:
+    """Whether a would-be preamble is lecture speech, i.e. its words are in the source chunk."""
+    if not source:
+        return False
+    filler = set(comparable_words(" ".join(FILLER_WORDS)))
+    words = [word for word in comparable_words(preamble) if word not in filler]
+    if not words:
+        return False
+    spoken = [word for word in comparable_words(source) if word not in filler]
+    return f" {' '.join(words)} " in f" {' '.join(spoken)} "
+
+
+def strip_model_wrapping(text: str, source: str | None = None) -> str:
+    """Remove a code fence or a preamble line such as "Here is the cleaned transcript:".
+
+    Args:
+        text: The model's answer.
+        source: The chunk the model was given. A matching opening that is also in
+            the source ("Here is the second version of the algorithm: ...", "هذا هو
+            النص الكامل للمسألة: ...") is the lecturer speaking, so it is kept.
+    Returns:
+        The answer without its wrapping. Only lines that talk about the transcript
+        itself are removed, so lecture speech that happens to end with a colon is kept.
+    """
+    text = (text or "").strip()
+    fenced = _CODE_FENCE_RE.match(text)
+    if fenced:
+        text = fenced.group(1).strip()
+    for pattern in _PREAMBLE_RES:
+        match = pattern.match(text)
+        if match:
+            if not _spoken_in_source(match.group(0), source):
+                text = text[match.end():].lstrip()
+            break
+    return text.strip()
 
 
 def has_arabic_script(text: str) -> bool:
-    """Return whether text still contains Arabic-script characters."""
+    """Return whether text contains Arabic-script characters."""
     return bool(ARABIC_CHAR_RE.search(text))
 
 
-def make_english_repair_prompt(text: str) -> str:
-    """Build a strict repair prompt for outputs that still contain Arabic text."""
-    return f"""The text below still contains Arabic or mixed-language content.
-Translate it into English only while preserving every detail, fact, example, number, and technical term.
-Do not summarize, shorten, add new information, or change the formatting style.
-Repair broken encoding artifacts and keep each bullet on its own line.
-
-Text:
-{text}
-"""
-
-
-class CloudCleanerUnavailable(RuntimeError):
-    """Signal that the remote cloud cleaner cannot provide a usable result.
-
-    Purpose:
-        Distinguish recoverable cloud-cleaner failures from general pipeline errors.
-    Args:
-        Inherits the standard exception message arguments from `RuntimeError`.
-    Returns:
-        Not applicable; this class represents an exception.
-    Workflow:
-        Raised for missing credentials, request failures, or empty cloud responses.
-    Connects to:
-        Raised by `openrouter_generate` and handled by the preferred-model pipeline.
-    """
-    pass
-
-
+# =========================
+# CHUNKING AND LAYOUT
+# =========================
 def split_long_text(text: str, max_chars: int):
     """Split oversized text into chunks without breaking individual words.
 
@@ -219,75 +416,64 @@ def split_long_text(text: str, max_chars: int):
     return chunks
 
 
-def split_sentences(text: str):
-    """Divide text into sentence-like units using Arabic and English punctuation.
-
-    Purpose:
-        Preserve natural boundaries when preparing transcript model chunks.
-    Args:
-        text: Transcript paragraph to split.
-    Returns:
-        A list of non-empty sentence-like strings.
-    Workflow:
-        Normalizes whitespace and splits after `.`, `!`, `?`, or Arabic question marks.
-    Connects to:
-        Called by `split_text`.
-    """
-    text = re.sub(r"\s+", " ", text).strip()
-    if not text:
-        return []
-
-    parts = re.split(r"(?<=[\.\!\?\u061f])\s+", text)
-    return [part.strip() for part in parts if part.strip()]
+def _pack(units: list[str], max_chars: int, separator: str) -> list[str]:
+    """Greedily join units with `separator` into pieces of at most `max_chars`."""
+    pieces = []
+    buf = ""
+    for unit in units:
+        if len(unit) > max_chars:
+            if buf:
+                pieces.append(buf)
+                buf = ""
+            pieces.extend(split_long_text(unit, max_chars))
+            continue
+        if not buf:
+            buf = unit
+        elif len(buf) + len(separator) + len(unit) <= max_chars:
+            buf = f"{buf}{separator}{unit}"
+        else:
+            pieces.append(buf)
+            buf = unit
+    if buf:
+        pieces.append(buf)
+    return pieces
 
 
 def split_text(text: str, max_chars: int):
-    """Build size-limited chunks while preserving paragraph and sentence order.
+    """Build size-limited chunks made of whole paragraphs.
 
     Purpose:
-        Prepare transcript requests that fit model context and output limits.
+        Prepare transcript requests that fit model context and output limits without
+        cutting through sentences or paragraphs.
     Args:
-        text: Complete transcript text.
+        text: Complete transcript text, paragraphs separated by blank lines.
         max_chars: Preferred maximum characters per generated chunk.
     Returns:
-        Ordered transcript chunks.
+        Ordered transcript chunks; paragraphs inside a chunk keep their blank lines.
     Workflow:
-        Splits paragraphs, then sentences, combines units while under the limit, and
-        delegates oversized units to `split_long_text`.
+        Packs whole paragraphs; a paragraph larger than one chunk is split into
+        sentences (Arabic-aware), and a sentence larger than one chunk by words.
     Connects to:
         Calls `split_sentences` and `split_long_text`; used by the shared cleaner.
     """
-    parts = re.split(r"\n{2,}", text.strip())
-    chunks = []
-    buf = ""
-
-    for p in parts:
-        p = p.strip()
-        if not p:
+    paragraphs = [part.strip() for part in re.split(r"\n\s*\n", (text or "").strip()) if part.strip()]
+    chunks: list[str] = []
+    buf: list[str] = []
+    size = 0
+    for paragraph in paragraphs:
+        if len(paragraph) > max_chars:
+            if buf:
+                chunks.append("\n\n".join(buf))
+                buf, size = [], 0
+            chunks.extend(_pack(split_sentences(paragraph) or [paragraph], max_chars, " "))
             continue
-
-        sentences = split_sentences(p)
-        units = sentences if sentences else [p]
-
-        for unit in units:
-            if len(unit) > max_chars:
-                if buf:
-                    chunks.append(buf)
-                    buf = ""
-                chunks.extend(split_long_text(unit, max_chars))
-                continue
-
-            if not buf:
-                buf = unit
-            elif len(buf) + len(unit) + 1 <= max_chars:
-                buf = f"{buf} {unit}".strip()
-            else:
-                chunks.append(buf)
-                buf = unit
-
+        if buf and size + 2 + len(paragraph) > max_chars:
+            chunks.append("\n\n".join(buf))
+            buf, size = [], 0
+        buf.append(paragraph)
+        size += len(paragraph) + 2
     if buf:
-        chunks.append(buf)
-
+        chunks.append("\n\n".join(buf))
     return chunks
 
 
@@ -306,57 +492,26 @@ def normalize_for_compare(text: str) -> str:
         Called by `dedupe_consecutive_units`.
     """
     text = text.lower().strip()
-    text = re.sub(r"[^\w\u0600-\u06ff]+", " ", text)
+    text = re.sub(r"[^\w؀-ۿ]+", " ", text)
     text = re.sub(r"\s+", " ", text)
     return text.strip()
 
 
-def collapse_repeated_word_blocks(text: str, max_block_words: int = 12) -> str:
-    """Collapse immediately repeated sequences of words.
+def _dedupe_key(unit: str) -> str:
+    """Comparison key for a line or sentence; empty when the unit must never be dropped.
 
-    Purpose:
-        Remove common ASR loops before sending text to a language model.
-    Args:
-        text: Raw transcript text.
-        max_block_words: Largest repeated word-block size to detect.
-    Returns:
-        Text with adjacent repeated blocks reduced to one copy.
-    Workflow:
-        Scans left to right, searches longest-first for repeated blocks, and advances
-        past all repeated copies when a match is found.
-    Connects to:
-        Called by `clean_transcript_with_generator` before chunking.
+    Short units ("No. No.") and units without letters (numbers, symbols) are never
+    treated as duplicates, so emphasis and numeric content survive.
     """
-    words = text.split()
-    if not words:
-        return text
+    normalized = normalize_for_compare(unit)
+    if len(normalized.split()) < 3 or not re.search(r"[^\W\d_]", normalized):
+        return ""
+    return normalized
 
-    out = []
-    i = 0
-    n = len(words)
 
-    while i < n:
-        best_len = 0
-        best_repeat = 1
-
-        for block_len in range(min(max_block_words, n - i) // 2, 0, -1):
-            block = words[i:i + block_len]
-            repeat = 1
-            while i + (repeat + 1) * block_len <= n and words[i + repeat * block_len:i + (repeat + 1) * block_len] == block:
-                repeat += 1
-            if repeat > 1:
-                best_len = block_len
-                best_repeat = repeat
-                break
-
-        if best_len:
-            out.extend(words[i:i + best_len])
-            i += best_len * best_repeat
-        else:
-            out.append(words[i])
-            i += 1
-
-    return " ".join(out)
+def collapse_repeated_word_blocks(text: str, max_block_words: int = 30) -> str:
+    """Backward-compatible name for `transcript_format.collapse_loops`."""
+    return collapse_loops(text, max_block_words)
 
 
 def dedupe_consecutive_units(text: str) -> str:
@@ -370,9 +525,9 @@ def dedupe_consecutive_units(text: str) -> str:
         Cleaned text with adjacent duplicate units removed.
     Workflow:
         Deduplicates normalized lines, limits blank lines, then repeats the process at
-        sentence level.
+        sentence level. Units shorter than three words or without letters are kept.
     Connects to:
-        Calls `normalize_for_compare`; used per chunk and on final combined output.
+        Calls `normalize_for_compare`; used on the combined cleaner output.
     """
     lines = [line.strip() for line in text.splitlines()]
     cleaned_lines = []
@@ -384,12 +539,12 @@ def dedupe_consecutive_units(text: str) -> str:
                 cleaned_lines.append("")
             continue
 
-        normalized = normalize_for_compare(line)
-        if normalized and normalized == previous:
+        key = _dedupe_key(line)
+        if key and key == previous:
             continue
 
         cleaned_lines.append(line)
-        previous = normalized
+        previous = key
 
     deduped_lines = []
     for line in cleaned_lines:
@@ -397,121 +552,162 @@ def dedupe_consecutive_units(text: str) -> str:
             deduped_lines.append("")
             continue
 
-        parts = re.split(r"(?<=[\.\!\?\u061f])\s+", line)
+        parts = re.split(r"(?<=[\.\!\?؟])\s+", line)
         merged = []
         previous = ""
         for part in parts:
             part = part.strip()
             if not part:
                 continue
-            normalized = normalize_for_compare(part)
-            if normalized and normalized == previous:
+            key = _dedupe_key(part)
+            if key and key == previous:
                 continue
             merged.append(part)
-            previous = normalized
+            previous = key
         deduped_lines.append(" ".join(merged))
 
     text = "\n".join(deduped_lines)
     return re.sub(r"\n{3,}", "\n\n", text).strip()
 
 
-def repair_mojibake(text: str) -> str:
-    """Repair common UTF-8 text displayed as Windows-1252 artifacts."""
-    replacements = {
-        "â€™": "'",
-        "â€˜": "'",
-        "â€œ": '"',
-        "â€": '"',
-        "â€“": "-",
-        "â€”": "-",
-        "â€‘": "-",
-        "â€¯": " ",
-        "Â ": " ",
-        "Â": "",
-        "â†": "<-",
-        "â†’": "->",
-        "â€¢": "-",
-        "â€¦": "...",
-    }
-    for bad, good in replacements.items():
-        text = text.replace(bad, good)
-    return text
+_HEADING_RE = re.compile(r"^#{1,3}\s")
+_RULE_LINE_RE = re.compile(r"(?:-{3,}|\*{3,}|_{3,})")
+_INLINE_LIST_START_RE = re.compile(r"[:：][ \t]+(?=-[ \t]+(?:\*\*)?[^\W\d_])")
+_INLINE_ITEM_RE = re.compile(r"[ \t]+-[ \t]+(?=(?:\*\*)?[^\W\d_])")
+
+
+def _split_inline_list(line: str, next_line: str) -> str:
+    """Put a list glued after a colon on its own lines ("Items: - arrays - trees").
+
+    Only a real list is split: two or more dash items after the colon, or one item
+    followed by a "- " line. A dash after other punctuation is prose, such as a
+    Whisper self-interruption ("لماذا؟ - لأن الذاكرة محدودة"), and a lone dash after a
+    colon may be a minus sign ("النتيجة هي: - س تربيع"); both stay as written.
+    """
+    match = _INLINE_LIST_START_RE.search(line)
+    if not match:
+        return line
+    items = [item.strip() for item in _INLINE_ITEM_RE.split(" " + line[match.end():])]
+    items = [item for item in items if item]
+    if len(items) < 2 and not next_line.lstrip().startswith("- "):
+        return line
+    return line[:match.start() + 1] + "\n" + "\n".join(f"- {item}" for item in items)
 
 
 def normalize_markdown_layout(text: str) -> str:
-    """Clean Markdown layout after model generation.
+    """Clean Markdown layout after model generation, without touching the math.
 
     Purpose:
-        Keep bullets, numbered lists, tables, and headings readable even when the model
-        returns several items on one line.
+        Keep headings and bullets on their own lines in any script while leaving
+        expressions such as "(a + b) - c", "|x|" and "3. 2." exactly as written.
     Args:
         text: Generated transcript text.
     Returns:
-        Text with repaired encoding, list spacing, and paragraph breaks.
+        Text in the Markdown subset (headings, paragraphs, "- " bullets, numbered
+        items, bold) with repaired encoding and tidy blank lines.
     Workflow:
-        Fixes mojibake, splits glued list markers onto new lines, trims whitespace, and
-        limits blank lines.
+        Repairs mojibake; moves a "## " heading glued to the previous sentence onto
+        its own paragraph; splits a dash list glued after a colon onto its own lines
+        (`_split_inline_list`; prose dashes and minus signs stay); maps "* " bullets
+        to "- ", deep headings to "### ", drops horizontal rules, and keeps blank
+        lines around headings.
     Connects to:
-        Called after each model response and once on the final combined transcript.
+        Called after each model response and on the final combined transcript.
     """
-    text = repair_mojibake(text)
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    text = repair_mojibake(text).replace("\r\n", "\n").replace("\r", "\n")
+    text = re.sub(r"(?<=\S)[ \t]+(#{2,3}[ \t]+)(?=\S)", r"\n\n\1", text)
+    lines = text.split("\n")
+    text = "\n".join(
+        _split_inline_list(line, lines[index + 1] if index + 1 < len(lines) else "")
+        for index, line in enumerate(lines)
+    )
 
-    # Split glued bullets like "text. - Next point" and "text. 1. Next step".
-    text = re.sub(r"(?<=[\.\!\?:\)])\s+-\s+(?=(?:\*\*)?[A-Za-z0-9`])", "\n- ", text)
-    text = re.sub(r"(?<=[\.\!\?:\)])\s+(\d+\.\s+)(?=(?:\*\*)?[A-Za-z])", r"\n\1", text)
-
-    # Put Markdown headings that were glued to the previous sentence on a new paragraph.
-    text = re.sub(r"(?<=[a-z0-9\.\)])\s+(#{1,4}\s+)", r"\n\n\1", text)
-
-    # Keep horizontal rules and table rows readable.
-    text = re.sub(r"\s+---\s+", "\n\n---\n\n", text)
-    text = re.sub(r"\s+(\|[^|\n]+(?:\|[^|\n]+)+\|)", r"\n\1", text)
-
-    lines = [re.sub(r"[ \t]+", " ", line).strip() for line in text.splitlines()]
-    cleaned = []
-    for line in lines:
-        if not line:
+    cleaned: list[str] = []
+    previous_heading = False
+    for raw_line in text.split("\n"):
+        line = re.sub(r"[ \t]+", " ", raw_line).strip()
+        if not line or _RULE_LINE_RE.fullmatch(line):
             if cleaned and cleaned[-1] != "":
                 cleaned.append("")
+            previous_heading = False
             continue
+        line = re.sub(r"^[*+•]\s+", "- ", line)
+        line = re.sub(r"^#{4,6}\s+", "### ", line)
+        heading = bool(_HEADING_RE.match(line))
+        if (heading or previous_heading) and cleaned and cleaned[-1] != "":
+            cleaned.append("")
         cleaned.append(line)
+        previous_heading = heading
 
     return re.sub(r"\n{3,}", "\n\n", "\n".join(cleaned)).strip()
 
 
-def ollama_generate(prompt: str) -> str:
+# =========================
+# PROVIDERS
+# =========================
+def _env_int(name: str, default: int) -> int:
+    """Read a positive integer setting, keeping the default for missing or bad values."""
+    try:
+        value = int(os.environ.get(name, default))
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
+def ollama_generate(prompt: str, system: str | None = None) -> str:
     """Generate cleaned transcript text with the local Ollama server.
 
     Purpose:
-        Provide the offline cleaner used when local formatting is selected or required.
+        Provide the offline cleaner used when OpenRouter is unavailable.
     Args:
         prompt: Fully constructed transcript-cleaning prompt.
+        system: System prompt for the lecture language (language-neutral by default).
     Returns:
         Ollama's stripped response text.
     Raises:
-        requests.RequestException: If the local API is unavailable or returns an error.
+        CleanerUnavailable: When the server is unreachable or the model is missing.
+        ChunkCleaningError: When this generation failed, was truncated, or was empty.
     Workflow:
-        Builds the generation payload, sends a non-streaming request, validates the HTTP
-        response, and extracts the `response` field.
+        Sends a non-streaming request with an output budget large enough for Arabic
+        chunks (`OLLAMA_NUM_PREDICT`) and an explicit context size (`OLLAMA_NUM_CTX`).
     Connects to:
-        Passed to `clean_transcript_with_generator` by `clean_transcript_file`.
+        Bound to a language and passed to `clean_transcript_with_generator` by
+        `clean_transcript_file`.
     """
     payload = {
         "model": MODEL,
         "prompt": prompt,
-        "system": SYSTEM_RULES,
+        "system": system or SYSTEM_RULES,
         "stream": False,
         "options": {
             "temperature": 0.2,
             "top_p": 0.9,
-            "num_predict": 1200,
+            "num_predict": _env_int("OLLAMA_NUM_PREDICT", OLLAMA_NUM_PREDICT),
+            "num_ctx": _env_int("OLLAMA_NUM_CTX", OLLAMA_NUM_CTX),
         },
     }
-    r = requests.post(OLLAMA_URL, json=payload, timeout=600)
-    r.raise_for_status()
-    data = r.json()
-    return data.get("response", "").strip()
+    try:
+        response = requests.post(OLLAMA_URL, json=payload, timeout=600)
+    except requests.ConnectionError as exc:
+        raise CleanerUnavailable(f"Ollama is not reachable ({type(exc).__name__}).") from exc
+    except requests.RequestException as exc:
+        raise ChunkCleaningError(f"Ollama request failed ({type(exc).__name__}).", retryable=False) from exc
+    if response.status_code == 404:
+        raise CleanerUnavailable(f"Ollama model {MODEL} is not available (HTTP 404).")
+    if not response.ok:
+        raise ChunkCleaningError(f"Ollama returned HTTP {response.status_code}.", retryable=False)
+    try:
+        data = response.json()
+    except ValueError as exc:
+        raise ChunkCleaningError("Ollama response was not JSON.") from exc
+    if not isinstance(data, dict):
+        raise ChunkCleaningError("Ollama response has an invalid shape.")
+    if data.get("done_reason") == "length":
+        raise ChunkCleaningError("Ollama output was truncated (done_reason=length).")
+    content = (data.get("response") or "").strip()
+    if not content:
+        raise ChunkCleaningError("Ollama returned an empty response.")
+    return content
 
 
 def load_local_env(path: Path = Path(".env")) -> None:
@@ -543,24 +739,89 @@ def load_local_env(path: Path = Path(".env")) -> None:
             os.environ.setdefault(key, value)
 
 
-def openrouter_generate(prompt: str) -> str:
+def _retry_after_seconds(response: Any) -> float | None:
+    """Read a numeric Retry-After header, capped so one chunk cannot stall the job."""
+    try:
+        value = response.headers.get("Retry-After")
+    except AttributeError:
+        return None
+    if not isinstance(value, str):
+        return None
+    try:
+        seconds = float(value.strip())
+    except ValueError:
+        return None
+    return max(0.0, min(seconds, MAX_RETRY_AFTER_SECONDS))
+
+
+_reasoning_rejected = False
+
+
+def _post_openrouter(url: str, payload: dict, headers: dict, timeout_seconds: int) -> Any:
+    """POST one chat completion, retrying transient failures with backoff.
+
+    Raises:
+        CloudCleanerUnavailable: For HTTP 401/402/403/404 (no chunk can succeed).
+        ChunkCleaningError: When the transient retries are exhausted or the request
+            is rejected for this prompt.
+    """
+    global _reasoning_rejected
+    attempts = len(CLEANER_RETRY_DELAYS) + 1
+    last_error = "OpenRouter cleaner request was not sent."
+    attempt = 0
+    while attempt < attempts:
+        attempt += 1
+        delay = None
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=timeout_seconds)
+        except requests.RequestException as exc:
+            last_error = f"OpenRouter cleaner request failed ({type(exc).__name__})."
+        else:
+            status = response.status_code
+            if status in FATAL_HTTP_STATUSES:
+                raise CloudCleanerUnavailable(f"OpenRouter cleaner returned HTTP {status}.")
+            if status == 400 and "reasoning" in payload:
+                # Some routed models reject the reasoning option; ask once without it.
+                _reasoning_rejected = True
+                payload = {key: value for key, value in payload.items() if key != "reasoning"}
+                attempt -= 1
+                continue
+            if status in TRANSIENT_HTTP_STATUSES:
+                last_error = f"OpenRouter cleaner returned HTTP {status}."
+                delay = _retry_after_seconds(response)
+            elif not response.ok:
+                raise ChunkCleaningError(f"OpenRouter cleaner returned HTTP {status}.", retryable=False)
+            else:
+                try:
+                    return response.json()
+                except ValueError:
+                    last_error = "OpenRouter cleaner response was not JSON."
+        if attempt < attempts:
+            time.sleep(delay if delay is not None else CLEANER_RETRY_DELAYS[attempt - 1])
+    raise ChunkCleaningError(last_error, retryable=False)
+
+
+def openrouter_generate(prompt: str, system: str | None = None) -> str:
     """Generate cleaned transcript text with OpenRouter's chat-completions API.
 
     Purpose:
         Use the configured cloud model as the preferred transcript cleaner.
     Args:
         prompt: Fully constructed transcript-cleaning prompt.
+        system: System prompt for the lecture language (language-neutral by default).
     Returns:
         Non-empty response text from the first model choice.
     Raises:
-        CloudCleanerUnavailable: If credentials are missing, the request fails, or the
-            service returns no usable text.
+        CloudCleanerUnavailable: Missing credentials, or a rejection that affects
+            every chunk (HTTP 401/402/403/404).
+        ChunkCleaningError: Transient failures after retries, truncated output
+            (finish_reason=length), or empty/null content.
     Workflow:
-        Loads local environment values, creates an authenticated request, validates the
-        response shape, and extracts the first message content.
+        Loads local environment values, parses numeric settings defensively, sends the
+        request with retries, and validates the response shape and finish reason.
     Connects to:
-        Calls `load_local_env`; passed to the shared cleaner by
-        `clean_transcript_file_with_openrouter`.
+        Calls `load_local_env`; bound to a language and passed to the shared cleaner
+        by `clean_transcript_file_with_openrouter`.
     """
     load_local_env()
     api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
@@ -569,19 +830,22 @@ def openrouter_generate(prompt: str) -> str:
 
     model = os.environ.get("OPENROUTER_MODEL", OPENROUTER_MODEL).strip() or OPENROUTER_MODEL
     url = os.environ.get("OPENROUTER_API_URL", OPENROUTER_URL).strip() or OPENROUTER_URL
-    max_tokens = int(os.environ.get("OPENROUTER_MAX_TOKENS", OPENROUTER_MAX_TOKENS))
-    timeout_seconds = int(os.environ.get("OPENROUTER_TIMEOUT_SECONDS", OPENROUTER_TIMEOUT_SECONDS))
+    max_tokens = _env_int("OPENROUTER_MAX_TOKENS", OPENROUTER_MAX_TOKENS)
+    timeout_seconds = _env_int("OPENROUTER_TIMEOUT_SECONDS", OPENROUTER_TIMEOUT_SECONDS)
 
-    payload = {
+    payload: dict[str, Any] = {
         "model": model,
         "messages": [
-            {"role": "system", "content": SYSTEM_RULES},
+            {"role": "system", "content": system or SYSTEM_RULES},
             {"role": "user", "content": prompt},
         ],
         "temperature": 0.2,
         "top_p": 0.9,
         "max_tokens": max_tokens,
     }
+    effort = os.environ.get("OPENROUTER_REASONING_EFFORT", OPENROUTER_REASONING_EFFORT).strip().lower()
+    if effort and effort not in {"none", "off", "false", "0", "default"} and not _reasoning_rejected:
+        payload["reasoning"] = {"effort": effort, "exclude": True}
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
@@ -589,31 +853,23 @@ def openrouter_generate(prompt: str) -> str:
         "X-Title": os.environ.get("OPENROUTER_APP_NAME", "LectureScribe AI"),
     }
 
-    try:
-        response = requests.post(
-            url,
-            json=payload,
-            headers=headers,
-            timeout=timeout_seconds,
-        )
-        response.raise_for_status()
-    except requests.RequestException as exc:
-        raise CloudCleanerUnavailable(f"OpenRouter cleaner failed: {exc}") from exc
+    data = _post_openrouter(url, payload, headers, timeout_seconds)
+    choices = data.get("choices") if isinstance(data, dict) else None
+    if not choices or not isinstance(choices[0], dict):
+        raise ChunkCleaningError("OpenRouter returned no choices.")
 
-    data = response.json()
-    choices = data.get("choices") or []
-    if not choices:
-        raise CloudCleanerUnavailable("OpenRouter returned no choices.")
-
-    message = choices[0].get("message") or {}
-    content = message.get("content", "").strip()
+    choice = choices[0]
+    message = choice.get("message") if isinstance(choice.get("message"), dict) else {}
+    content = (message.get("content") or "").strip()
+    finish_reason = choice.get("finish_reason")
+    if finish_reason == "length":
+        raise ChunkCleaningError("OpenRouter output was truncated (finish_reason=length).")
     if not content:
-        finish_reason = choices[0].get("finish_reason", "unknown")
         usage = data.get("usage") or {}
-        completion_tokens = usage.get("completion_tokens", "unknown")
-        raise CloudCleanerUnavailable(
+        completion_tokens = usage.get("completion_tokens", "unknown") if isinstance(usage, dict) else "unknown"
+        raise ChunkCleaningError(
             "OpenRouter returned an empty response "
-            f"(finish_reason={finish_reason}, completion_tokens={completion_tokens})."
+            f"(finish_reason={finish_reason or 'unknown'}, completion_tokens={completion_tokens})."
         )
 
     return content
@@ -627,137 +883,201 @@ def groq_generate(prompt: str) -> str:
 ProgressCallback = Callable[[str, dict[str, Any]], None]
 
 
+# =========================
+# CLEANING
+# =========================
+def _clean_chunk(
+    generate_fn: Callable[[str], str],
+    chunk: str,
+    language: str | None,
+) -> tuple[str | None, list[str]]:
+    """Clean one chunk: first attempt, then one stricter retry when it is rejected.
+
+    Returns:
+        `(cleaned_or_None, reasons)` where `reasons` lists why each rejected attempt
+        failed ('failed', 'translated', 'too_short', 'too_long').
+    Raises:
+        CleanerUnavailable: Propagated so the caller can stop using the provider.
+    """
+    reasons: list[str] = []
+    for attempt in (1, 2):
+        prompt = make_user_prompt(chunk, language) if attempt == 1 else make_retry_prompt(chunk, language, reasons[-1])
+        try:
+            output = generate_fn(prompt)
+        except CleanerUnavailable:
+            raise
+        except ChunkCleaningError as exc:
+            print(f"Chunk generation failed: {exc}")
+            reasons.append("failed")
+            if not exc.retryable:
+                break
+            continue
+        except Exception as exc:  # An unexpected provider error must cost one chunk, not the lecture.
+            print(f"Chunk generation failed: {type(exc).__name__}: {exc}")
+            reasons.append("failed")
+            continue
+        output = normalize_markdown_layout(strip_model_wrapping(output if isinstance(output, str) else "", chunk))
+        reason = validate_chunk(chunk, output, language)
+        if reason is None:
+            return output, reasons
+        print(f"Chunk rejected: {reason}")
+        reasons.append(reason)
+    return None, reasons
+
+
 def clean_transcript_with_generator(
     input_txt: Path,
     generate_fn: Callable[[str], str],
     provider_name: str,
     chunk_chars: int = CHUNK_CHARS,
     progress_callback: ProgressCallback | None = None,
+    *,
+    language: str | None = None,
+    segments: list[dict[str, Any]] | None = None,
+    output_path: Path | None = None,
+    stats: dict[str, Any] | None = None,
+    max_consecutive_failures: int = MAX_CONSECUTIVE_CHUNK_FAILURES,
 ) -> Path | None:
-    """Clean a transcript using a supplied model-generation function.
+    """Clean a transcript in its own language using a supplied model-generation function.
 
     Purpose:
-        Share file, chunking, progress, deduplication, and output logic across providers.
+        Share file, chunking, guards, fallback, progress, and output logic across
+        providers. One bad chunk must never discard the lecture.
     Args:
         input_txt: Raw transcript file to clean.
         generate_fn: Callable that accepts a prompt and returns cleaned text.
         provider_name: Human-readable provider name used in logs and progress updates.
         chunk_chars: Preferred maximum chunk size for this provider.
         progress_callback: Optional callback receiving `(stage, details)` updates.
+        language: Lecture language code; detected from the script when None.
+        segments: Optional Whisper segments aligned with the raw text.
+        output_path: Where to write the result (defaults to OutputForOllama/).
+        stats: Optional dictionary filled with per-chunk counters.
+        max_consecutive_failures: Chunks in a row whose generation may fail before the
+            provider is no longer called for this transcript.
     Returns:
         Path to the cleaned transcript, or None for a missing or empty input file.
+    Raises:
+        CleanerUnavailable: When the provider produced no usable chunk at all, so the
+            caller can try another provider or the deterministic formatter.
     Workflow:
-        Reads and pre-deduplicates the transcript, splits it into chunks, invokes the
-        provider for each chunk, deduplicates responses, and saves the combined output.
+        Lays the raw text out with `format_transcript` (hallucinations and loops
+        removed, paragraphs), packs whole paragraphs into chunks, and cleans each with
+        a language-locked prompt. A chunk whose answer is empty, truncated,
+        translated, or outside the coverage band is retried once with a stricter
+        prompt and otherwise kept in its deterministic layout. Nothing is ever
+        translated and no call ever covers the whole transcript.
     Connects to:
-        Calls prompt/chunk/deduplication helpers and provider functions; wrapped by
-        `clean_transcript_file` and `clean_transcript_file_with_openrouter`.
+        Wrapped by `clean_transcript_file` and `clean_transcript_file_with_openrouter`.
     """
     if not input_txt.exists():
         print(f"Input file not found: {input_txt.resolve()}")
         return None
 
-    raw = input_txt.read_text(encoding="utf-8", errors="ignore").strip()
+    raw = input_txt.read_text(encoding="utf-8", errors="replace").strip()
     if not raw:
         print("Input file is empty.")
         return None
 
-    # Remove obvious repeated blocks before chunking so the model sees less noise.
-    raw = collapse_repeated_word_blocks(raw)
+    code = normalize_language(language) or detect_text_language(raw)
+    prepared = format_transcript(raw, segments, code)
+    if not prepared:
+        print("Transcript contains no speech after removing hallucinations.")
+        return None
 
-    output_dir = Path("OutputForOllama")
-    output_dir.mkdir(exist_ok=True)
-    output_txt = output_dir / f"{input_txt.stem}_cleanedv5.txt"
+    output_txt = Path(output_path) if output_path else Path("OutputForOllama") / f"{input_txt.stem}_cleanedv5.txt"
+    output_txt.parent.mkdir(parents=True, exist_ok=True)
 
-    chunks = split_text(raw, chunk_chars)
-    print(f"Loaded text. Chunks: {len(chunks)}")
+    chunks = split_text(prepared, chunk_chars)
+    total = len(chunks)
+    print(f"Loaded text. Chunks: {total}")
     if progress_callback:
         progress_callback(
             "formatting",
             {
                 "detail": f"{provider_name} is preparing transcript chunks",
                 "chunk_index": 0,
-                "chunk_total": len(chunks),
+                "chunk_total": total,
             },
         )
 
-    cleaned_chunks = []
-    for i, ch in enumerate(chunks, start=1):
-        print(f"{provider_name} cleaning chunk {i}/{len(chunks)} ...")
+    cleaned_chunks: list[str] = []
+    llm_chunks = 0
+    fallback_chunks = 0
+    retried_chunks = 0
+    rejections: dict[str, int] = {}
+    consecutive_failures = 0
+    stopped_reason: str | None = None
+
+    for index, chunk in enumerate(chunks, start=1):
         if progress_callback:
             progress_callback(
                 "formatting",
                 {
-                    "detail": f"{provider_name} cleaning chunk {i} of {len(chunks)}",
-                    "chunk_index": i,
-                    "chunk_total": len(chunks),
+                    "detail": f"{provider_name} cleaning chunk {index} of {total}",
+                    "chunk_index": index,
+                    "chunk_total": total,
                 },
             )
-        out = generate_fn(make_user_prompt(ch))
-        out = normalize_markdown_layout(out)
+        if stopped_reason:
+            cleaned_chunks.append(chunk)
+            fallback_chunks += 1
+            continue
 
-        # Coverage guard. The prompt forbids summarizing, but a model that ignores
-        # it fails silently, so the shortfall is measured and repaired mechanically.
-        source_words = len(ch.split())
-        if source_words and coverage_ratio(ch, out) < MIN_COVERAGE_RATIO:
-            print(
-                f"{provider_name} chunk {i}/{len(chunks)} came back "
-                f"{coverage_ratio(ch, out):.0%} of the source; asking for the missing text ..."
-            )
-            if progress_callback:
-                progress_callback(
-                    "formatting",
-                    {
-                        "detail": f"{provider_name} restoring dropped text in chunk {i} of {len(chunks)}",
-                        "chunk_index": i,
-                        "chunk_total": len(chunks),
-                    },
-                )
-            retry = normalize_markdown_layout(generate_fn(make_expansion_prompt(ch, out)))
-            if coverage_ratio(ch, retry) > coverage_ratio(ch, out):
-                out = retry
-            if coverage_ratio(ch, out) < MIN_COVERAGE_RATIO:
-                # The cleaner is still eating the lecture. A readable summary is
-                # worth less than the words the student actually needs.
-                print(
-                    f"{provider_name} still short for chunk {i}/{len(chunks)}; "
-                    "keeping the original text for this chunk."
-                )
-                out = normalize_markdown_layout(ch)
+        print(f"{provider_name} cleaning chunk {index}/{total} ...")
+        try:
+            output, reasons = _clean_chunk(generate_fn, chunk, code)
+        except CleanerUnavailable as exc:
+            if not llm_chunks:
+                raise
+            stopped_reason = str(exc)
+            print(f"{provider_name} stopped: {stopped_reason}. Remaining chunks keep their plain layout.")
+            cleaned_chunks.append(chunk)
+            fallback_chunks += 1
+            continue
 
-        if has_arabic_script(out):
-            print(f"{provider_name} repair pass for chunk {i}/{len(chunks)} ...")
-            if progress_callback:
-                progress_callback(
-                    "formatting",
-                    {
-                        "detail": f"{provider_name} translating remaining Arabic in chunk {i} of {len(chunks)}",
-                        "chunk_index": i,
-                        "chunk_total": len(chunks),
-                    },
-                )
-            out = generate_fn(make_english_repair_prompt(out))
-            out = normalize_markdown_layout(out)
-        cleaned_chunks.append(normalize_markdown_layout(dedupe_consecutive_units(out)))
+        for reason in reasons:
+            rejections[reason] = rejections.get(reason, 0) + 1
+        if reasons:
+            retried_chunks += 1
 
-    cleaned = "\n\n".join(cleaned_chunks).strip()
-    cleaned = normalize_markdown_layout(dedupe_consecutive_units(cleaned))
-    if has_arabic_script(cleaned):
-        print(f"{provider_name} final English repair pass ...")
-        if progress_callback:
-            progress_callback(
-                "formatting",
-                {
-                    "detail": f"{provider_name} translating remaining Arabic in final transcript",
-                    "chunk_index": len(chunks),
-                    "chunk_total": len(chunks),
-                },
-            )
-        cleaned = normalize_markdown_layout(
-            dedupe_consecutive_units(generate_fn(make_english_repair_prompt(cleaned)))
+        if output is not None:
+            cleaned_chunks.append(output)
+            llm_chunks += 1
+            consecutive_failures = 0
+            continue
+
+        print(f"{provider_name} chunk {index}/{total} kept in its plain layout ({', '.join(reasons)}).")
+        cleaned_chunks.append(chunk)
+        fallback_chunks += 1
+        consecutive_failures = consecutive_failures + 1 if reasons and reasons[-1] == "failed" else 0
+        if consecutive_failures >= max_consecutive_failures:
+            message = f"{provider_name} failed on {consecutive_failures} chunks in a row"
+            if not llm_chunks:
+                raise CleanerUnavailable(message)
+            stopped_reason = message
+
+    if not llm_chunks:
+        raise CleanerUnavailable(
+            f"{provider_name} produced no usable chunk ({', '.join(sorted(rejections)) or 'no output'})."
         )
-    cleaned = normalize_markdown_layout(cleaned)
+
+    cleaned = normalize_markdown_layout(dedupe_consecutive_units("\n\n".join(cleaned_chunks)))
     output_txt.write_text(cleaned, encoding="utf-8")
+
+    if stats is not None:
+        stats.update(
+            {
+                "provider": provider_name,
+                "language": code,
+                "chunks": total,
+                "llm_chunks": llm_chunks,
+                "fallback_chunks": fallback_chunks,
+                "retried_chunks": retried_chunks,
+                "rejections": rejections,
+                "stopped_reason": stopped_reason,
+            }
+        )
 
     print("\n DONE")
     print(f"Saved cleaned transcript to: {output_txt.resolve()}")
@@ -765,9 +1085,22 @@ def clean_transcript_with_generator(
     return output_txt
 
 
+def _cleaning_language(input_txt: Path, language: str | None) -> str | None:
+    """Use the requested language, or detect it from the raw transcript's script."""
+    code = normalize_language(language)
+    if code or not input_txt.exists():
+        return code
+    return detect_text_language(input_txt.read_text(encoding="utf-8", errors="replace"))
+
+
 def clean_transcript_file(
     input_txt: Path,
     progress_callback: ProgressCallback | None = None,
+    *,
+    language: str | None = None,
+    segments: list[dict[str, Any]] | None = None,
+    output_path: Path | None = None,
+    stats: dict[str, Any] | None = None,
 ) -> Path | None:
     """Clean a transcript with the local Ollama provider.
 
@@ -776,26 +1109,42 @@ def clean_transcript_file(
     Args:
         input_txt: Raw transcript file to clean.
         progress_callback: Optional pipeline progress callback.
+        language: Lecture language code; detected when None.
+        segments: Optional Whisper segments aligned with the raw text.
+        output_path: Destination file (defaults to OutputForOllama/).
+        stats: Optional dictionary filled with per-chunk counters.
     Returns:
         Path to the cleaned file, or None when the input is unavailable or empty.
     Workflow:
-        Configures the shared cleaner with `ollama_generate` and Ollama's chunk size.
+        Binds the language-locked system prompt to `ollama_generate` and uses smaller
+        chunks for Arabic.
     Connects to:
         Calls `clean_transcript_with_generator`; used by the preferred-model pipeline
         and this module's command-line entry point.
     """
+    code = _cleaning_language(input_txt, language)
+    chunk_chars = OLLAMA_ARABIC_CHUNK_CHARS if code in ARABIC_SCRIPT_LANGUAGES else CHUNK_CHARS
     return clean_transcript_with_generator(
         input_txt,
-        ollama_generate,
+        partial(ollama_generate, system=build_system_rules(code)),
         "Ollama",
-        CHUNK_CHARS,
+        chunk_chars,
         progress_callback,
+        language=code,
+        segments=segments,
+        output_path=output_path,
+        stats=stats,
     )
 
 
 def clean_transcript_file_with_openrouter(
     input_txt: Path,
     progress_callback: ProgressCallback | None = None,
+    *,
+    language: str | None = None,
+    segments: list[dict[str, Any]] | None = None,
+    output_path: Path | None = None,
+    stats: dict[str, Any] | None = None,
 ) -> Path | None:
     """Clean a transcript with the remote OpenRouter provider.
 
@@ -804,23 +1153,32 @@ def clean_transcript_file_with_openrouter(
     Args:
         input_txt: Raw transcript file to clean.
         progress_callback: Optional pipeline progress callback.
+        language: Lecture language code; detected when None.
+        segments: Optional Whisper segments aligned with the raw text.
+        output_path: Destination file (defaults to OutputForOllama/).
+        stats: Optional dictionary filled with per-chunk counters.
     Returns:
         Path to the cleaned file, or None when the input is unavailable or empty.
     Raises:
-        CloudCleanerUnavailable: When OpenRouter cannot return usable cleaned text.
+        CleanerUnavailable: When OpenRouter cannot return any usable cleaned chunk.
     Workflow:
-        Configures the shared cleaner with `openrouter_generate` and the smaller cloud
-        chunk size.
+        Binds the language-locked system prompt to `openrouter_generate` and uses the
+        cloud chunk size.
     Connects to:
         Calls `clean_transcript_with_generator`; used by
         `clean_transcript_with_preferred_model`.
     """
+    code = _cleaning_language(input_txt, language)
     return clean_transcript_with_generator(
         input_txt,
-        openrouter_generate,
+        partial(openrouter_generate, system=build_system_rules(code)),
         "OpenRouter",
         CLOUD_CHUNK_CHARS,
         progress_callback,
+        language=code,
+        segments=segments,
+        output_path=output_path,
+        stats=stats,
     )
 
 
@@ -832,7 +1190,9 @@ def clean_transcript_file_with_groq(
     return clean_transcript_file_with_openrouter(input_txt, progress_callback)
 
 
-# if you want to run this file alone to clean a transcript without running the faster-whisper code, you can do that by putting the name of the transcript file in the same directory as this cleaner.py file and then run it. it will produce a cleaned version of the transcript with the name "OutputForOllama_" + input_file_name + "_cleanedv5.txt"
+# Run this file alone to clean a transcript without the Whisper step: put the raw
+# transcript next to this file and set INPUT_TXT. The result is written to
+# OutputForOllama/<input stem>_cleanedv5.txt in the transcript's own language.
 if __name__ == "__main__":
     INPUT_TXT = Path("Qbqc5MoGk5E_IUG Renewable energy Lab 7 _ Broken solar panel part 3_transcript.txt")
     clean_transcript_file(INPUT_TXT)

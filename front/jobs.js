@@ -60,7 +60,15 @@ function formatDate(timestamp) {
   });
 }
 
+const LANGUAGE_NAMES = {
+  ar: "Arabic",
+  en: "English",
+};
+
 function sourceLabel(job) {
+  if (job.title) {
+    return job.title;
+  }
   const url = job.request?.youtube_url;
   if (!url) {
     return job.job_id;
@@ -70,6 +78,20 @@ function sourceLabel(job) {
 
 function modeLabel(job) {
   return job.request?.clean === false ? "fast output" : "better formatting";
+}
+
+function requestedLanguage(job) {
+  return job.language || job.request?.language || "";
+}
+
+function languageLabel(job) {
+  const requested = requestedLanguage(job);
+  const detected = job.detected_language;
+  const name = (code) => LANGUAGE_NAMES[code] || String(code).toUpperCase();
+  if (!requested || requested === "auto") {
+    return detected ? `${name(detected)} (detected)` : "language auto";
+  }
+  return name(requested);
 }
 
 function cacheLabel(job) {
@@ -94,7 +116,7 @@ function filteredJobs() {
   const query = jobSearch.value.trim().toLowerCase();
   const status = statusFilter.value;
   return allJobs.filter((job) => {
-    const haystack = `${job.job_id} ${job.request?.youtube_url || ""}`.toLowerCase();
+    const haystack = `${job.job_id} ${job.title || ""} ${job.request?.youtube_url || ""}`.toLowerCase();
     const matchesQuery = !query || haystack.includes(query);
     const matchesStatus = status === "all" || job.status === status;
     return matchesQuery && matchesStatus;
@@ -110,7 +132,7 @@ function renderEmpty() {
         <h2>Nothing on the board matches</h2>
         <p>
           ${allJobs.length} ${allJobs.length === 1 ? "lecture has" : "lectures have"}
-          come through this server. None of them match the search and filter you have set.
+          been submitted on this site. None of them match the search and filter you have set.
         </p>
       </div>`;
     return;
@@ -151,15 +173,16 @@ function renderJobs() {
     row.innerHTML = `
       <span class="tile"><svg class="pict"><use href="#i-${STATUS_ICONS[status] || "queue"}"></use></svg></span>
       <div class="row-main">
-        <span class="row-source">${escapeHtml(sourceLabel(job))}</span>
+        <span class="row-source" dir="auto">${escapeHtml(sourceLabel(job))}</span>
         <div class="row-meta">
           <span class="row-state">${STATUS_WORDS[status] || escapeHtml(status)}</span>
           <span>${escapeHtml(modeLabel(job))}</span>
+          <span>${escapeHtml(languageLabel(job))}</span>
           <span>${escapeHtml(cacheLabel(job))}</span>
           <span>${escapeHtml(formatDate(job.submitted_at))}</span>
           <span class="row-id">${escapeHtml(job.job_id)}</span>
         </div>
-        ${status === "failed" ? '<span class="row-stamp">Cancelled</span>' : ""}
+        ${status === "failed" ? '<span class="row-stamp">Failed</span>' : ""}
         ${job.error ? `<p class="row-error">${escapeHtml(job.error)}</p>` : ""}
       </div>
       <div class="row-actions">
@@ -172,6 +195,7 @@ function renderJobs() {
       const params = new URLSearchParams({
         url: job.request?.youtube_url || "",
         mode: job.request?.clean === false ? "fast" : "formatted",
+        language: requestedLanguage(job) || "auto",
       });
       window.location.href = `/app?${params.toString()}`;
     });

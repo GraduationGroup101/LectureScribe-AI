@@ -661,7 +661,7 @@ a.action {
    column with bare ground beside it. */
 .decision.is-secondary form {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.6fr) minmax(0, 1fr) auto;
   align-items: end;
   gap: 20px;
 }
@@ -677,7 +677,8 @@ a.action {
   padding: 11px 14px;
 }
 
-.decision.is-secondary .mode-note {
+.decision.is-secondary .mode-note,
+.decision.is-secondary .field-hint {
   display: none;
 }
 
@@ -1062,6 +1063,11 @@ button:disabled:hover {
   max-width: 68ch;
 }
 
+.field-hint {
+  margin-top: 8px;
+  padding-bottom: 0;
+}
+
 .note + .hint {
   padding-top: 2px;
 }
@@ -1173,9 +1179,71 @@ button:disabled:hover {
   font-family: "Fira Sans", ui-sans-serif, system-ui, "Noto Naskh Arabic", sans-serif;
   font-size: 17px;
   line-height: 1.75;
-  white-space: pre-wrap;
+  /* Blocks keep their own line breaks; the blank lines between them are margins. */
+  white-space: normal;
   overflow-wrap: anywhere;
   scrollbar-color: #b9bec4 transparent;
+}
+
+/* Each block picks its direction from its own text (dir="auto"), and
+   plaintext bidi lets every line of a mixed Arabic/English block do the same. */
+.sheet p,
+.sheet li,
+.sheet h2,
+.sheet h3,
+.sheet h4 {
+  white-space: pre-wrap;
+  unicode-bidi: plaintext;
+  text-align: start;
+}
+
+.sheet p {
+  margin: 0 0 1.1em;
+}
+
+.sheet h2,
+.sheet h3,
+.sheet h4 {
+  margin: 1.4em 0 0.5em;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.sheet > h2:first-child,
+.sheet > h3:first-child,
+.sheet > h4:first-child {
+  margin-top: 0;
+}
+
+.sheet h2 {
+  font-size: 1.4em;
+}
+
+.sheet h3 {
+  font-size: 1.2em;
+}
+
+.sheet h4 {
+  font-size: 1.05em;
+}
+
+.sheet ul,
+.sheet ol {
+  margin: 0 0 1.1em;
+  padding-inline-start: 1.6em;
+}
+
+.sheet li + li {
+  margin-top: 0.3em;
+}
+
+/* Arabic script needs more room between lines than Latin text. */
+.sheet:lang(ar) p,
+.sheet:lang(ar) li,
+.sheet p:dir(rtl),
+.sheet li:dir(rtl) {
+  font-family: "Noto Naskh Arabic", "Fira Sans", ui-sans-serif, system-ui, sans-serif;
+  line-height: 2;
 }
 
 .sheet::selection,
@@ -1316,7 +1384,7 @@ button:disabled:hover {
   color: var(--sign);
 }
 
-/* Nothing disappears, it cancels. */
+/* Nothing disappears: a failed job stays on the board, stamped. */
 .row-stamp {
   display: inline-block;
   margin-top: 9px;
@@ -1428,6 +1496,11 @@ button:disabled:hover {
 
   .facts > div:nth-child(n + 3) {
     border-top: 1px solid var(--rule);
+  }
+
+  /* Link and language on one row, output mode and Start on the next. */
+  .decision.is-secondary form {
+    grid-template-columns: minmax(0, 1fr) minmax(170px, 0.45fr);
   }
 }
 

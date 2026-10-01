@@ -18,11 +18,12 @@ WORKDIR /app
 COPY requirements-render.txt .
 RUN pip install --no-cache-dir -r requirements-render.txt
 
-COPY api.py MainCode_FasterWhisper.py clean_with_Llama.py openrouter_transcription.py url_to_mp3.py ./
+COPY api.py MainCode_FasterWhisper.py clean_with_Llama.py openrouter_transcription.py transcript_format.py url_to_mp3.py ./
 COPY front/ ./front/
 
 RUN useradd --system --create-home --home-dir /home/lecturescribe lecturescribe \
     && chown lecturescribe:lecturescribe /app
 USER lecturescribe
 
+# One worker: the job queue, rate limits, callbacks and keep-alive live in this process.
 CMD ["sh", "-c", "exec uvicorn api:app --host 0.0.0.0 --port ${PORT:-10000} --workers 1"]

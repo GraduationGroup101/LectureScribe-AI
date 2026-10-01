@@ -12,11 +12,32 @@ services:
     envVars:
       - key: OPENROUTER_API_KEY
         sync: false
-      # Comma-separated secrets for gateways exempt from the per-IP job limit.
+      # Comma-separated secrets for trusted gateways (EduFusion): per-student limits,
+      # access to their jobs in GET /jobs, and the key that signs finish callbacks.
       - key: GATEWAY_KEYS
         sync: false
       - key: JOB_RATE_GLOBAL
         value: "60"
+      - key: JOB_MAX_ACTIVE
+        value: "10"
+      - key: JOB_RATE_PER_USER
+        value: "6"
+      - key: JOB_HISTORY_LIMIT
+        value: "500"
+      # Answers from saved transcripts per caller and in total, per hour.
+      - key: JOB_REUSE_PER_CLIENT
+        value: "20"
+      - key: JOB_REUSE_GLOBAL
+        value: "200"
+      # While jobs are queued or running, finish callbacks are being delivered, or the
+      # last job finished less than KEEPALIVE_GRACE_SECONDS ago, the service pings its
+      # own ${RENDER_EXTERNAL_URL}/health so the free instance (and its disk) is not
+      # stopped before EduFusion has the transcript.
+      # Render sets RENDER_EXTERNAL_URL itself; KEEPALIVE_DISABLED=true turns this off.
+      - key: KEEPALIVE_INTERVAL_SECONDS
+        value: "240"
+      - key: KEEPALIVE_GRACE_SECONDS
+        value: "900"
       # YouTube blocks datacenter IPs; upload a cookies export as a Secret File
       # named youtube-cookies.txt (or set YTDLP_PROXY) and keep this path.
       - key: YTDLP_COOKIES_FILE

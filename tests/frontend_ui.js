@@ -101,6 +101,28 @@ async (page) => {
   assert((await page.locator("#result-notice").textContent()).includes("original transcript"), "Raw fallback explanation missing");
   assert(await page.locator('#stage-rail [data-state="failed"]').count() === 1, "Unavailable formatting was marked as completed");
 
+  // "Better formatting" that fell back to the automatic layout still has a cleaned file.
+  const formattedRequest = { ...job.request, clean: true };
+  job = { ...job, request: formattedRequest, result: { raw_transcript_path: job.result.raw_transcript_path,
+    cleaned_transcript_path: "OutputForOllama/LiXm1wvK7Tk_ar_fast_source-language-v2.md",
+    mode: "fast", requested_mode: "formatted", cleaner_provider: "formatter", cleaner_error: "HTTP 401" } };
+  await page.reload();
+  await page.waitForFunction(() => !document.querySelector("#copy-transcript").disabled);
+  assert(await page.locator("#result-summary").textContent() === "Automatic paragraphs (AI formatting unavailable)",
+    "Formatting fallback shown as a formatted transcript");
+  assert((await page.locator("#result-notice").textContent()).includes("arranged into paragraphs automatically"),
+    "Formatting fallback explanation missing");
+  assert(await page.locator('#stage-rail [data-state="failed"]').count() === 1, "Formatting fallback marked as done");
+
+  job = { ...job, result: { ...job.result, cleaner_provider: "openrouter", cleaner_partial: true,
+    cleaner_error: "OpenRouter cleaner returned HTTP 402." } };
+  await page.reload();
+  await page.waitForFunction(() => !document.querySelector("#copy-transcript").disabled);
+  assert(await page.locator("#result-summary").textContent() === "Partly formatted (AI formatting stopped part-way)",
+    "Partly formatted transcript mislabeled");
+  assert((await page.locator("#result-notice").textContent()).includes("stopped part-way"), "Partial formatting not explained");
+  job = { ...job, request: { ...formattedRequest, clean: false } };
+
   await page.route("**/jobs", route => route.request().method() === "POST"
     ? route.fulfill({ json: { job_id: "frontend-check" } }) : route.fallback());
   job = { ...job, status: "running", stage: "transcribing", finished_at: null, result: null };
@@ -125,5 +147,6 @@ async (page) => {
   await page.unroute(`**/jobs/${completedId}`);
   await page.unroute(`**/jobs/${completedId}/transcript?*`);
   await page.goto(`${origin}/app`);
-  return "Frontend checks passed: desktop/mobile, copy/download, running, completed, cache, raw fallback, retry, and failure.";
+  return "Frontend checks passed: desktop/mobile, copy/download, running, completed, cache, raw fallback, "
+    + "formatting fallback, retry, and failure.";
 }
